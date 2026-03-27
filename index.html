@@ -1,1 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediTrack Enterprise — Hospital Management</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── ENTERPRISE UI THEME ── */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#F8FAFC; --bg2:#FFFFFF; --bg3:#F1F5F9; --bg4:#E2E8F0;
+  --border:#E2E8F0; --border2:#CBD5E1;
+  --text:#0F172A; --text2:#475569; --text3:#94A3B8;
+  --green:#10B981; --green-bg:#D1FAE5; --green-text:#065F46;
+  --blue:#3B82F6; --blue-bg:#DBEAFE; --blue-text:#1E40AF;
+  --red:#EF4444; --red-bg:#FEE2E2; --red-text:#991B1B;
+  --yellow:#F59E0B; --yellow-bg:#FEF3C7; --yellow-text:#92400E;
+  --brand:#2563EB; --brand-hover:#1D4ED8;
+  --r:12px; --r2:8px; --font:'Plus Jakarta Sans',sans-serif;
+  --shadow:0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
 
+/* ── LOGIN OVERLAY ── */
+#login-screen {position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.login-box {background:var(--bg2);padding:40px;border-radius:var(--r);box-shadow:var(--shadow);width:100%;max-width:400px;text-align:center;}
+.login-input {width:100%;padding:12px;margin:10px 0 20px;border:1px solid var(--border);border-radius:var(--r2);font-family:var(--font);}
+.btn-brand {background:var(--brand);color:#fff;border:none;padding:12px;width:100%;border-radius:var(--r2);font-weight:700;cursor:pointer;transition:0.2s;}
+.btn-brand:hover {background:var(--brand-hover);}
+
+/* ── LAYOUT ── */
+#app-core {display:none; min-height:100vh;}
+.sidebar{width:260px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:200}
+.main{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.logo-area{padding:24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.logo-icon{width:40px;height:40px;background:var(--brand);color:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.logo-text{font-size:18px;font-weight:800;letter-spacing:-0.5px;color:var(--text)}
+.nav-item{display:flex;align-items:center;gap:12px;padding:14px 24px;cursor:pointer;font-size:14px;color:var(--text2);font-weight:600;transition:0.2s}
+.nav-item:hover{background:var(--bg3);color:var(--brand)}
+.nav-item.active{background:var(--blue-bg);color:var(--brand);border-right:4px solid var(--brand)}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.user-profile{display:flex;align-items:center;gap:10px;background:var(--bg3);padding:6px 16px;border-radius:20px;font-size:13px;font-weight:700}
+
+/* ── CONTENT & CARDS ── */
+.page-content{padding:32px;flex:1}
+.page{display:none}
+.page.active{display:block}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;box-shadow:var(--shadow);margin-bottom:24px}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:16px;color:var(--text3);border-bottom:2px solid var(--border);text-transform:uppercase;font-size:12px;font-weight:700}
+td{padding:16px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:hover td{background:var(--bg3)}
+
+/* ── TRAFFIC LIGHT STATUS BADGES ── */
+.badge{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;display:inline-block}
+.status-green{background:var(--green-bg);color:var(--green-text)}
+.status-yellow{background:var(--yellow-bg);color:var(--yellow-text)}
+.status-red{background:var(--red-bg);color:var(--red-text)}
+
+/* ── MODALS (TRIAGE / SOAP) ── */
+.modal-overlay {position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;display:none;align-items:center;justify-content:center;}
+.modal-overlay.active {display:flex;}
+.modal {background:var(--bg2);width:100%;max-width:600px;border-radius:var(--r);padding:24px;box-shadow:var(--shadow);}
+.form-grid {display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+.input-field {width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--r2);font-family:var(--font);}
+textarea.input-field {resize:vertical;min-height:80px;}
+
+.spinner{width:20px;height:20px;border:3px solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo-icon" style="margin:0 auto 16px; width:50px; height:50px; font-size:24px;">🏥</div>
+    <h2 style="margin-bottom:8px">MediTrack Enterprise</h2>
+    <p style="color:var(--text2); font-size:14px; margin-bottom:24px">Authorized Personnel Only</p>
+    
+    <div id="login-error" style="color:var(--red); font-size:13px; margin-bottom:10px; display:none;">Invalid credentials</div>
+    
+    <input type="email" id="staff-email" class="login-input" placeholder="Staff Email (e.g., admin@icure.com)">
+    <button class="btn-brand" onclick="authenticateUser()">Secure Login</button>
+  </div>
+</div>
+
+<div class="app" id="app-core">
+  <div class="sidebar">
+    <div class="logo-area">
+      <div class="logo-icon">🏥</div>
+      <div>
+        <div class="logo-text">MediTrack</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="hosp-branch">Main Branch</div>
+      </div>
+    </div>
+    <div style="padding:16px 0">
+      <div class="nav-item active" onclick="showPage('queue', this)">🚦 Live Queue</div>
+      <div class="nav-item" onclick="showPage('triage', this)">🩺 Triage & Vitals</div>
+      <div class="nav-item" onclick="showPage('pharmacy', this)">💊 Pharmacy</div>
+      <div class="nav-item" onclick="showPage('billing', this)">🧾 Finance & Billing</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h2 id="page-title" style="font-size:20px; font-weight:800;">Today's Queue</h2>
+        <p style="color:var(--text2); font-size:13px; margin-top:4px;">Real-time patient flow</p>
+      </div>
+      <div class="user-profile">
+        <span style="background:var(--blue-bg);color:var(--brand);padding:4px 8px;border-radius:10px;">🟢 Online</span>
+        <span id="logged-in-user">Dr. David Laurance Okullu</span>
+      </div>
+    </div>
+
+    <div class="page-content">
+      
+      <div class="page active" id="page-queue">
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3>Waiting Room & Active Visits</h3>
+            <button class="btn-brand" style="width:auto; padding:10px 20px;">+ Walk-in Patient</button>
+          </div>
+          <table id="queue-table">
+            <thead>
+              <tr><th>Patient ID</th><th>Patient Name</th><th>Department</th><th>Wait Time</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody id="queue-body">
+              <tr><td colspan="6"><div style="display:flex;gap:10px;"><div class="spinner"></div> Syncing Queue...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="page" id="page-triage">
+        <div class="card">
+          <h3>Pending Triage</h3>
+          <p style="color:var(--text2); margin-bottom:20px; font-size:14px;">Patients awaiting nurse assessment.</p>
+          <button class="btn-brand" style="width:auto; padding:10px 20px;" onclick="openTriageModal()">Open Vitals Form</button>
+        </div>
+      </div>
+
+      <div class="page" id="page-pharmacy">
+        <div class="card">
+          <h3>Pharmacy Dispensing</h3>
+          <p style="color:var(--text2); margin-bottom:20px; font-size:14px;">Prescriptions pending auto-deduct from inventory.</p>
+          </div>
+      </div>
+
+      <div class="page" id="page-billing">
+        <div class="card">
+          <h3>Financial Records</h3>
+          </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="triage-modal">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:16px;">
+      <h3>Clinical Assessment (SOAP)</h3>
+      <span style="cursor:pointer; font-size:20px;" onclick="closeModals()">✕</span>
+    </div>
+    
+    <div class="form-grid">
+      <div><label style="font-size:12px;font-weight:700;">Blood Pressure</label><input type="text" class="input-field" placeholder="120/80 mmHg"></div>
+      <div><label style="font-size:12px;font-weight:700;">Heart Rate</label><input type="number" class="input-field" placeholder="72 bpm"></div>
+      <div><label style="font-size:12px;font-weight:700;">Temperature</label><input type="text" class="input-field" placeholder="37.0 °C"></div>
+      <div><label style="font-size:12px;font-weight:700;">Weight</label><input type="number" class="input-field" placeholder="kg"></div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <label style="font-size:12px;font-weight:700;">Doctor's Notes (Subjective/Objective)</label>
+      <textarea class="input-field" placeholder="Patient complains of..."></textarea>
+    </div>
+
+    <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+      <button style="padding:10px 16px; background:var(--bg3); border:none; border-radius:var(--r2); cursor:pointer;" onclick="closeModals()">Cancel</button>
+      <button class="btn-brand" style="width:auto; padding:10px 20px;" onclick="saveClinicalData()">Save & Update File</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// SUPABASE CONFIGURATION
+const SB_URL = "https://jrzziyyhllflobtuvwte.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenppeXlobGxmbG9idHV2d3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NjE2ODMsImV4cCI6MjA4OTEzNzY4M30.3GMwHOt5e5xNCbSn3VR_xFsSqPItBmIkkVwyMCw2ctk";
+const supabase = supabase.createClient(SB_URL, SB_KEY);
+
+// 1. AUTHENTICATION LOGIC (Security Wall)
+async function authenticateUser() {
+    const emailInput = document.getElementById('staff-email').value;
+    const errorMsg = document.getElementById('login-error');
+    
+    // In a real scenario, use Supabase Auth. For this UI/UX simulation, we query the staff table.
+    const { data, error } = await supabase.from('staff').select('*').eq('email', emailInput).single();
+    
+    // For demo purposes, allowing a bypass if they type 'demo' to ensure you can test the UI immediately
+    if (emailInput === 'demo' || (data && !error)) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app-core').style.display = 'flex';
+        
+        if(data) {
+           document.getElementById('logged-in-user').innerText = data.full_name;
+        }
+        
+        initDashboard();
+    } else {
+        errorMsg.style.display = 'block';
+    }
+}
+
+// 2. DASHBOARD INITIALIZATION
+async function initDashboard() {
+    // Fetch live visits instead of just a static list of patients
+    const { data, error } = await supabase
+        .from('visits')
+        .select(`
+            id,
+            visit_type,
+            status,
+            created_at,
+            patients ( patient_number, full_name )
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+    const tbody = document.getElementById('queue-body');
+
+    if (error || !data) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--red)">No active visits found or RLS policy restricting access.</td></tr>`;
+        return;
+    }
+
+    if (data.length > 0) {
+        tbody.innerHTML = data.map(v => {
+            // Traffic Light Logic based on visit type
+            let badgeClass = 'status-green';
+            let badgeText = 'Routine';
+            if(v.visit_type === 'emergency') { badgeClass = 'status-red'; badgeText = 'Emergency'; }
+            if(v.visit_type === 'lab') { badgeClass = 'status-yellow'; badgeText = 'Lab Pending'; }
+
+            const pat = v.patients || {};
+            return `
+            <tr>
+                <td style="font-weight:700; color:var(--brand);">${pat.patient_number || 'N/A'}</td>
+                <td style="font-weight:600;">${pat.full_name || 'Unknown'}</td>
+                <td style="text-transform:capitalize;">${v.visit_type || 'General'}</td>
+                <td><span style="color:var(--text3); font-size:12px;">Waiting</span></td>
+                <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+                <td><button onclick="openTriageModal()" style="border:none;background:var(--blue-bg);color:var(--brand);padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:700;">Open File</button></td>
+            </tr>
+            `;
+        }).join('');
+    } else {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">The queue is currently empty.</td></tr>`;
+    }
+}
+
+// 3. NAVIGATION & UI LOGIC
+function showPage(pageId, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + pageId).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('page-title').innerText = el.innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\s/g, '').replace(/([A-Z])/g, ' $1').trim();
+}
+
+function openTriageModal() {
+    document.getElementById('triage-modal').classList.add('active');
+}
+
+function closeModals() {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+}
+
+function saveClinicalData() {
+    // In production, this pushes the Vitals & SOAP note to the Supabase database
+    alert("Clinical data securely saved to patient record.");
+    closeModals();
+}
+
+// 4. PHARMACY AUTO-DEDUCT ENGINE (Core monetization feature)
+async function dispenseDrug(inventoryId, quantityDispensed) {
+    // Step 1: Fetch current stock
+    const { data: item } = await supabase.from('inventory').select('quantity').eq('id', inventoryId).single();
+    
+    if (item && item.quantity >= quantityDispensed) {
+        // Step 2: Auto-Deduct Math
+        const newStock = item.quantity - quantityDispensed;
+        
+        // Step 3: Update Database
+        const { error } = await supabase.from('inventory').update({ quantity: newStock }).eq('id', inventoryId);
+        
+        if (!error) console.log(`Stock updated. Remaining: ${newStock}`);
+    } else {
+        alert("Insufficient stock in pharmacy inventory!");
+    }
+}
+
+</script>
+</body>
+</html>

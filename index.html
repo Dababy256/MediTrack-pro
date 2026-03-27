@@ -3,311 +3,1173 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MediTrack Enterprise — Hospital Management</title>
+<title>MediTrack Pro — ICURE Medical Centre</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-/* ── ENTERPRISE UI THEME ── */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#F8FAFC; --bg2:#FFFFFF; --bg3:#F1F5F9; --bg4:#E2E8F0;
-  --border:#E2E8F0; --border2:#CBD5E1;
-  --text:#0F172A; --text2:#475569; --text3:#94A3B8;
-  --green:#10B981; --green-bg:#D1FAE5; --green-text:#065F46;
-  --blue:#3B82F6; --blue-bg:#DBEAFE; --blue-text:#1E40AF;
-  --red:#EF4444; --red-bg:#FEE2E2; --red-text:#991B1B;
-  --yellow:#F59E0B; --yellow-bg:#FEF3C7; --yellow-text:#92400E;
-  --brand:#2563EB; --brand-hover:#1D4ED8;
-  --r:12px; --r2:8px; --font:'Plus Jakarta Sans',sans-serif;
-  --shadow:0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+  /* ClinicPlus-inspired: deep navy/blue sidebar, white content, teal/green accents */
+  --navy:#1B2A4A;
+  --navy2:#243352;
+  --navy3:#2E3F63;
+  --navy-light:#3A4F7A;
+  --teal:#00B4D8;
+  --teal2:#0096B7;
+  --green:#2DC653;
+  --green2:#25A847;
+  --white:#FFFFFF;
+  --bg:#F0F4F8;
+  --bg2:#E8EDF5;
+  --card:#FFFFFF;
+  --text:#1B2A4A;
+  --text2:#4A5568;
+  --text3:#8896A7;
+  --border:#D1DCE8;
+  --border2:#B8C9D9;
+  /* Module card colors matching ClinicPlus screenshot */
+  --mod1:#2B4C8C; /* Dashboard - deep blue */
+  --mod2:#3A6BC2; /* Outpatient - medium blue */
+  --mod3:#2E7D9F; /* Inpatient - teal-blue */
+  --mod4:#1F7A6B; /* Doctor - teal-green */
+  --mod5:#3557A0; /* Accounting - blue */
+  --mod6:#5B7EC9; /* Lab - lighter blue */
+  --mod7:#2A6B8A; /* Pharmacy - ocean blue */
+  --mod8:#3D5FA0; /* Inventory - slate blue */
+  --shadow:0 2px 8px rgba(27,42,74,0.1);
+  --shadow2:0 4px 20px rgba(27,42,74,0.15);
+  --r:12px;--r2:8px;--r3:24px;
+  --font:'Nunito',sans-serif;
+  --font2:'Nunito Sans',sans-serif;
 }
 body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
 
-/* ── LOGIN OVERLAY ── */
-#login-screen {position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;}
-.login-box {background:var(--bg2);padding:40px;border-radius:var(--r);box-shadow:var(--shadow);width:100%;max-width:400px;text-align:center;}
-.login-input {width:100%;padding:12px;margin:10px 0 20px;border:1px solid var(--border);border-radius:var(--r2);font-family:var(--font);}
-.btn-brand {background:var(--brand);color:#fff;border:none;padding:12px;width:100%;border-radius:var(--r2);font-weight:700;cursor:pointer;transition:0.2s;}
-.btn-brand:hover {background:var(--brand-hover);}
+/* ══ LAYOUT ══ */
+.app{display:flex;min-height:100vh}
+.sidebar{width:250px;background:var(--navy);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;transition:transform 0.3s;box-shadow:4px 0 20px rgba(0,0,0,0.2)}
+.main{margin-left:250px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.stats-grid{grid-template-columns:1fr 1fr!important}.modules-grid{grid-template-columns:1fr 1fr!important}}
 
-/* ── LAYOUT ── */
-#app-core {display:none; min-height:100vh;}
-.sidebar{width:260px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:200}
-.main{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+/* ══ SIDEBAR ══ */
+.logo-area{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:12px}
+.logo-icon{width:40px;height:40px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,180,216,0.4)}
+.logo-text{font-size:17px;font-weight:900;color:#fff;letter-spacing:-0.3px;line-height:1.1}
+.logo-sub{font-size:10px;color:rgba(255,255,255,0.5);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.hosp-selector{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.hosp-select{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:var(--r2);padding:8px 12px;font-size:12px;color:#fff;font-family:var(--font);outline:none;cursor:pointer}
+.hosp-select option{background:var(--navy2);color:#fff}
+.nav-section{padding:10px 0 4px}
+.nav-label{font-size:10px;color:rgba(255,255,255,0.35);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;padding:0 20px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.65);font-weight:600;position:relative;transition:all 0.2s;margin:1px 8px;border-radius:8px}
+.nav-item:hover{background:rgba(255,255,255,0.08);color:#fff}
+.nav-item.active{background:var(--teal);color:#fff;box-shadow:0 2px 12px rgba(0,180,216,0.4)}
+.nav-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:rgba(255,80,80,0.9);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;min-width:20px;text-align:center}
+.sidebar-footer{margin-top:auto;padding:14px 12px;border-top:1px solid rgba(255,255,255,0.08)}
+.user-card{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.06);border-radius:var(--r2);padding:10px 12px}
+.user-av{width:36px;height:36px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.user-name{font-size:12px;font-weight:800;color:#fff;line-height:1.2}
+.user-role{font-size:10px;color:rgba(255,255,255,0.5);font-weight:600}
+.online-dot{width:9px;height:9px;border-radius:50%;background:#2DC653;margin-left:auto;flex-shrink:0;border:2px solid var(--navy);box-shadow:0 0 6px rgba(45,198,83,0.6)}
 
-/* ── SIDEBAR ── */
-.logo-area{padding:24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
-.logo-icon{width:40px;height:40px;background:var(--brand);color:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
-.logo-text{font-size:18px;font-weight:800;letter-spacing:-0.5px;color:var(--text)}
-.nav-item{display:flex;align-items:center;gap:12px;padding:14px 24px;cursor:pointer;font-size:14px;color:var(--text2);font-weight:600;transition:0.2s}
-.nav-item:hover{background:var(--bg3);color:var(--brand)}
-.nav-item.active{background:var(--blue-bg);color:var(--brand);border-right:4px solid var(--brand)}
+/* ══ TOPBAR ══ */
+.topbar{background:var(--white);border-bottom:2px solid var(--border);padding:0 28px;display:flex;align-items:center;gap:16px;height:68px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.topbar-menu{display:none;cursor:pointer;font-size:22px;color:var(--text2)}
+@media(max-width:900px){.topbar-menu{display:block}}
+.topbar-brand{display:flex;align-items:center;gap:10px}
+.topbar-brand-icon{width:32px;height:32px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.topbar-brand-name{font-size:15px;font-weight:900;color:var(--navy)}
+.topbar-sep{width:1px;height:32px;background:var(--border);margin:0 4px}
+.topbar-title{font-size:16px;font-weight:800;color:var(--text)}
+.topbar-sub{font-size:11px;color:var(--text3);font-weight:600;margin-top:2px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.topbar-btn{width:38px;height:38px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;position:relative;transition:all 0.15s}
+.topbar-btn:hover{background:var(--bg2);border-color:var(--border2)}
+.notif-dot{position:absolute;top:5px;right:5px;width:9px;height:9px;background:#FF4545;border-radius:50%;border:2px solid #fff}
+.live-badge{display:flex;align-items:center;gap:5px;background:linear-gradient(135deg,#E8F8EE,#D0F2DC);border:1.5px solid #A8DFBB;border-radius:20px;padding:6px 14px;font-size:11px;font-weight:800;color:#1A7A3A}
+.live-dot{width:7px;height:7px;background:#2DC653;border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.8)}}
 
-/* ── TOPBAR ── */
-.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.user-profile{display:flex;align-items:center;gap:10px;background:var(--bg3);padding:6px 16px;border-radius:20px;font-size:13px;font-weight:700}
-
-/* ── CONTENT & CARDS ── */
-.page-content{padding:32px;flex:1}
+/* ══ CONTENT ══ */
+.page-content{padding:28px;flex:1}
 .page{display:none}
 .page.active{display:block}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;box-shadow:var(--shadow);margin-bottom:24px}
 
-table{width:100%;border-collapse:collapse;font-size:14px}
-th{text-align:left;padding:16px;color:var(--text3);border-bottom:2px solid var(--border);text-transform:uppercase;font-size:12px;font-weight:700}
-td{padding:16px;border-bottom:1px solid var(--border);vertical-align:middle;}
-tr:hover td{background:var(--bg3)}
+/* ══ WELCOME BANNER ══ */
+.welcome-banner{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 50%,var(--navy3) 100%);border-radius:var(--r);padding:24px 28px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow2);position:relative;overflow:hidden}
+.welcome-banner::before{content:'';position:absolute;right:-20px;top:-20px;width:200px;height:200px;background:rgba(0,180,216,0.08);border-radius:50%}
+.welcome-banner::after{content:'';position:absolute;right:60px;bottom:-40px;width:150px;height:150px;background:rgba(0,180,216,0.05);border-radius:50%}
+.wb-text{position:relative;z-index:1}
+.wb-hi{font-size:13px;color:rgba(255,255,255,0.6);font-weight:600;margin-bottom:4px}
+.wb-name{font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.3px}
+.wb-name span{color:var(--teal)}
+.wb-date{font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;font-weight:600}
+.wb-right{display:flex;gap:10px;position:relative;z-index:1}
+.wb-btn{padding:10px 20px;border-radius:var(--r3);font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:var(--font);transition:all 0.2s}
+.wb-btn-primary{background:var(--teal);color:#fff;box-shadow:0 2px 12px rgba(0,180,216,0.4)}
+.wb-btn-primary:hover{background:var(--teal2);transform:translateY(-1px)}
+.wb-btn-secondary{background:rgba(255,255,255,0.12);color:#fff;border:1.5px solid rgba(255,255,255,0.2)}
+.wb-btn-secondary:hover{background:rgba(255,255,255,0.2)}
 
-/* ── TRAFFIC LIGHT STATUS BADGES ── */
-.badge{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;display:inline-block}
-.status-green{background:var(--green-bg);color:var(--green-text)}
-.status-yellow{background:var(--yellow-bg);color:var(--yellow-text)}
-.status-red{background:var(--red-bg);color:var(--red-text)}
+/* ══ STATS ══ */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);border:1.5px solid var(--border);cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow2);border-color:var(--teal)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0}
+.stat-card.sc-green::before{background:linear-gradient(90deg,#2DC653,#00B4D8)}
+.stat-card.sc-blue::before{background:linear-gradient(90deg,#3A6BC2,#00B4D8)}
+.stat-card.sc-red::before{background:linear-gradient(90deg,#FF6B6B,#FF4545)}
+.stat-card.sc-purple::before{background:linear-gradient(90deg,#7C5CBF,#A855F7)}
+.stat-icon-wrap{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+.si-green{background:linear-gradient(135deg,#E8F8EE,#D0F2DC)}
+.si-blue{background:linear-gradient(135deg,#E8F0FF,#D0DEFF)}
+.si-red{background:linear-gradient(135deg,#FFF0F0,#FFE0E0)}
+.si-purple{background:linear-gradient(135deg,#F5F0FF,#EAE0FF)}
+.stat-label{font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px}
+.stat-value{font-size:28px;font-weight:900;color:var(--text);letter-spacing:-0.5px;line-height:1}
+.stat-change{font-size:12px;margin-top:6px;font-weight:700}
+.stat-change.up{color:var(--green)}
+.stat-change.down{color:#FF4545}
+.stat-change.neutral{color:var(--text3)}
 
-/* ── MODALS (TRIAGE / SOAP) ── */
-.modal-overlay {position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;display:none;align-items:center;justify-content:center;}
-.modal-overlay.active {display:flex;}
-.modal {background:var(--bg2);width:100%;max-width:600px;border-radius:var(--r);padding:24px;box-shadow:var(--shadow);}
-.form-grid {display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
-.input-field {width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--r2);font-family:var(--font);}
-textarea.input-field {resize:vertical;min-height:80px;}
+/* ══ MODULES GRID (ClinicPlus style cards) ══ */
+.modules-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.module-card{border-radius:var(--r);padding:22px 20px;cursor:pointer;transition:all 0.25s;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;box-shadow:var(--shadow2)}
+.module-card::after{content:'';position:absolute;bottom:-20px;right:-20px;width:100px;height:100px;background:rgba(255,255,255,0.06);border-radius:50%}
+.module-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.25)}
+.module-card:active{transform:translateY(-1px)}
+.mc-icon{font-size:30px;line-height:1;position:relative;z-index:1}
+.mc-title{font-size:15px;font-weight:900;color:#fff;position:relative;z-index:1;letter-spacing:-0.2px}
+.mc-desc{font-size:11px;color:rgba(255,255,255,0.7);line-height:1.5;flex:1;position:relative;z-index:1;font-weight:600}
+.mc-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);border-radius:var(--r3);padding:8px 16px;font-size:12px;font-weight:800;color:#fff;cursor:pointer;font-family:var(--font);transition:all 0.2s;margin-top:4px;position:relative;z-index:1;width:fit-content}
+.mc-btn:hover{background:rgba(255,255,255,0.25)}
 
-.spinner{width:20px;height:20px;border:3px solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:spin 0.8s linear infinite}
+/* ══ SECTION CARDS ══ */
+.card{background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);border:1.5px solid var(--border);margin-bottom:20px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.card-title{font-size:15px;font-weight:800;color:var(--text)}
+.card-action{font-size:12px;color:var(--teal);font-weight:800;cursor:pointer;background:none;border:none;font-family:var(--font);padding:6px 14px;border-radius:20px;background:linear-gradient(135deg,#E8F8FD,#D0F0F8);border:1.5px solid #A8DFF0}
+.card-action:hover{background:var(--teal);color:#fff}
+
+/* ══ TABLE ══ */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;font-family:var(--font2)}
+th{text-align:left;padding:10px 14px;color:var(--text3);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;border-bottom:2px solid var(--border);background:var(--bg);white-space:nowrap}
+th:first-child{border-radius:8px 0 0 0}
+th:last-child{border-radius:0 8px 0 0}
+td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#F8FBFF}
+.td-name{font-weight:700;color:var(--navy)}
+.td-sub{font-size:11px;color:var(--text3);margin-top:2px;font-weight:600}
+
+/* ══ BADGES ══ */
+.badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;white-space:nowrap}
+.b-paid{background:#E8F8EE;color:#1A7A3A;border:1px solid #A8DFBB}
+.b-pending{background:#FFF8E8;color:#8A6000;border:1px solid #FFDB88}
+.b-overdue{background:#FFF0F0;color:#CC2200;border:1px solid #FFAAAA}
+.b-admitted{background:#E8F0FF;color:#1A3A8A;border:1px solid #A8BFFF}
+.b-active{background:#E8F5FF;color:#005A8A;border:1px solid #A8DAFF}
+.b-completed{background:#E8F8EE;color:#1A7A3A;border:1px solid #A8DFBB}
+.b-discharged{background:#F0F0F0;color:#666;border:1px solid #CCC}
+.b-critical{background:#FFF0F0;color:#CC0000;border:1px solid #FF9999}
+.b-outpatient{background:#F0EAFF;color:#5A0FA0;border:1px solid #C8A8FF}
+.b-inpatient{background:#E8F0FF;color:#1A3A8A;border:1px solid #A8BFFF}
+.b-emergency{background:#FFF0F0;color:#CC0000;border:1px solid #FF9999}
+.b-partial{background:#E8F5FF;color:#005A8A;border:1px solid #A8DAFF}
+.b-lab{background:#EAF5E8;color:#2A6A1A;border:1px solid #A8D8A0}
+.b-pharmacy{background:#FFF5E8;color:#8A4400;border:1px solid #FFD0A0}
+
+/* ══ BUTTONS ══ */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:var(--r3);font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:var(--font);transition:all 0.2s}
+.btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;box-shadow:0 2px 12px rgba(0,180,216,0.35)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,180,216,0.5)}
+.btn-green{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;box-shadow:0 2px 12px rgba(45,198,83,0.3)}
+.btn-secondary{background:var(--bg);border:1.5px solid var(--border);color:var(--text2)}
+.btn-secondary:hover{border-color:var(--teal);color:var(--teal)}
+.btn-danger{background:#FFF0F0;border:1.5px solid #FFAAAA;color:#CC2200}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-navy{background:var(--navy);color:#fff}
+.btn-navy:hover{background:var(--navy2)}
+
+/* ══ FORMS ══ */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:600px){.form-grid,.form-grid-3{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column;gap:7px}
+.form-label{font-size:11px;color:var(--text2);font-weight:800;text-transform:uppercase;letter-spacing:0.6px}
+.form-input,.form-select,.form-textarea{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:10px 14px;font-size:13px;color:var(--text);font-family:var(--font);outline:none;transition:all 0.2s;width:100%;font-weight:600}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px rgba(0,180,216,0.1)}
+.form-textarea{resize:vertical;min-height:80px}
+.form-section-title{font-size:13px;font-weight:800;color:var(--navy);padding:16px 0 10px;border-top:2px solid var(--border);margin-top:8px;text-transform:uppercase;letter-spacing:0.5px}
+
+/* ══ MODAL ══ */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,20,40,0.75);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:16px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.modal::-webkit-scrollbar{width:5px}
+.modal::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.modal-header{padding:20px 24px;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}
+.modal-icon{font-size:24px;margin-right:10px}
+.modal-title{font-size:17px;font-weight:900;color:var(--navy);display:flex;align-items:center}
+.modal-close{width:34px;height:34px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border);cursor:pointer;font-size:18px;color:var(--text2);display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.modal-close:hover{background:var(--navy);color:#fff}
+.modal-body{padding:22px 24px;display:flex;flex-direction:column;gap:16px}
+.modal-footer{padding:18px 24px;border-top:2px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:#FAFCFF;border-radius:0 0 16px 16px}
+
+/* ══ ALERT BANNERS ══ */
+.alert-bar{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:var(--r2);margin-bottom:16px;font-size:13px;font-weight:700}
+.alert-bar.warning{background:linear-gradient(135deg,#FFF9E8,#FFF3D0);border:1.5px solid #FFD080;color:#7A5000}
+.alert-bar.danger{background:linear-gradient(135deg,#FFF4F4,#FFE8E8);border:1.5px solid #FFAAAA;color:#AA1500}
+.alert-bar.success{background:linear-gradient(135deg,#F0FFF5,#E0FFEC);border:1.5px solid #88DFA8;color:#0A5A20}
+
+/* ══ CHART ══ */
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:110px;margin-top:8px}
+.cbar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%}
+.cbar{width:100%;border-radius:6px 6px 0 0;min-height:4px;transition:height 0.6s ease;cursor:pointer}
+.cbar.active{background:linear-gradient(180deg,var(--teal),var(--teal2))}
+.cbar.inactive{background:var(--bg2);border:1px solid var(--border)}
+.cbar:hover{opacity:0.8}
+.cbar-lbl{font-size:10px;color:var(--text3);font-weight:700}
+
+/* ══ BREAKDOWN ══ */
+.bkd-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.bkd-item:last-child{border-bottom:none}
+.bkd-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.bkd-name{flex:1;font-size:13px;color:var(--text);font-weight:700}
+.bkd-bar-bg{width:80px;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden}
+.bkd-bar-fg{height:100%;border-radius:3px}
+.bkd-amt{font-size:13px;font-weight:800;color:var(--navy);min-width:60px;text-align:right}
+.bkd-pct{font-size:11px;color:var(--text3);min-width:32px;text-align:right;font-weight:700}
+
+/* ══ TOAST ══ */
+.toast{position:fixed;bottom:28px;right:28px;background:var(--navy);border-radius:12px;padding:14px 20px;font-size:13px;font-weight:700;color:#fff;z-index:1000;transform:translateY(100px);opacity:0;transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1);display:flex;align-items:center;gap:10px;max-width:340px;box-shadow:0 8px 30px rgba(27,42,74,0.3)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:linear-gradient(135deg,#1A7A3A,#2DC653)}
+.toast.error{background:linear-gradient(135deg,#AA1500,#FF4545)}
+
+/* ══ LOADING / EMPTY ══ */
+.loading{display:flex;align-items:center;justify-content:center;padding:48px;color:var(--text3);gap:12px;font-size:13px;font-weight:700}
+.spinner{width:22px;height:22px;border:2.5px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 20px;color:var(--text3);gap:12px;font-size:14px;font-weight:700}
+.empty-icon{font-size:48px;opacity:0.35}
+.empty-sub{font-size:12px;font-weight:600;color:var(--text3)}
+
+/* ══ PAGE HEADER ══ */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.page-title{font-size:24px;font-weight:900;color:var(--navy);letter-spacing:-0.5px}
+.page-sub{font-size:13px;color:var(--text3);margin-top:3px;font-weight:600}
+
+/* ══ SEARCH ══ */
+.search-bar{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r3);padding:10px 16px;margin-bottom:18px;box-shadow:var(--shadow)}
+.search-bar:focus-within{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,180,216,0.1)}
+.search-bar input{background:none;border:none;outline:none;font-size:13px;color:var(--text);flex:1;font-family:var(--font);font-weight:600}
+.search-bar input::placeholder{color:var(--text3)}
+
+/* ══ INV ITEMS ══ */
+.inv-bar-bg{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden;margin-top:5px}
+.inv-bar-fg{height:100%;border-radius:4px;transition:width 0.5s}
+
+/* ══ GRID ══ */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ══ PATIENT AVATAR ══ */
+.pt-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.12)}
+.av1{background:linear-gradient(135deg,#3A6BC2,#00B4D8);color:#fff}
+.av2{background:linear-gradient(135deg,#2DC653,#00B4D8);color:#fff}
+.av3{background:linear-gradient(135deg,#A855F7,#7C5CBF);color:#fff}
+.av4{background:linear-gradient(135deg,#FF6B6B,#FF8E53);color:#fff}
+
+/* ══ REVENUE DISPLAY ══ */
+.rev-total{font-size:32px;font-weight:900;letter-spacing:-1px;color:var(--navy)}
+.rev-sub{font-size:12px;color:var(--text3);margin-top:3px;font-weight:700}
+.rev-up{display:inline-flex;align-items:center;gap:4px;background:#E8F8EE;color:#1A7A3A;font-weight:800;font-size:13px;padding:4px 10px;border-radius:20px;border:1px solid #88DFA8}
 </style>
 </head>
 <body>
+<div class="app">
 
-<div id="login-screen">
-  <div class="login-box">
-    <div class="logo-icon" style="margin:0 auto 16px; width:50px; height:50px; font-size:24px;">🏥</div>
-    <h2 style="margin-bottom:8px">MediTrack Enterprise</h2>
-    <p style="color:var(--text2); font-size:14px; margin-bottom:24px">Authorized Personnel Only</p>
-    
-    <div id="login-error" style="color:var(--red); font-size:13px; margin-bottom:10px; display:none;">Invalid credentials</div>
-    
-    <input type="email" id="staff-email" class="login-input" placeholder="Staff Email (e.g., admin@icure.com)">
-    <button class="btn-brand" onclick="authenticateUser()">Secure Login</button>
+<!-- ══ SIDEBAR ══ -->
+<div class="sidebar" id="sidebar">
+  <div class="logo-area">
+    <div class="logo-icon">🏥</div>
+    <div><div class="logo-text">MediTrack Pro</div><div class="logo-sub">Hospital Management</div></div>
   </div>
-</div>
-
-<div class="app" id="app-core">
-  <div class="sidebar">
-    <div class="logo-area">
-      <div class="logo-icon">🏥</div>
-      <div>
-        <div class="logo-text">MediTrack</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;" id="hosp-branch">Main Branch</div>
-      </div>
-    </div>
-    <div style="padding:16px 0">
-      <div class="nav-item active" onclick="showPage('queue', this)">🚦 Live Queue</div>
-      <div class="nav-item" onclick="showPage('triage', this)">🩺 Triage & Vitals</div>
-      <div class="nav-item" onclick="showPage('pharmacy', this)">💊 Pharmacy</div>
-      <div class="nav-item" onclick="showPage('billing', this)">🧾 Finance & Billing</div>
-    </div>
+  <div class="hosp-selector">
+    <select class="hosp-select" id="hosp-select" onchange="switchHospital(this.value)">
+      <option value="">Loading hospitals...</option>
+    </select>
   </div>
-
-  <div class="main">
-    <div class="topbar">
-      <div>
-        <h2 id="page-title" style="font-size:20px; font-weight:800;">Today's Queue</h2>
-        <p style="color:var(--text2); font-size:13px; margin-top:4px;">Real-time patient flow</p>
-      </div>
-      <div class="user-profile">
-        <span style="background:var(--blue-bg);color:var(--brand);padding:4px 8px;border-radius:10px;">🟢 Online</span>
-        <span id="logged-in-user">Dr. David Laurance Okullu</span>
-      </div>
-    </div>
-
-    <div class="page-content">
-      
-      <div class="page active" id="page-queue">
-        <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h3>Waiting Room & Active Visits</h3>
-            <button class="btn-brand" style="width:auto; padding:10px 20px;">+ Walk-in Patient</button>
-          </div>
-          <table id="queue-table">
-            <thead>
-              <tr><th>Patient ID</th><th>Patient Name</th><th>Department</th><th>Wait Time</th><th>Status</th><th>Action</th></tr>
-            </thead>
-            <tbody id="queue-body">
-              <tr><td colspan="6"><div style="display:flex;gap:10px;"><div class="spinner"></div> Syncing Queue...</div></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="page" id="page-triage">
-        <div class="card">
-          <h3>Pending Triage</h3>
-          <p style="color:var(--text2); margin-bottom:20px; font-size:14px;">Patients awaiting nurse assessment.</p>
-          <button class="btn-brand" style="width:auto; padding:10px 20px;" onclick="openTriageModal()">Open Vitals Form</button>
-        </div>
-      </div>
-
-      <div class="page" id="page-pharmacy">
-        <div class="card">
-          <h3>Pharmacy Dispensing</h3>
-          <p style="color:var(--text2); margin-bottom:20px; font-size:14px;">Prescriptions pending auto-deduct from inventory.</p>
-          </div>
-      </div>
-
-      <div class="page" id="page-billing">
-        <div class="card">
-          <h3>Financial Records</h3>
-          </div>
-      </div>
-
+  <div class="nav-section">
+    <div class="nav-label">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)" data-page="dashboard"><span class="nav-icon">🏠</span>Dashboard</div>
+    <div class="nav-item" onclick="showPage('outpatient',this)" data-page="outpatient"><span class="nav-icon">🚶</span>Outpatient</div>
+    <div class="nav-item" onclick="showPage('inpatient',this)" data-page="inpatient"><span class="nav-icon">🛏️</span>Inpatient</div>
+    <div class="nav-item" onclick="showPage('patients',this)" data-page="patients"><span class="nav-icon">👥</span>All Patients</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Departments</div>
+    <div class="nav-item" onclick="showPage('lab',this)" data-page="lab"><span class="nav-icon">🔬</span>Laboratory</div>
+    <div class="nav-item" onclick="showPage('pharmacy',this)" data-page="pharmacy"><span class="nav-icon">💊</span>Pharmacy</div>
+    <div class="nav-item" onclick="showPage('inventory',this)" data-page="inventory"><span class="nav-icon">📦</span>Inventory</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Finance & Admin</div>
+    <div class="nav-item" onclick="showPage('billing',this)" data-page="billing"><span class="nav-icon">🧾</span>Billing <span class="nav-badge" id="overdue-badge" style="display:none">0</span></div>
+    <div class="nav-item" onclick="showPage('reports',this)" data-page="reports"><span class="nav-icon">📊</span>Reports</div>
+    <div class="nav-item" onclick="showPage('staff',this)" data-page="staff"><span class="nav-icon">👨‍⚕️</span>Staff</div>
+    <div class="nav-item" onclick="showPage('hospitals',this)" data-page="hospitals"><span class="nav-icon">🏗️</span>Hospitals</div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-av">DO</div>
+      <div><div class="user-name">Dr. David Okello</div><div class="user-role">Administrator</div></div>
+      <div class="online-dot"></div>
     </div>
   </div>
 </div>
 
-<div class="modal-overlay" id="triage-modal">
-  <div class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:16px;">
-      <h3>Clinical Assessment (SOAP)</h3>
-      <span style="cursor:pointer; font-size:20px;" onclick="closeModals()">✕</span>
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-menu" onclick="toggleSidebar()">☰</span>
+    <div class="topbar-brand">
+      <div class="topbar-brand-icon">🏥</div>
+      <div><div class="topbar-brand-name">MediTrack Pro</div></div>
     </div>
-    
+    <div class="topbar-sep"></div>
+    <div>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-sub" id="topbar-sub">ICURE Medical Centre · Main Branch</div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-badge"><div class="live-dot"></div>Live</div>
+      <div class="topbar-btn" onclick="showPage('billing',document.querySelector('[data-page=billing]'))">🔔<div class="notif-dot" id="notif-dot" style="display:none"></div></div>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="welcome-banner">
+        <div class="wb-text">
+          <div class="wb-hi">Good day, Doctor 👋</div>
+          <div class="wb-name">Hi <span>Dr. David Okello</span>, welcome back to MediTrack!</div>
+          <div class="wb-date" id="dash-date"></div>
+        </div>
+        <div class="wb-right">
+          <button class="wb-btn wb-btn-secondary" onclick="showPage('reports',document.querySelector('[data-page=reports]'))">📊 Reports</button>
+          <button class="wb-btn wb-btn-primary" onclick="openModal('modal-patient')">➕ New Patient</button>
+        </div>
+      </div>
+
+      <div id="dash-alerts"></div>
+      <div class="stats-grid" id="dash-stats"><div class="loading"><div class="spinner"></div>Loading stats...</div></div>
+
+      <!-- Module cards exactly like ClinicPlus -->
+      <div style="font-size:15px;font-weight:900;color:var(--navy);margin-bottom:14px;letter-spacing:-0.2px">Quick Access</div>
+      <div class="modules-grid">
+        <div class="module-card" style="background:linear-gradient(135deg,var(--mod1),#3A5EA0)" onclick="showPage('reports',document.querySelector('[data-page=reports]'))">
+          <div class="mc-icon">📊</div><div class="mc-title">System Dashboard</div>
+          <div class="mc-desc">At-a-glance view data through a combination of visualizations and summary information.</div>
+          <button class="mc-btn">Go to Dashboard →</button>
+        </div>
+        <div class="module-card" style="background:linear-gradient(135deg,var(--mod2),#5588D8)" onclick="showPage('outpatient',document.querySelector('[data-page=outpatient]'))">
+          <div class="mc-icon">🚶</div><div class="mc-title">Outpatient Section</div>
+          <div class="mc-desc">Patient who come to ICURE with no plan to stay beyond the duration of the visit.</div>
+          <button class="mc-btn">Go to Outpatient →</button>
+        </div>
+        <div class="module-card" style="background:linear-gradient(135deg,var(--mod3),#3D9FBF)" onclick="showPage('inpatient',document.querySelector('[data-page=inpatient]'))">
+          <div class="mc-icon">🛏️</div><div class="mc-title">Inpatient Section</div>
+          <div class="mc-desc">Patients admitted to stay in a hospital overnight or for an indeterminate time, usually several days.</div>
+          <button class="mc-btn">Go to Inpatient →</button>
+        </div>
+        <div class="module-card" style="background:linear-gradient(135deg,var(--mod4),#2A9A80)" onclick="showPage('staff',document.querySelector('[data-page=staff]'))">
+          <div class="mc-icon">👨‍⚕️</div><div class="mc-title">Doctor's Section</div>
+          <div class="mc-desc">For special & general healthcare services like health education, radiology, physiotherapy, procedures.</div>
+          <button class="mc-btn">Go to Doctors →</button>
+        </div>
+        <div class="module-card" style="background:linear-gradient(135deg,var(--mod5),#4A70C0)" onclick="showPage('billing',document.querySelector('[data-page=billing]'))">
+          <div class="mc-icon">🧾</div><div class="mc-title">Accounting Section</div>
+          <div class="mc-desc">View, generate and clear patients bill for all insured and not insured patients.</div>
+          <button class="mc-btn">Go to Accounts →</button>
+        </div>
+        <div class="module-card" style="background:linear-gradient(135deg,var(--mod6),#7098E0)" onclick="showPage('lab',document.querySelector('[data-page=lab]'))">
+          <div class="mc-icon">🔬</div><div class="mc-title">Laboratory Section</div>
+          <div class="mc-desc">Laboratory data, research projects, investigation and result history.</div>
+          <button class="mc-btn">Go to Laboratory →</button>
+        </div>
+        <div class="module-card" style="background:linear-gradient(135deg,var(--mod7),#3A8AAA)" onclick="showPage('pharmacy',document.querySelector('[data-page=pharmacy]'))">
+          <div class="mc-icon">💊</div><div class="mc-title">Pharmacy Section</div>
+          <div class="mc-desc">Manage dispensary, pharmacy stock and on counter sales to walk-in clients.</div>
+          <button class="mc-btn">Go to Pharmacy →</button>
+        </div>
+        <div class="module-card" style="background:linear-gradient(135deg,var(--mod8),#5578C0)" onclick="showPage('inventory',document.querySelector('[data-page=inventory]'))">
+          <div class="mc-icon">📦</div><div class="mc-title">Inventory Section</div>
+          <div class="mc-desc">Manage inventory items, store management and stock purchases.</div>
+          <button class="mc-btn">Go to Inventory →</button>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📈 Revenue This Week</span>
+            <button class="card-action" onclick="showPage('reports',document.querySelector('[data-page=reports]'))">Full Report →</button>
+          </div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px">
+            <div><div class="rev-total" id="dash-rev-total">$0</div><div class="rev-sub">This week · all hospitals</div></div>
+            <div class="rev-up" id="dash-rev-up">↑ 0%</div>
+          </div>
+          <div class="chart-bars" id="dash-chart"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">💰 Revenue Breakdown</span></div>
+          <div id="dash-breakdown"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🧑‍⚕️ Recent Patients</span>
+          <button class="card-action" onclick="showPage('patients',document.querySelector('[data-page=patients]'))">See all →</button>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Patient</th><th>Visit Type</th><th>Department</th><th>Invoice</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody id="dash-recent-patients"><tr><td colspan="6"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ══ OUTPATIENT ══ -->
+    <div class="page" id="page-outpatient">
+      <div class="page-header">
+        <div><div class="page-title">🚶 Outpatient Section</div><div class="page-sub">Walk-in & scheduled OPD visits</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-patient')">➕ Register Patient</button>
+      </div>
+      <div class="search-bar"><span style="color:var(--text3)">🔍</span><input placeholder="Search patients by name or number..." id="opd-search" oninput="filterTable('opd-table',this.value)"></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Patient</th><th>Age/Sex</th><th>Complaint</th><th>Doctor</th><th>Status</th><th>Invoice</th><th>Actions</th></tr></thead>
+          <tbody id="opd-table"><tr><td colspan="8"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ══ INPATIENT ══ -->
+    <div class="page" id="page-inpatient">
+      <div class="page-header">
+        <div><div class="page-title">🛏️ Inpatient Section</div><div class="page-sub">Admitted patients & bed management</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-patient')">➕ Admit Patient</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Patient</th><th>Bed</th><th>Diagnosis</th><th>Admitted</th><th>Days</th><th>Status</th><th>Invoice</th></tr></thead>
+          <tbody id="ipd-table"><tr><td colspan="8"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ══ ALL PATIENTS ══ -->
+    <div class="page" id="page-patients">
+      <div class="page-header">
+        <div><div class="page-title">👥 All Patients</div><div class="page-sub">Complete patient registry</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-patient')">➕ New Patient</button>
+      </div>
+      <div class="search-bar"><span style="color:var(--text3)">🔍</span><input placeholder="Search by name, number, phone..." id="pt-search" oninput="filterTable('pt-table',this.value)"></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Patient No.</th><th>Name</th><th>Age/Sex</th><th>Phone</th><th>Insurance</th><th>Registered</th><th>Actions</th></tr></thead>
+          <tbody id="pt-table"><tr><td colspan="8"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ══ BILLING ══ -->
+    <div class="page" id="page-billing">
+      <div class="page-header">
+        <div><div class="page-title">🧾 Billing & Accounts</div><div class="page-sub">Invoice management & payment tracking</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-invoice')">➕ New Invoice</button>
+      </div>
+      <div id="billing-alerts"></div>
+      <div class="stats-grid" id="billing-stats" style="margin-bottom:20px"></div>
+      <div class="search-bar"><span style="color:var(--text3)">🔍</span><input placeholder="Search invoices..." id="inv-search" oninput="filterTable('inv-table',this.value)"></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Invoice #</th><th>Patient</th><th>Total</th><th>Paid</th><th>Balance</th><th>Method</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="inv-table"><tr><td colspan="9"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ══ LAB ══ -->
+    <div class="page" id="page-lab">
+      <div class="page-header">
+        <div><div class="page-title">🔬 Laboratory</div><div class="page-sub">Test orders, results & investigations</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-lab')">➕ New Test Order</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Patient</th><th>Test</th><th>Category</th><th>Result</th><th>Price</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="lab-table"><tr><td colspan="9"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ══ PHARMACY ══ -->
+    <div class="page" id="page-pharmacy">
+      <div class="page-header">
+        <div><div class="page-title">💊 Pharmacy</div><div class="page-sub">Prescriptions & drug dispensing</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-prescription')">➕ New Prescription</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Patient</th><th>Drug</th><th>Dosage</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Dispensed</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="rx-table"><tr><td colspan="10"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ══ INVENTORY ══ -->
+    <div class="page" id="page-inventory">
+      <div class="page-header">
+        <div><div class="page-title">📦 Inventory</div><div class="page-sub">Stock management & reorder tracking</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-inventory')">➕ Add Item</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Unit Cost</th><th>Stock Level</th><th>Actions</th></tr></thead>
+          <tbody id="inv-table2"><tr><td colspan="8"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ══ REPORTS ══ -->
+    <div class="page" id="page-reports">
+      <div class="page-header">
+        <div><div class="page-title">📊 Reports & Analytics</div><div class="page-sub">Financial & operational summary</div></div>
+      </div>
+      <div class="stats-grid" id="report-stats"></div>
+      <div class="grid-2">
+        <div class="card" id="report-by-hospital"></div>
+        <div class="card" id="report-by-service"></div>
+      </div>
+      <div class="card" id="report-monthly"></div>
+    </div>
+
+    <!-- ══ STAFF ══ -->
+    <div class="page" id="page-staff">
+      <div class="page-header">
+        <div><div class="page-title">👨‍⚕️ Staff Management</div><div class="page-sub">Doctors, nurses & support staff</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-staff')">➕ Add Staff</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Name</th><th>Role</th><th>Department</th><th>Phone</th><th>Email</th><th>Status</th></tr></thead>
+          <tbody id="staff-table"><tr><td colspan="7"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ══ HOSPITALS ══ -->
+    <div class="page" id="page-hospitals">
+      <div class="page-header">
+        <div><div class="page-title">🏗️ Hospital Sites</div><div class="page-sub">Manage all branches & facilities</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-hospital')">➕ Add Hospital</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>#</th><th>Hospital Name</th><th>Branch</th><th>Location</th><th>Added</th></tr></thead>
+          <tbody id="hosp-table"><tr><td colspan="5"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<div class="modal-overlay" id="modal-patient" onclick="if(event.target===this)closeModal('modal-patient')">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title"><span class="modal-icon">🧑‍⚕️</span>Register New Patient</div><button class="modal-close" onclick="closeModal('modal-patient')">×</button></div>
+  <div class="modal-body">
     <div class="form-grid">
-      <div><label style="font-size:12px;font-weight:700;">Blood Pressure</label><input type="text" class="input-field" placeholder="120/80 mmHg"></div>
-      <div><label style="font-size:12px;font-weight:700;">Heart Rate</label><input type="number" class="input-field" placeholder="72 bpm"></div>
-      <div><label style="font-size:12px;font-weight:700;">Temperature</label><input type="text" class="input-field" placeholder="37.0 °C"></div>
-      <div><label style="font-size:12px;font-weight:700;">Weight</label><input type="number" class="input-field" placeholder="kg"></div>
+      <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="pt-name" placeholder="e.g. Amara Musa"></div>
+      <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="pt-phone" placeholder="+211 ..."></div>
+      <div class="form-group"><label class="form-label">Age</label><input class="form-input" type="number" id="pt-age" placeholder="Years"></div>
+      <div class="form-group"><label class="form-label">Gender</label><select class="form-select" id="pt-gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+      <div class="form-group"><label class="form-label">Insurance</label><select class="form-select" id="pt-insurance"><option value="none">None / Cash</option><option value="nhif">NHIF</option><option value="private">Private Insurance</option><option value="free">Free / Waived</option></select></div>
+      <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="pt-address" placeholder="Town / Area"></div>
     </div>
-
-    <div style="margin-top:16px;">
-      <label style="font-size:12px;font-weight:700;">Doctor's Notes (Subjective/Objective)</label>
-      <textarea class="input-field" placeholder="Patient complains of..."></textarea>
+    <div class="form-section-title">Visit Details</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Visit Type *</label><select class="form-select" id="pt-vtype"><option value="outpatient">Outpatient</option><option value="inpatient">Inpatient / Admitted</option><option value="emergency">Emergency</option><option value="lab">Lab Only</option><option value="pharmacy">Pharmacy Only</option></select></div>
+      <div class="form-group"><label class="form-label">Department</label><select class="form-select" id="pt-dept"><option>General OPD</option><option>Maternity & ANC</option><option>Paediatrics</option><option>Surgery</option><option>Internal Medicine</option><option>Orthopaedics</option><option>Dental</option><option>Eye Clinic</option></select></div>
+      <div class="form-group"><label class="form-label">Bed Number (if admitted)</label><input class="form-input" id="pt-bed" placeholder="e.g. Ward 2 Bed 5"></div>
+      <div class="form-group"><label class="form-label">Attending Doctor</label><select class="form-select" id="pt-doctor"><option value="">— Select —</option></select></div>
     </div>
+    <div class="form-group"><label class="form-label">Chief Complaint</label><textarea class="form-textarea" id="pt-complaint" placeholder="Brief description of presenting complaint..."></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-patient')">Cancel</button>
+    <button class="btn btn-primary" onclick="savePatient()">💾 Register & Create Invoice</button>
+  </div>
+</div></div>
 
-    <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
-      <button style="padding:10px 16px; background:var(--bg3); border:none; border-radius:var(--r2); cursor:pointer;" onclick="closeModals()">Cancel</button>
-      <button class="btn-brand" style="width:auto; padding:10px 20px;" onclick="saveClinicalData()">Save & Update File</button>
+<div class="modal-overlay" id="modal-invoice" onclick="if(event.target===this)closeModal('modal-invoice')">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title"><span class="modal-icon">🧾</span>Create Invoice</div><button class="modal-close" onclick="closeModal('modal-invoice')">×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Patient *</label><select class="form-select" id="inv-patient"><option value="">— Select Patient —</option></select></div>
+      <div class="form-group"><label class="form-label">Payment Method</label><select class="form-select" id="inv-method"><option value="cash">Cash</option><option value="mobile_money">Mobile Money</option><option value="insurance">Insurance</option><option value="credit">Credit</option></select></div>
+    </div>
+    <div class="form-section-title">Invoice Items</div>
+    <div id="inv-items-wrap"></div>
+    <button class="btn btn-secondary btn-sm" onclick="addInvItem()" style="margin-top:8px">+ Add Service Item</button>
+    <div class="form-grid" style="margin-top:16px">
+      <div class="form-group"><label class="form-label">Amount Paid Now ($)</label><input class="form-input" type="number" id="inv-paid" placeholder="0.00" value="0"></div>
+      <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="inv-notes" placeholder="Optional notes..."></div>
     </div>
   </div>
-</div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-invoice')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveInvoice()">💾 Save Invoice</button>
+  </div>
+</div></div>
+
+<div class="modal-overlay" id="modal-lab" onclick="if(event.target===this)closeModal('modal-lab')">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title"><span class="modal-icon">🔬</span>New Lab Test Order</div><button class="modal-close" onclick="closeModal('modal-lab')">×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Patient *</label><select class="form-select" id="lab-patient"><option value="">— Select —</option></select></div>
+      <div class="form-group"><label class="form-label">Test Name *</label><select class="form-select" id="lab-test"><option>Full Blood Count</option><option>Malaria RDT</option><option>Malaria Blood Slide</option><option>Widal Test</option><option>Urine Analysis</option><option>Blood Sugar (RBS)</option><option>HIV Test</option><option>Pregnancy Test</option><option>Liver Function Test</option><option>Renal Function Test</option><option>Sputum AFB</option><option>Stool Microscopy</option><option>Blood Group & Crossmatch</option><option>COVID-19 Antigen</option></select></div>
+      <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="lab-cat"><option>Haematology</option><option>Microbiology</option><option>Chemistry</option><option>Serology</option><option>Urinalysis</option></select></div>
+      <div class="form-group"><label class="form-label">Price ($)</label><input class="form-input" type="number" id="lab-price" placeholder="0.00"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Result (leave blank if pending)</label><textarea class="form-textarea" id="lab-result" placeholder="Enter result or leave blank..."></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-lab')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveLab()">💾 Save Test</button>
+  </div>
+</div></div>
+
+<div class="modal-overlay" id="modal-prescription" onclick="if(event.target===this)closeModal('modal-prescription')">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title"><span class="modal-icon">💊</span>New Prescription</div><button class="modal-close" onclick="closeModal('modal-prescription')">×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Patient *</label><select class="form-select" id="rx-patient"><option value="">— Select —</option></select></div>
+      <div class="form-group"><label class="form-label">Drug Name *</label><input class="form-input" id="rx-drug" placeholder="e.g. Amoxicillin 500mg"></div>
+      <div class="form-group"><label class="form-label">Dosage</label><input class="form-input" id="rx-dosage" placeholder="e.g. 1 tab × 3 daily × 7 days"></div>
+      <div class="form-group"><label class="form-label">Quantity</label><input class="form-input" type="number" id="rx-qty" value="1"></div>
+      <div class="form-group"><label class="form-label">Unit Price ($)</label><input class="form-input" type="number" id="rx-price" placeholder="0.00"></div>
+      <div class="form-group"><label class="form-label">Dispensed?</label><select class="form-select" id="rx-dispensed"><option value="false">No — Pending</option><option value="true">Yes — Dispensed</option></select></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-prescription')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveRx()">💾 Save Prescription</button>
+  </div>
+</div></div>
+
+<div class="modal-overlay" id="modal-inventory" onclick="if(event.target===this)closeModal('modal-inventory')">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title"><span class="modal-icon">📦</span>Add Inventory Item</div><button class="modal-close" onclick="closeModal('modal-inventory')">×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Item Name *</label><input class="form-input" id="inv2-name" placeholder="e.g. Amoxicillin 500mg"></div>
+      <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="inv2-cat"><option value="drug">Drug</option><option value="equipment">Equipment</option><option value="consumable">Consumable</option><option value="other">Other</option></select></div>
+      <div class="form-group"><label class="form-label">Quantity</label><input class="form-input" type="number" id="inv2-qty" value="0"></div>
+      <div class="form-group"><label class="form-label">Unit</label><input class="form-input" id="inv2-unit" value="units"></div>
+      <div class="form-group"><label class="form-label">Unit Cost ($)</label><input class="form-input" type="number" id="inv2-cost" placeholder="0.00"></div>
+      <div class="form-group"><label class="form-label">Reorder Level</label><input class="form-input" type="number" id="inv2-reorder" value="10"></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-inventory')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveInventory()">💾 Save Item</button>
+  </div>
+</div></div>
+
+<div class="modal-overlay" id="modal-staff" onclick="if(event.target===this)closeModal('modal-staff')">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title"><span class="modal-icon">👨‍⚕️</span>Add Staff Member</div><button class="modal-close" onclick="closeModal('modal-staff')">×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="st-name" placeholder="Full name"></div>
+      <div class="form-group"><label class="form-label">Role *</label><select class="form-select" id="st-role"><option value="doctor">Doctor</option><option value="nurse">Nurse</option><option value="lab">Lab Technician</option><option value="pharmacy">Pharmacist</option><option value="billing">Billing Staff</option><option value="receptionist">Receptionist</option><option value="admin">Admin</option></select></div>
+      <div class="form-group"><label class="form-label">Department</label><input class="form-input" id="st-dept" placeholder="e.g. Medicine"></div>
+      <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="st-phone" placeholder="+211..."></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="st-email" placeholder="email@hospital.com" type="email"></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-staff')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveStaff()">💾 Save Staff</button>
+  </div>
+</div></div>
+
+<div class="modal-overlay" id="modal-hospital" onclick="if(event.target===this)closeModal('modal-hospital')">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title"><span class="modal-icon">🏗️</span>Add Hospital / Branch</div><button class="modal-close" onclick="closeModal('modal-hospital')">×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Hospital Name *</label><input class="form-input" id="hs-name" placeholder="e.g. Nimule Health Centre"></div>
+      <div class="form-group"><label class="form-label">Branch</label><input class="form-input" id="hs-branch" value="Main Branch"></div>
+      <div class="form-group"><label class="form-label">Location</label><input class="form-input" id="hs-loc" placeholder="Town, Country"></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-hospital')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveHospital()">💾 Save Hospital</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+<div id="sidebar-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150" onclick="toggleSidebar()"></div>
 
 <script>
-// SUPABASE CONFIGURATION
-const SB_URL = "https://jrzziyyhllflobtuvwte.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenppeXlobGxmbG9idHV2d3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NjE2ODMsImV4cCI6MjA4OTEzNzY4M30.3GMwHOt5e5xNCbSn3VR_xFsSqPItBmIkkVwyMCw2ctk";
-const supabase = supabase.createClient(SB_URL, SB_KEY);
+const SUPABASE_URL='https://jrzziyyhllflobtuvwte.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenppeXlobGxmbG9idHV2d3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NjE2ODMsImV4cCI6MjA4OTEzNzY4M30.3GMwHOt5e5xNCbSn3VR_xFsSqPItBmIkkVwyMCw2ctk';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentHospital=null,allHospitals=[],allPatients=[],invItemCount=0;
 
-// 1. AUTHENTICATION LOGIC (Security Wall)
-async function authenticateUser() {
-    const emailInput = document.getElementById('staff-email').value;
-    const errorMsg = document.getElementById('login-error');
-    
-    // In a real scenario, use Supabase Auth. For this UI/UX simulation, we query the staff table.
-    const { data, error } = await supabase.from('staff').select('*').eq('email', emailInput).single();
-    
-    // For demo purposes, allowing a bypass if they type 'demo' to ensure you can test the UI immediately
-    if (emailInput === 'demo' || (data && !error)) {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app-core').style.display = 'flex';
-        
-        if(data) {
-           document.getElementById('logged-in-user').innerText = data.full_name;
-        }
-        
-        initDashboard();
-    } else {
-        errorMsg.style.display = 'block';
-    }
+window.onload=async()=>{
+  document.getElementById('dash-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  await loadHospitals();
+  await loadAllPatients();
+  await loadDoctors();
+  await loadDashboard();
+};
+
+async function loadHospitals(){
+  const{data,error}=await sb.from('hospitals').select('*').order('name');
+  if(error){showToast('⚠️ Run the schema SQL in Supabase first!','error');return;}
+  allHospitals=data||[];
+  const sel=document.getElementById('hosp-select');
+  sel.innerHTML=allHospitals.map(h=>`<option value="${h.id}">${h.name} — ${h.branch}</option>`).join('');
+  if(allHospitals.length){currentHospital=allHospitals[0].id;document.getElementById('topbar-sub').textContent=allHospitals[0].name+' · '+allHospitals[0].branch;}
+  renderHospTable();
+}
+function switchHospital(id){currentHospital=id;const h=allHospitals.find(x=>x.id===id);if(h)document.getElementById('topbar-sub').textContent=h.name+' · '+h.branch;loadDashboard();}
+async function saveHospital(){
+  const name=v('hs-name');if(!name){showToast('Hospital name required','error');return;}
+  const{error}=await sb.from('hospitals').insert({name,branch:v('hs-branch')||'Main Branch',location:v('hs-loc')});
+  if(error){showToast(error.message,'error');return;}
+  showToast('✅ Hospital added!','success');closeModal('modal-hospital');await loadHospitals();
+}
+function renderHospTable(){
+  const tb=document.getElementById('hosp-table');
+  if(!allHospitals.length){tb.innerHTML='<tr><td colspan="5"><div class="empty"><div class="empty-icon">🏥</div><span>No hospitals yet</span></div></td></tr>';return;}
+  tb.innerHTML=allHospitals.map((h,i)=>`<tr><td>${i+1}</td><td class="td-name">${h.name}</td><td>${h.branch}</td><td>${h.location||'—'}</td><td>${fmt(h.created_at)}</td></tr>`).join('');
 }
 
-// 2. DASHBOARD INITIALIZATION
-async function initDashboard() {
-    // Fetch live visits instead of just a static list of patients
-    const { data, error } = await supabase
-        .from('visits')
-        .select(`
-            id,
-            visit_type,
-            status,
-            created_at,
-            patients ( patient_number, full_name )
-        `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-    const tbody = document.getElementById('queue-body');
-
-    if (error || !data) {
-        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--red)">No active visits found or RLS policy restricting access.</td></tr>`;
-        return;
-    }
-
-    if (data.length > 0) {
-        tbody.innerHTML = data.map(v => {
-            // Traffic Light Logic based on visit type
-            let badgeClass = 'status-green';
-            let badgeText = 'Routine';
-            if(v.visit_type === 'emergency') { badgeClass = 'status-red'; badgeText = 'Emergency'; }
-            if(v.visit_type === 'lab') { badgeClass = 'status-yellow'; badgeText = 'Lab Pending'; }
-
-            const pat = v.patients || {};
-            return `
-            <tr>
-                <td style="font-weight:700; color:var(--brand);">${pat.patient_number || 'N/A'}</td>
-                <td style="font-weight:600;">${pat.full_name || 'Unknown'}</td>
-                <td style="text-transform:capitalize;">${v.visit_type || 'General'}</td>
-                <td><span style="color:var(--text3); font-size:12px;">Waiting</span></td>
-                <td><span class="badge ${badgeClass}">${badgeText}</span></td>
-                <td><button onclick="openTriageModal()" style="border:none;background:var(--blue-bg);color:var(--brand);padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:700;">Open File</button></td>
-            </tr>
-            `;
-        }).join('');
-    } else {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">The queue is currently empty.</td></tr>`;
-    }
+async function loadAllPatients(){
+  const{data}=await sb.from('patients').select('*').order('created_at',{ascending:false});
+  allPatients=data||[];
+  populatePatientSelects();renderPatientTable();
+}
+function populatePatientSelects(){
+  const opts='<option value="">— Select Patient —</option>'+allPatients.map(p=>`<option value="${p.id}">${p.full_name} (${p.patient_number||'—'})</option>`).join('');
+  ['inv-patient','lab-patient','rx-patient'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+}
+function renderPatientTable(){
+  const tb=document.getElementById('pt-table');
+  if(!allPatients.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">👥</div><span>No patients yet — register your first patient!</span><span class="empty-sub">Click "+ New Patient" to get started</span></div></td></tr>';return;}
+  const avColors=['av1','av2','av3','av4'];
+  tb.innerHTML=allPatients.map((p,i)=>`<tr>
+    <td>${i+1}</td><td><code style="background:var(--bg2);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;color:var(--navy)">${p.patient_number||'—'}</code></td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${avColors[i%4]}">${p.full_name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div><div><div class="td-name">${p.full_name}</div></div></div></td>
+    <td>${p.age||'—'}/${p.gender?p.gender[0]:'—'}</td><td>${p.phone||'—'}</td>
+    <td><span class="badge b-${p.insurance==='none'||!p.insurance?'discharged':'paid'}">${p.insurance||'cash'}</span></td>
+    <td>${fmt(p.created_at)}</td>
+    <td><button class="btn btn-secondary btn-sm" onclick="openModal('modal-invoice')">🧾 Invoice</button></td>
+  </tr>`).join('');
+}
+async function savePatient(){
+  const name=v('pt-name');if(!name){showToast('Patient name required','error');return;}
+  const pnum='PT-'+Date.now().toString().slice(-6);
+  const{data:pt,error}=await sb.from('patients').insert({hospital_id:currentHospital,full_name:name,age:parseInt(v('pt-age'))||null,gender:v('pt-gender'),phone:v('pt-phone'),address:v('pt-address'),insurance:v('pt-insurance'),patient_number:pnum}).select().single();
+  if(error){showToast(error.message,'error');return;}
+  const vtype=v('pt-vtype');
+  const{data:visit}=await sb.from('visits').insert({patient_id:pt.id,hospital_id:currentHospital,visit_type:vtype,department:v('pt-dept'),complaint:v('pt-complaint'),doctor_id:v('pt-doctor')||null,bed_number:v('pt-bed')||null,status:vtype==='inpatient'?'admitted':'active',admitted_at:vtype==='inpatient'?new Date().toISOString():null}).select().single();
+  const invNum='INV-'+Date.now().toString().slice(-6);
+  await sb.from('invoices').insert({invoice_number:invNum,patient_id:pt.id,visit_id:visit?.id,hospital_id:currentHospital,payment_method:v('pt-insurance')==='none'?'cash':'insurance',payment_status:'pending',total_amount:0,paid_amount:0});
+  showToast(`✅ ${name} registered! Invoice ${invNum} created.`,'success');
+  closeModal('modal-patient');await loadAllPatients();loadDashboard();loadVisits();loadBilling();
 }
 
-// 3. NAVIGATION & UI LOGIC
-function showPage(pageId, el) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-' + pageId).classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    el.classList.add('active');
-    document.getElementById('page-title').innerText = el.innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\s/g, '').replace(/([A-Z])/g, ' $1').trim();
+async function loadDoctors(){
+  const{data}=await sb.from('staff').select('*').eq('role','doctor');
+  const sel=document.getElementById('pt-doctor');
+  if(sel)sel.innerHTML='<option value="">— Select Doctor —</option>'+((data||[]).map(s=>`<option value="${s.id}">${s.full_name}</option>`).join(''));
 }
 
-function openTriageModal() {
-    document.getElementById('triage-modal').classList.add('active');
+async function loadVisits(){
+  const hid=currentHospital||allHospitals[0]?.id||'';
+  const{data}=await sb.from('visits').select(`*,patients(*),staff(*),invoices(*)`).eq('hospital_id',hid).order('created_at',{ascending:false});
+  const visits=data||[];
+  const opd=visits.filter(v=>v.visit_type==='outpatient'||v.visit_type==='emergency');
+  const ipd=visits.filter(v=>v.visit_type==='inpatient');
+  renderOPD(opd);renderIPD(ipd);renderDashRecent(visits.slice(0,8));
+}
+const avColors=['av1','av2','av3','av4'];
+function renderOPD(visits){
+  const tb=document.getElementById('opd-table');
+  if(!visits.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">🚶</div><span>No outpatients today</span><span class="empty-sub">Register a patient to get started</span></div></td></tr>';return;}
+  tb.innerHTML=visits.map((vt,i)=>{const inv=Array.isArray(vt.invoices)?vt.invoices[0]:vt.invoices;return`<tr>
+    <td>${i+1}</td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${avColors[i%4]}">${(vt.patients?.full_name||'?').split(' ').map(n=>n[0]).join('').slice(0,2)}</div><div><div class="td-name">${vt.patients?.full_name||'—'}</div><div class="td-sub">${vt.patients?.patient_number||''}</div></div></div></td>
+    <td>${vt.patients?.age||'?'}/${vt.patients?.gender?vt.patients.gender[0]:'?'}</td>
+    <td>${vt.complaint||'—'}</td><td>${vt.staff?.full_name||'—'}</td>
+    <td><span class="badge b-${vt.status}">${vt.status}</span></td>
+    <td>${inv?'<strong>$'+(inv.total_amount||0).toFixed(2)+'</strong>':'—'}</td>
+    <td><button class="btn btn-secondary btn-sm" onclick="openModal('modal-invoice')">🧾 Invoice</button></td>
+  </tr>`;}).join('');
+}
+function renderIPD(visits){
+  const tb=document.getElementById('ipd-table');
+  if(!visits.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">🛏️</div><span>No inpatients currently</span></div></td></tr>';return;}
+  tb.innerHTML=visits.map((vt,i)=>{
+    const days=vt.admitted_at?Math.floor((Date.now()-new Date(vt.admitted_at))/86400000):0;
+    const inv=Array.isArray(vt.invoices)?vt.invoices[0]:vt.invoices;
+    return`<tr><td>${i+1}</td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${avColors[i%4]}">${(vt.patients?.full_name||'?').split(' ').map(n=>n[0]).join('').slice(0,2)}</div><div class="td-name">${vt.patients?.full_name||'—'}</div></div></td>
+    <td><strong>${vt.bed_number||'—'}</strong></td><td>${vt.diagnosis||vt.complaint||'—'}</td>
+    <td>${vt.admitted_at?fmt(vt.admitted_at):'—'}</td><td><span class="badge b-${days>3?'overdue':'active'}">${days}d</span></td>
+    <td><span class="badge b-${vt.status}">${vt.status}</span></td>
+    <td>${inv?'$'+(inv.total_amount||0).toFixed(2):'—'}</td></tr>`;}).join('');
+}
+function renderDashRecent(visits){
+  const tb=document.getElementById('dash-recent-patients');
+  if(!visits.length){tb.innerHTML='<tr><td colspan="6"><div class="empty"><div class="empty-icon">👥</div><span>No patients yet</span><span class="empty-sub">Register your first patient using the button above</span></div></td></tr>';return;}
+  tb.innerHTML=visits.map((vt,i)=>{
+    const inv=Array.isArray(vt.invoices)?vt.invoices[0]:vt.invoices;
+    const status=inv?.payment_status||'pending';
+    return`<tr>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${avColors[i%4]}">${(vt.patients?.full_name||'?').split(' ').map(n=>n[0]).join('').slice(0,2)}</div><div><div class="td-name">${vt.patients?.full_name||'—'}</div><div class="td-sub">${vt.patients?.patient_number||''}</div></div></div></td>
+      <td><span class="badge b-${vt.visit_type}">${vt.visit_type}</span></td>
+      <td>${vt.department||'—'}</td>
+      <td>${inv?'<strong>$'+(inv.total_amount||0).toFixed(2)+'</strong>':'—'}</td>
+      <td><span class="badge b-${status}">${status}</span></td>
+      <td>${fmt(vt.created_at)}</td>
+    </tr>`;}).join('');
 }
 
-function closeModals() {
-    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+async function loadDashboard(){
+  if(!allHospitals.length)return;
+  const hid=currentHospital||allHospitals[0].id;
+  const today=new Date().toISOString().split('T')[0];
+  const[invR,visitR,ptR]=await Promise.all([
+    sb.from('invoices').select('*').eq('hospital_id',hid),
+    sb.from('visits').select('*,patients(*),staff(*),invoices(*)').eq('hospital_id',hid).order('created_at',{ascending:false}),
+    sb.from('patients').select('*').eq('hospital_id',hid)
+  ]);
+  const invs=invR.data||[];const visits=visitR.data||[];const pts=ptR.data||[];
+  const todayInvs=invs.filter(i=>i.created_at?.startsWith(today));
+  const todayRev=todayInvs.reduce((a,i)=>a+(i.paid_amount||0),0);
+  const totalRev=invs.reduce((a,i)=>a+(i.paid_amount||0),0);
+  const overdue=invs.filter(i=>i.payment_status==='pending'||i.payment_status==='overdue');
+  const admitted=visits.filter(v=>v.status==='admitted');
+  const ob=document.getElementById('overdue-badge');
+  if(overdue.length>0){ob.style.display='';ob.textContent=overdue.length;document.getElementById('notif-dot').style.display='';}
+  const alerts=overdue.length?`<div class="alert-bar warning">💰 <strong>${overdue.length} unpaid invoice${overdue.length>1?'s':''}</strong> totalling <strong>$${overdue.reduce((a,i)=>a+(i.total_amount-i.paid_amount),0).toFixed(2)}</strong> are pending payment. <button onclick="showPage('billing',document.querySelector('[data-page=billing]'))" style="margin-left:8px;background:var(--navy);color:#fff;border:none;border-radius:12px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer">View Billing →</button></div>`:'';
+  document.getElementById('dash-alerts').innerHTML=alerts;
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="stat-card sc-green" onclick="showPage('patients',document.querySelector('[data-page=patients]'))">
+      <div class="stat-icon-wrap si-green">🏥</div>
+      <div class="stat-label">Patients Today</div>
+      <div class="stat-value">${visits.filter(v=>v.created_at?.startsWith(today)).length}</div>
+      <div class="stat-change up">↑ Total: ${pts.length} registered</div>
+    </div>
+    <div class="stat-card sc-blue" onclick="showPage('inpatient',document.querySelector('[data-page=inpatient]'))">
+      <div class="stat-icon-wrap si-blue">🛏️</div>
+      <div class="stat-label">Admitted</div>
+      <div class="stat-value">${admitted.length}</div>
+      <div class="stat-change neutral">Currently inpatient</div>
+    </div>
+    <div class="stat-card sc-green" onclick="showPage('billing',document.querySelector('[data-page=billing]'))">
+      <div class="stat-icon-wrap si-green">💰</div>
+      <div class="stat-label">Revenue Today</div>
+      <div class="stat-value">$${todayRev.toFixed(0)}</div>
+      <div class="stat-change up">↑ All time: $${totalRev.toFixed(0)}</div>
+    </div>
+    <div class="stat-card sc-red" onclick="showPage('billing',document.querySelector('[data-page=billing]'))">
+      <div class="stat-icon-wrap si-red">🧾</div>
+      <div class="stat-label">Outstanding</div>
+      <div class="stat-value" style="color:#CC2200">${overdue.length}</div>
+      <div class="stat-change down">↓ Unpaid invoices</div>
+    </div>`;
+  // chart
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const tod=new Date().getDay();
+  const barData=days.map((_,i)=>{
+    const d=new Date();d.setDate(d.getDate()-(tod===0?6:tod-1)+i);
+    const ds=d.toISOString().split('T')[0];
+    return{label:days[i],val:invs.filter(x=>x.created_at?.startsWith(ds)).reduce((a,x)=>a+(x.paid_amount||0),0)};
+  });
+  const maxV=Math.max(...barData.map(b=>b.val),1);
+  const wkTotal=barData.reduce((a,b)=>a+b.val,0);
+  document.getElementById('dash-rev-total').textContent='$'+wkTotal.toFixed(0);
+  document.getElementById('dash-chart').innerHTML=barData.map((b,i)=>`
+    <div class="cbar-wrap">
+      <div class="cbar ${i===(tod===0?6:tod-1)?'active':'inactive'}" style="height:${Math.round(b.val/maxV*90)+5}%" title="$${b.val.toFixed(0)}"></div>
+      <div class="cbar-lbl">${b.label}</div>
+    </div>`).join('');
+  // breakdown
+  const{data:items}=await sb.from('invoice_items').select('*');
+  const cats=[{name:'Consultations',color:'#3A6BC2',cat:'consultation'},{name:'Laboratory',color:'#7C5CBF',cat:'lab'},{name:'Pharmacy',color:'#2DC653',cat:'pharmacy'},{name:'Procedures',color:'#00B4D8',cat:'procedure'},{name:'In-patient',color:'#F78C00',cat:'bed'}];
+  const tot=Math.max(items?.reduce((a,x)=>a+(x.total_price||0),0)||1,1);
+  document.getElementById('dash-breakdown').innerHTML=cats.map(c=>{
+    const amt=items?.filter(x=>x.category===c.cat).reduce((a,x)=>a+(x.total_price||0),0)||0;
+    const pct=Math.round(amt/tot*100);
+    return`<div class="bkd-item"><div class="bkd-dot" style="background:${c.color}"></div><span class="bkd-name">${c.name}</span><div class="bkd-bar-bg"><div class="bkd-bar-fg" style="width:${pct}%;background:${c.color}"></div></div><span class="bkd-amt">$${amt.toFixed(0)}</span><span class="bkd-pct">${pct}%</span></div>`;}).join('');
+  renderDashRecent(visits.slice(0,8));
 }
 
-function saveClinicalData() {
-    // In production, this pushes the Vitals & SOAP note to the Supabase database
-    alert("Clinical data securely saved to patient record.");
-    closeModals();
+async function loadBilling(){
+  const{data}=await sb.from('invoices').select(`*,patients(full_name,patient_number)`).order('created_at',{ascending:false});
+  const invs=data||[];
+  const total=invs.reduce((a,i)=>a+(i.total_amount||0),0);
+  const paid=invs.reduce((a,i)=>a+(i.paid_amount||0),0);
+  const pending=invs.filter(i=>i.payment_status==='pending');
+  const overdue=invs.filter(i=>i.payment_status==='overdue');
+  document.getElementById('billing-stats').innerHTML=`
+    <div class="stat-card sc-blue"><div class="stat-icon-wrap si-blue">🧾</div><div class="stat-label">Total Invoices</div><div class="stat-value">${invs.length}</div></div>
+    <div class="stat-card sc-green"><div class="stat-icon-wrap si-green">💰</div><div class="stat-label">Total Collected</div><div class="stat-value">$${paid.toFixed(0)}</div></div>
+    <div class="stat-card sc-purple"><div class="stat-icon-wrap si-purple">⏳</div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div>
+    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">⚠️</div><div class="stat-label">Overdue</div><div class="stat-value" style="color:#CC2200">${overdue.length}</div></div>`;
+  const tb=document.getElementById('inv-table');
+  if(!invs.length){tb.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-icon">🧾</div><span>No invoices yet</span><span class="empty-sub">Invoices are created automatically when you register a patient</span></div></td></tr>';return;}
+  tb.innerHTML=invs.map(inv=>{
+    const bal=(inv.total_amount||0)-(inv.paid_amount||0);
+    return`<tr>
+      <td><code style="background:var(--bg2);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;color:var(--navy)">${inv.invoice_number||'—'}</code></td>
+      <td><div class="td-name">${inv.patients?.full_name||'—'}</div><div class="td-sub">${inv.patients?.patient_number||''}</div></td>
+      <td><strong>$${(inv.total_amount||0).toFixed(2)}</strong></td>
+      <td style="color:var(--green2)">$${(inv.paid_amount||0).toFixed(2)}</td>
+      <td style="color:${bal>0?'#CC2200':'#1A7A3A'};font-weight:800">$${bal.toFixed(2)}</td>
+      <td>${inv.payment_method||'cash'}</td>
+      <td><span class="badge b-${inv.payment_status}">${inv.payment_status}</span></td>
+      <td>${fmt(inv.created_at)}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        ${bal>0?`<button class="btn btn-green btn-sm" onclick="markPaid('${inv.id}','${inv.total_amount}')">✓ Paid</button>`:''}
+        <button class="btn btn-secondary btn-sm" onclick="addInvItems('${inv.id}')">+ Items</button>
+      </td>
+    </tr>`;}).join('');
+}
+async function markPaid(id,total){
+  await sb.from('invoices').update({paid_amount:parseFloat(total),payment_status:'paid'}).eq('id',id);
+  showToast('✅ Invoice marked as paid!','success');loadBilling();loadDashboard();
+}
+async function addInvItems(invId){
+  const svc=prompt('Service name (e.g. Malaria Treatment):');if(!svc)return;
+  const price=parseFloat(prompt('Price in USD ($):')||0);
+  const cat=prompt('Category:\nconsultation / lab / pharmacy / procedure / bed / other')||'consultation';
+  await sb.from('invoice_items').insert({invoice_id:invId,service_name:svc,category:cat,unit_price:price,quantity:1});
+  const{data:items}=await sb.from('invoice_items').select('total_price').eq('invoice_id',invId);
+  const total=items?.reduce((a,x)=>a+(x.total_price||0),0)||0;
+  await sb.from('invoices').update({total_amount:total}).eq('id',invId);
+  showToast('✅ Item added to invoice!','success');loadBilling();
+}
+function addInvItem(){
+  invItemCount++;
+  const w=document.getElementById('inv-items-wrap');
+  const div=document.createElement('div');
+  div.style.cssText='display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:flex-end';
+  div.innerHTML=`
+    <div><label class="form-label">Service Name</label><input class="form-input" placeholder="e.g. Consultation fee" id="ii-name-${invItemCount}"></div>
+    <div><label class="form-label">Category</label><select class="form-select" id="ii-cat-${invItemCount}"><option value="consultation">Consultation</option><option value="lab">Lab</option><option value="pharmacy">Pharmacy</option><option value="procedure">Procedure</option><option value="bed">Bed/Ward</option><option value="other">Other</option></select></div>
+    <div><label class="form-label">Price ($)</label><input class="form-input" type="number" placeholder="0.00" id="ii-price-${invItemCount}"></div>
+    <button class="btn btn-danger btn-sm" style="align-self:flex-end" onclick="this.parentElement.remove()">✕</button>`;
+  w.appendChild(div);
+}
+async function saveInvoice(){
+  const pid=v('inv-patient');if(!pid){showToast('Select a patient','error');return;}
+  const invNum='INV-'+Date.now().toString().slice(-6);
+  const items=[];
+  for(let i=1;i<=invItemCount;i++){
+    const name=document.getElementById('ii-name-'+i)?.value;
+    const price=parseFloat(document.getElementById('ii-price-'+i)?.value||0);
+    const cat=document.getElementById('ii-cat-'+i)?.value||'consultation';
+    if(name&&price>0)items.push({service_name:name,category:cat,unit_price:price,quantity:1});
+  }
+  const total=items.reduce((a,x)=>a+x.unit_price,0);
+  const paid=parseFloat(v('inv-paid')||0);
+  const status=paid>=total&&total>0?'paid':paid>0?'partial':'pending';
+  const{data:inv,error}=await sb.from('invoices').insert({invoice_number:invNum,patient_id:pid,hospital_id:currentHospital,total_amount:total,paid_amount:paid,payment_method:v('inv-method'),payment_status:status,notes:v('inv-notes')}).select().single();
+  if(error){showToast(error.message,'error');return;}
+  if(items.length>0)await sb.from('invoice_items').insert(items.map(x=>({...x,invoice_id:inv.id})));
+  showToast(`✅ Invoice ${invNum} created!`,'success');
+  closeModal('modal-invoice');invItemCount=0;document.getElementById('inv-items-wrap').innerHTML='';
+  loadBilling();loadDashboard();
 }
 
-// 4. PHARMACY AUTO-DEDUCT ENGINE (Core monetization feature)
-async function dispenseDrug(inventoryId, quantityDispensed) {
-    // Step 1: Fetch current stock
-    const { data: item } = await supabase.from('inventory').select('quantity').eq('id', inventoryId).single();
-    
-    if (item && item.quantity >= quantityDispensed) {
-        // Step 2: Auto-Deduct Math
-        const newStock = item.quantity - quantityDispensed;
-        
-        // Step 3: Update Database
-        const { error } = await supabase.from('inventory').update({ quantity: newStock }).eq('id', inventoryId);
-        
-        if (!error) console.log(`Stock updated. Remaining: ${newStock}`);
-    } else {
-        alert("Insufficient stock in pharmacy inventory!");
-    }
+async function loadLab(){
+  const{data}=await sb.from('lab_tests').select(`*,patients(full_name,patient_number)`).order('created_at',{ascending:false});
+  const tests=data||[];const tb=document.getElementById('lab-table');
+  if(!tests.length){tb.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-icon">🔬</div><span>No lab tests ordered yet</span></div></td></tr>';return;}
+  tb.innerHTML=tests.map((t,i)=>{
+    const sc=t.status==='completed'?'b-completed':t.status==='processing'?'b-active':'b-pending';
+    return`<tr><td>${i+1}</td>
+    <td><div class="td-name">${t.patients?.full_name||'—'}</div><div class="td-sub">${t.patients?.patient_number||''}</div></td>
+    <td><strong>${t.test_name}</strong></td><td>${t.test_category||'—'}</td>
+    <td>${t.result||'<span style="color:var(--text3);font-style:italic">Pending...</span>'}</td>
+    <td>$${(t.price||0).toFixed(2)}</td>
+    <td><span class="badge ${sc}">${t.status}</span></td>
+    <td>${fmt(t.created_at)}</td>
+    <td>${t.status!=='completed'?`<button class="btn btn-green btn-sm" onclick="completeTest('${t.id}')">✓ Enter Result</button>`:'<span style="color:var(--green2);font-weight:800">✓ Done</span>'}</td>
+  </tr>`;}).join('');
+}
+async function saveLab(){
+  const pid=v('lab-patient');if(!pid){showToast('Select a patient','error');return;}
+  const result=v('lab-result');
+  const{error}=await sb.from('lab_tests').insert({patient_id:pid,hospital_id:currentHospital,test_name:v('lab-test'),test_category:v('lab-cat'),price:parseFloat(v('lab-price')||0),result:result||null,status:result?'completed':'pending'});
+  if(error){showToast(error.message,'error');return;}
+  showToast('✅ Lab test ordered!','success');closeModal('modal-lab');loadLab();
+}
+async function completeTest(id){
+  const result=prompt('Enter test result:');if(!result)return;
+  await sb.from('lab_tests').update({result,status:'completed'}).eq('id',id);
+  showToast('✅ Result saved!','success');loadLab();
 }
 
+async function loadPharmacy(){
+  const{data}=await sb.from('prescriptions').select(`*,patients(full_name,patient_number)`).order('created_at',{ascending:false});
+  const rxs=data||[];const tb=document.getElementById('rx-table');
+  if(!rxs.length){tb.innerHTML='<tr><td colspan="10"><div class="empty"><div class="empty-icon">💊</div><span>No prescriptions yet</span></div></td></tr>';return;}
+  tb.innerHTML=rxs.map((r,i)=>`<tr><td>${i+1}</td>
+    <td><div class="td-name">${r.patients?.full_name||'—'}</div></td>
+    <td><strong>${r.drug_name}</strong></td><td>${r.dosage||'—'}</td>
+    <td>${r.quantity}</td><td>$${(r.unit_price||0).toFixed(2)}</td>
+    <td><strong>$${(r.total_price||0).toFixed(2)}</strong></td>
+    <td><span class="badge ${r.dispensed?'b-completed':'b-pending'}">${r.dispensed?'✓ Dispensed':'Pending'}</span></td>
+    <td>${fmt(r.created_at)}</td>
+    <td>${!r.dispensed?`<button class="btn btn-green btn-sm" onclick="dispense('${r.id}')">✓ Dispense</button>`:'—'}</td>
+  </tr>`).join('');
+}
+async function saveRx(){
+  const pid=v('rx-patient');if(!pid){showToast('Select a patient','error');return;}
+  const{error}=await sb.from('prescriptions').insert({patient_id:pid,hospital_id:currentHospital,drug_name:v('rx-drug'),dosage:v('rx-dosage'),quantity:parseInt(v('rx-qty')||1),unit_price:parseFloat(v('rx-price')||0),dispensed:v('rx-dispensed')==='true'});
+  if(error){showToast(error.message,'error');return;}
+  showToast('✅ Prescription saved!','success');closeModal('modal-prescription');loadPharmacy();
+}
+async function dispense(id){
+  await sb.from('prescriptions').update({dispensed:true}).eq('id',id);
+  showToast('✅ Drug dispensed!','success');loadPharmacy();
+}
+
+async function loadInventory(){
+  const{data}=await sb.from('inventory').select('*').order('item_name');
+  const items=data||[];const tb=document.getElementById('inv-table2');
+  if(!items.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">📦</div><span>No inventory items yet</span></div></td></tr>';return;}
+  tb.innerHTML=items.map((it,i)=>{
+    const pct=it.reorder_level>0?Math.min(100,Math.round(it.quantity/it.reorder_level*50)):100;
+    const color=it.quantity<=it.reorder_level?'#CC2200':it.quantity<=it.reorder_level*2?'#F78C00':'#2DC653';
+    const statusText=it.quantity<=it.reorder_level?'⚠️ Low Stock':'✓ OK';
+    return`<tr><td>${i+1}</td><td class="td-name">${it.item_name}</td>
+    <td><span class="badge b-${it.category==='drug'?'admitted':it.category==='equipment'?'outpatient':'lab'}">${it.category}</span></td>
+    <td style="font-weight:800;color:${it.quantity<=it.reorder_level?'#CC2200':'var(--navy)'}">${it.quantity}</td>
+    <td>${it.unit}</td><td>$${(it.unit_cost||0).toFixed(2)}</td>
+    <td style="min-width:110px"><div style="font-size:11px;color:${color};font-weight:800;margin-bottom:4px">${statusText}</div><div class="inv-bar-bg"><div class="inv-bar-fg" style="width:${pct}%;background:${color}"></div></div></td>
+    <td><button class="btn btn-secondary btn-sm" onclick="restockItem('${it.id}')">+ Restock</button></td>
+  </tr>`;}).join('');
+}
+async function saveInventory(){
+  const name=v('inv2-name');if(!name){showToast('Item name required','error');return;}
+  const{error}=await sb.from('inventory').insert({hospital_id:currentHospital,item_name:name,category:v('inv2-cat'),quantity:parseInt(v('inv2-qty')||0),unit:v('inv2-unit')||'units',unit_cost:parseFloat(v('inv2-cost')||0),reorder_level:parseInt(v('inv2-reorder')||10)});
+  if(error){showToast(error.message,'error');return;}
+  showToast('✅ Item added!','success');closeModal('modal-inventory');loadInventory();
+}
+async function restockItem(id){
+  const qty=parseInt(prompt('Add how many units?'));if(!qty||isNaN(qty))return;
+  const{data}=await sb.from('inventory').select('quantity').eq('id',id).single();
+  await sb.from('inventory').update({quantity:(data?.quantity||0)+qty,updated_at:new Date().toISOString()}).eq('id',id);
+  showToast(`✅ Restocked +${qty} units`,'success');loadInventory();
+}
+
+async function loadStaff(){
+  const{data}=await sb.from('staff').select('*').order('full_name');
+  const staff=data||[];const tb=document.getElementById('staff-table');
+  if(!staff.length){tb.innerHTML='<tr><td colspan="7"><div class="empty"><div class="empty-icon">👨‍⚕️</div><span>No staff added yet</span></div></td></tr>';return;}
+  const roleColors={doctor:'b-admitted',nurse:'b-outpatient',lab:'b-lab',pharmacy:'b-pharmacy',billing:'b-pending',admin:'b-critical',receptionist:'b-completed'};
+  tb.innerHTML=staff.map((s,i)=>`<tr><td>${i+1}</td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${avColors[i%4]}">${s.full_name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div><div class="td-name">${s.full_name}</div></div></td>
+    <td><span class="badge ${roleColors[s.role]||'b-active'}">${s.role}</span></td>
+    <td>${s.department||'—'}</td><td>${s.phone||'—'}</td><td>${s.email||'—'}</td>
+    <td><span class="badge ${s.status==='active'?'b-completed':'b-discharged'}">${s.status||'active'}</span></td>
+  </tr>`).join('');
+}
+async function saveStaff(){
+  const name=v('st-name');if(!name){showToast('Name required','error');return;}
+  const{error}=await sb.from('staff').insert({hospital_id:currentHospital,full_name:name,role:v('st-role'),department:v('st-dept'),phone:v('st-phone'),email:v('st-email')});
+  if(error){showToast(error.message,'error');return;}
+  showToast('✅ Staff added!','success');closeModal('modal-staff');loadStaff();loadDoctors();
+}
+
+async function loadReports(){
+  const[invR,ptR]=await Promise.all([sb.from('invoices').select('*'),sb.from('patients').select('*')]);
+  const invs=invR.data||[];
+  const totalRev=invs.reduce((a,i)=>a+(i.paid_amount||0),0);
+  const totalInv=invs.reduce((a,i)=>a+(i.total_amount||0),0);
+  const outstanding=totalInv-totalRev;
+  const collRate=totalInv>0?Math.round(totalRev/totalInv*100):0;
+  document.getElementById('report-stats').innerHTML=`
+    <div class="stat-card sc-green"><div class="stat-icon-wrap si-green">💰</div><div class="stat-label">Total Revenue</div><div class="stat-value" style="color:#1A7A3A">$${totalRev.toFixed(0)}</div><div class="stat-change up">All time collected</div></div>
+    <div class="stat-card sc-blue"><div class="stat-icon-wrap si-blue">👥</div><div class="stat-label">Total Patients</div><div class="stat-value">${ptR.data?.length||0}</div><div class="stat-change up">Across all sites</div></div>
+    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">⚠️</div><div class="stat-label">Outstanding</div><div class="stat-value" style="color:#CC2200">$${outstanding.toFixed(0)}</div><div class="stat-change down">Uncollected balance</div></div>
+    <div class="stat-card sc-purple"><div class="stat-icon-wrap si-purple">📈</div><div class="stat-label">Collection Rate</div><div class="stat-value">${collRate}%</div><div class="stat-change ${collRate>80?'up':'down'}">${collRate>80?'Excellent':'Needs attention'}</div></div>`;
+  let hospHtml='<div class="card-header"><span class="card-title">🏥 Revenue by Hospital</span></div>';
+  for(const h of allHospitals){
+    const hInvs=invs.filter(i=>i.hospital_id===h.id);
+    const hRev=hInvs.reduce((a,i)=>a+(i.paid_amount||0),0);
+    const pct=totalRev>0?Math.round(hRev/totalRev*100):0;
+    hospHtml+=`<div class="bkd-item"><div class="bkd-dot" style="background:#3A6BC2"></div><span class="bkd-name">${h.name}</span><div class="bkd-bar-bg"><div class="bkd-bar-fg" style="width:${pct}%;background:#3A6BC2"></div></div><span class="bkd-amt">$${hRev.toFixed(0)}</span><span class="bkd-pct">${hInvs.length} inv</span></div>`;
+  }
+  document.getElementById('report-by-hospital').innerHTML=hospHtml;
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now=new Date();
+  const monthData=Array.from({length:6},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-5+i,1);const key=d.toISOString().slice(0,7);return{label:months[d.getMonth()],val:invs.filter(x=>x.created_at?.startsWith(key)).reduce((a,x)=>a+(x.paid_amount||0),0)};});
+  const maxM=Math.max(...monthData.map(m=>m.val),1);
+  let monthHtml='<div class="card-header"><span class="card-title">📈 Monthly Revenue (Last 6 Months)</span></div><div class="chart-bars" style="height:130px">';
+  monthData.forEach((m,i)=>{monthHtml+=`<div class="cbar-wrap"><div class="cbar ${i===5?'active':'inactive'}" style="height:${Math.round(m.val/maxM*90)+5}%" title="$${m.val.toFixed(0)}"></div><div class="cbar-lbl">${m.label}</div></div>`;});
+  monthHtml+='</div>';
+  document.getElementById('report-monthly').innerHTML=monthHtml;
+}
+
+// ── NAVIGATION ──
+const pageTitles={dashboard:'Dashboard',outpatient:'Outpatient Section',inpatient:'Inpatient Section',patients:'All Patients',billing:'Billing & Accounts',lab:'Laboratory',pharmacy:'Pharmacy',inventory:'Inventory',reports:'Reports & Analytics',staff:'Staff Management',hospitals:'Hospital Sites'};
+const pageLoaders={outpatient:loadVisits,inpatient:loadVisits,patients:()=>{},billing:loadBilling,lab:loadLab,pharmacy:loadPharmacy,inventory:loadInventory,reports:loadReports,staff:loadStaff,hospitals:()=>{}};
+function showPage(name,navEl){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name)?.classList.add('active');
+  if(navEl)navEl.classList.add('active');
+  document.getElementById('topbar-title').textContent=pageTitles[name]||name;
+  if(pageLoaders[name])pageLoaders[name]();
+  if(window.innerWidth<=900){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').style.display='none';}
+}
+function toggleSidebar(){const s=document.getElementById('sidebar');const ov=document.getElementById('sidebar-overlay');const open=s.classList.toggle('open');ov.style.display=open?'block':'none';}
+function openModal(id){document.getElementById(id).classList.add('open');if(id==='modal-patient')loadDoctors();if(id==='modal-invoice'&&!document.getElementById('inv-items-wrap').children.length)addInvItem();}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function filterTable(tbId,q){const rows=document.getElementById(tbId)?.getElementsByTagName('tr');if(!rows)return;const lq=q.toLowerCase();Array.from(rows).forEach(r=>{r.style.display=r.innerText.toLowerCase().includes(lq)||!lq?'':'none';});}
+function v(id){return document.getElementById(id)?.value||'';}
+function fmt(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
+function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type==='success'?'success':type==='error'?'error':'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+
+loadVisits();
 </script>
 </body>
 </html>

@@ -3,351 +3,454 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MediTrack Pro — ICURE Medical Centre</title>
+<title>MediTrack Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
-  /* ClinicPlus-inspired: deep navy/blue sidebar, white content, teal/green accents */
-  --navy:#1B2A4A;
-  --navy2:#243352;
-  --navy3:#2E3F63;
-  --navy-light:#3A4F7A;
-  --teal:#00B4D8;
-  --teal2:#0096B7;
-  --green:#2DC653;
-  --green2:#25A847;
-  --white:#FFFFFF;
-  --bg:#F0F4F8;
-  --bg2:#E8EDF5;
-  --card:#FFFFFF;
-  --text:#1B2A4A;
-  --text2:#4A5568;
-  --text3:#8896A7;
-  --border:#D1DCE8;
-  --border2:#B8C9D9;
-  /* Module card colors matching ClinicPlus screenshot */
-  --mod1:#2B4C8C; /* Dashboard - deep blue */
-  --mod2:#3A6BC2; /* Outpatient - medium blue */
-  --mod3:#2E7D9F; /* Inpatient - teal-blue */
-  --mod4:#1F7A6B; /* Doctor - teal-green */
-  --mod5:#3557A0; /* Accounting - blue */
-  --mod6:#5B7EC9; /* Lab - lighter blue */
-  --mod7:#2A6B8A; /* Pharmacy - ocean blue */
-  --mod8:#3D5FA0; /* Inventory - slate blue */
+  --navy:#1B2A4A;--navy2:#243352;--navy3:#2E3F63;
+  --teal:#00B4D8;--teal2:#0096B7;
+  --green:#2DC653;--green2:#25A847;
+  --white:#FFFFFF;--bg:#F0F4F8;--bg2:#E8EDF5;
+  --card:#FFFFFF;--text:#1B2A4A;--text2:#4A5568;--text3:#8896A7;
+  --border:#D1DCE8;--border2:#B8C9D9;
+  --red:#E53E3E;--red2:#FFF0F0;--red3:#FFAAAA;
+  --yellow:#D69E2E;--yellow2:#FFF9E8;--yellow3:#FFD080;
   --shadow:0 2px 8px rgba(27,42,74,0.1);
   --shadow2:0 4px 20px rgba(27,42,74,0.15);
   --r:12px;--r2:8px;--r3:24px;
-  --font:'Nunito',sans-serif;
-  --font2:'Nunito Sans',sans-serif;
+  --font:'Nunito',sans-serif;--font2:'Nunito Sans',sans-serif;
 }
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
 
-/* ══ LAYOUT ══ */
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy) 0%,var(--navy3) 100%);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
+.login-box{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:28px;justify-content:center}
+.login-logo-icon{width:48px;height:48px;background:var(--teal);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.login-logo-text{font-size:22px;font-weight:900;color:var(--navy)}
+.login-title{font-size:18px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--text3);text-align:center;margin-bottom:28px;font-weight:600}
+.login-form{display:flex;flex-direction:column;gap:14px}
+.login-label{font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:6px}
+.login-input{width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:var(--r2);font-size:14px;color:var(--text);font-family:var(--font);outline:none;transition:border-color 0.2s;background:var(--bg)}
+.login-input:focus{border-color:var(--teal);background:#fff}
+.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:var(--r2);font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:var(--font);margin-top:4px;box-shadow:0 4px 14px rgba(0,180,216,0.4)}
+.login-btn:hover{transform:translateY(-1px)}
+.login-demo{font-size:12px;color:var(--text3);text-align:center;margin-top:16px;line-height:1.6}
+.login-error{background:#FFF0F0;border:1px solid #FFAAAA;color:#CC2200;padding:10px 14px;border-radius:var(--r2);font-size:13px;font-weight:700;text-align:center;display:none}
+
+/* ── ROLE BADGE ── */
+.role-chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800}
+.role-admin{background:#E8F0FF;color:#1A3A8A;border:1px solid #A8BFFF}
+.role-doctor{background:#E8F8EE;color:#1A7A3A;border:1px solid #A8DFBB}
+.role-nurse{background:#F5F0FF;color:#5A0FA0;border:1px solid #C8A8FF}
+.role-pharmacist{background:#FFF5E8;color:#8A4400;border:1px solid #FFD0A0}
+.role-lab{background:#E8FBFF;color:#005A8A;border:1px solid #A8E8FF}
+.role-billing{background:#FFF9E8;color:#8A6000;border:1px solid #FFDB88}
+.role-receptionist{background:#F0F0F0;color:#444;border:1px solid #CCC}
+
+/* ── APP LAYOUT ── */
+#app-screen{display:none}
 .app{display:flex;min-height:100vh}
-.sidebar{width:250px;background:var(--navy);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;transition:transform 0.3s;box-shadow:4px 0 20px rgba(0,0,0,0.2)}
+.sidebar{width:250px;background:var(--navy);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;transition:transform 0.3s;box-shadow:4px 0 20px rgba(0,0,0,0.2);overflow-y:auto}
 .main{margin-left:250px;flex:1;display:flex;flex-direction:column;min-height:100vh}
-@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.stats-grid{grid-template-columns:1fr 1fr!important}.modules-grid{grid-template-columns:1fr 1fr!important}}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}}
 
-/* ══ SIDEBAR ══ */
-.logo-area{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:12px}
-.logo-icon{width:40px;height:40px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,180,216,0.4)}
-.logo-text{font-size:17px;font-weight:900;color:#fff;letter-spacing:-0.3px;line-height:1.1}
-.logo-sub{font-size:10px;color:rgba(255,255,255,0.5);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
-.hosp-selector{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.08)}
-.hosp-select{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:var(--r2);padding:8px 12px;font-size:12px;color:#fff;font-family:var(--font);outline:none;cursor:pointer}
+/* ── SIDEBAR ── */
+.logo-area{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.logo-icon{width:38px;height:38px;background:var(--teal);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.logo-text{font-size:15px;font-weight:900;color:#fff;letter-spacing:-0.3px;line-height:1.1}
+.logo-sub{font-size:10px;color:rgba(255,255,255,0.45);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-top:2px}
+.hosp-selector{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0}
+.hosp-select{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:var(--r2);padding:7px 10px;font-size:12px;color:#fff;font-family:var(--font);outline:none;cursor:pointer}
 .hosp-select option{background:var(--navy2);color:#fff}
-.nav-section{padding:10px 0 4px}
-.nav-label{font-size:10px;color:rgba(255,255,255,0.35);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;padding:0 20px 6px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.65);font-weight:600;position:relative;transition:all 0.2s;margin:1px 8px;border-radius:8px}
+.nav-section{padding:8px 0 2px;flex-shrink:0}
+.nav-label{font-size:10px;color:rgba(255,255,255,0.3);font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:0 18px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.6);font-weight:600;margin:1px 8px;border-radius:8px;transition:all 0.15s;position:relative}
 .nav-item:hover{background:rgba(255,255,255,0.08);color:#fff}
-.nav-item.active{background:var(--teal);color:#fff;box-shadow:0 2px 12px rgba(0,180,216,0.4)}
-.nav-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0}
-.nav-badge{margin-left:auto;background:rgba(255,80,80,0.9);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;min-width:20px;text-align:center}
-.sidebar-footer{margin-top:auto;padding:14px 12px;border-top:1px solid rgba(255,255,255,0.08)}
-.user-card{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.06);border-radius:var(--r2);padding:10px 12px}
-.user-av{width:36px;height:36px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.nav-item.active{background:var(--teal);color:#fff;box-shadow:0 2px 10px rgba(0,180,216,0.35)}
+.nav-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:rgba(255,80,80,0.9);color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:8px;min-width:18px;text-align:center}
+.nav-hidden{display:none}
+.sidebar-footer{margin-top:auto;padding:12px 10px;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0}
+.user-card{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,0.06);border-radius:var(--r2);padding:9px 10px;cursor:pointer}
+.user-av{width:34px;height:34px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
 .user-name{font-size:12px;font-weight:800;color:#fff;line-height:1.2}
-.user-role{font-size:10px;color:rgba(255,255,255,0.5);font-weight:600}
-.online-dot{width:9px;height:9px;border-radius:50%;background:#2DC653;margin-left:auto;flex-shrink:0;border:2px solid var(--navy);box-shadow:0 0 6px rgba(45,198,83,0.6)}
+.user-role-txt{font-size:10px;color:rgba(255,255,255,0.45);font-weight:600}
+.online-dot{width:8px;height:8px;border-radius:50%;background:var(--green);margin-left:auto;flex-shrink:0;border:2px solid var(--navy)}
+.logout-btn{width:100%;margin-top:8px;padding:8px;background:rgba(255,80,80,0.15);border:1px solid rgba(255,80,80,0.3);border-radius:var(--r2);color:rgba(255,150,150,0.9);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)}
 
-/* ══ TOPBAR ══ */
-.topbar{background:var(--white);border-bottom:2px solid var(--border);padding:0 28px;display:flex;align-items:center;gap:16px;height:68px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
-.topbar-menu{display:none;cursor:pointer;font-size:22px;color:var(--text2)}
+/* ── TOPBAR ── */
+.topbar{background:var(--white);border-bottom:2px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:14px;height:64px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.topbar-menu{display:none;cursor:pointer;font-size:20px;color:var(--text2)}
 @media(max-width:900px){.topbar-menu{display:block}}
-.topbar-brand{display:flex;align-items:center;gap:10px}
-.topbar-brand-icon{width:32px;height:32px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.topbar-brand{display:flex;align-items:center;gap:8px}
+.topbar-brand-icon{width:30px;height:30px;background:var(--navy);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px}
 .topbar-brand-name{font-size:15px;font-weight:900;color:var(--navy)}
-.topbar-sep{width:1px;height:32px;background:var(--border);margin:0 4px}
-.topbar-title{font-size:16px;font-weight:800;color:var(--text)}
-.topbar-sub{font-size:11px;color:var(--text3);font-weight:600;margin-top:2px}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
-.topbar-btn{width:38px;height:38px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;position:relative;transition:all 0.15s}
-.topbar-btn:hover{background:var(--bg2);border-color:var(--border2)}
-.notif-dot{position:absolute;top:5px;right:5px;width:9px;height:9px;background:#FF4545;border-radius:50%;border:2px solid #fff}
-.live-badge{display:flex;align-items:center;gap:5px;background:linear-gradient(135deg,#E8F8EE,#D0F2DC);border:1.5px solid #A8DFBB;border-radius:20px;padding:6px 14px;font-size:11px;font-weight:800;color:#1A7A3A}
-.live-dot{width:7px;height:7px;background:#2DC653;border-radius:50%;animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.8)}}
+.topbar-sep{width:1px;height:28px;background:var(--border)}
+.topbar-title{font-size:15px;font-weight:800;color:var(--text)}
+.topbar-sub{font-size:11px;color:var(--text3);font-weight:600;margin-top:1px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-btn{width:36px;height:36px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;position:relative}
+.topbar-btn:hover{background:var(--bg2)}
+.notif-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;background:#FF4545;border-radius:50%;border:2px solid #fff}
+.live-badge{display:flex;align-items:center;gap:4px;background:#E8F8EE;border:1.5px solid #A8DFBB;border-radius:18px;padding:5px 12px;font-size:11px;font-weight:800;color:#1A7A3A}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 
-/* ══ CONTENT ══ */
-.page-content{padding:28px;flex:1}
+/* ── CONTENT ── */
+.page-content{padding:24px;flex:1}
 .page{display:none}
 .page.active{display:block}
 
-/* ══ WELCOME BANNER ══ */
-.welcome-banner{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 50%,var(--navy3) 100%);border-radius:var(--r);padding:24px 28px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow2);position:relative;overflow:hidden}
-.welcome-banner::before{content:'';position:absolute;right:-20px;top:-20px;width:200px;height:200px;background:rgba(0,180,216,0.08);border-radius:50%}
-.welcome-banner::after{content:'';position:absolute;right:60px;bottom:-40px;width:150px;height:150px;background:rgba(0,180,216,0.05);border-radius:50%}
+/* ── WELCOME BANNER ── */
+.welcome-banner{background:linear-gradient(135deg,var(--navy) 0%,var(--navy3) 100%);border-radius:var(--r);padding:22px 26px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow2);position:relative;overflow:hidden}
+.welcome-banner::before{content:'';position:absolute;right:-20px;top:-20px;width:180px;height:180px;background:rgba(0,180,216,0.07);border-radius:50%}
 .wb-text{position:relative;z-index:1}
-.wb-hi{font-size:13px;color:rgba(255,255,255,0.6);font-weight:600;margin-bottom:4px}
-.wb-name{font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.3px}
+.wb-hi{font-size:13px;color:rgba(255,255,255,0.55);font-weight:600;margin-bottom:3px}
+.wb-name{font-size:20px;font-weight:900;color:#fff;letter-spacing:-0.3px}
 .wb-name span{color:var(--teal)}
-.wb-date{font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;font-weight:600}
-.wb-right{display:flex;gap:10px;position:relative;z-index:1}
-.wb-btn{padding:10px 20px;border-radius:var(--r3);font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:var(--font);transition:all 0.2s}
-.wb-btn-primary{background:var(--teal);color:#fff;box-shadow:0 2px 12px rgba(0,180,216,0.4)}
-.wb-btn-primary:hover{background:var(--teal2);transform:translateY(-1px)}
-.wb-btn-secondary{background:rgba(255,255,255,0.12);color:#fff;border:1.5px solid rgba(255,255,255,0.2)}
-.wb-btn-secondary:hover{background:rgba(255,255,255,0.2)}
+.wb-date{font-size:11px;color:rgba(255,255,255,0.45);margin-top:3px;font-weight:600}
+.wb-right{display:flex;gap:8px;position:relative;z-index:1;flex-wrap:wrap}
+.wb-btn{padding:9px 18px;border-radius:var(--r3);font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:var(--font);transition:all 0.2s}
+.wb-btn-primary{background:var(--teal);color:#fff;box-shadow:0 2px 10px rgba(0,180,216,0.4)}
+.wb-btn-secondary{background:rgba(255,255,255,0.1);color:#fff;border:1.5px solid rgba(255,255,255,0.2)}
 
-/* ══ STATS ══ */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.stat-card{background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);border:1.5px solid var(--border);cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
-.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow2);border-color:var(--teal)}
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:900px){.stats-grid{grid-template-columns:1fr 1fr}}
+.stat-card{background:var(--card);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);border:1.5px solid var(--border);cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow2)}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0}
-.stat-card.sc-green::before{background:linear-gradient(90deg,#2DC653,#00B4D8)}
-.stat-card.sc-blue::before{background:linear-gradient(90deg,#3A6BC2,#00B4D8)}
-.stat-card.sc-red::before{background:linear-gradient(90deg,#FF6B6B,#FF4545)}
-.stat-card.sc-purple::before{background:linear-gradient(90deg,#7C5CBF,#A855F7)}
-.stat-icon-wrap{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+.sc-green::before{background:linear-gradient(90deg,#2DC653,#00B4D8)}
+.sc-blue::before{background:linear-gradient(90deg,#3A6BC2,#00B4D8)}
+.sc-red::before{background:linear-gradient(90deg,#E53E3E,#FF6B6B)}
+.sc-purple::before{background:linear-gradient(90deg,#7C5CBF,#A855F7)}
+.sc-orange::before{background:linear-gradient(90deg,#F78C00,#E53E3E)}
+.stat-icon-wrap{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px}
 .si-green{background:linear-gradient(135deg,#E8F8EE,#D0F2DC)}
 .si-blue{background:linear-gradient(135deg,#E8F0FF,#D0DEFF)}
 .si-red{background:linear-gradient(135deg,#FFF0F0,#FFE0E0)}
 .si-purple{background:linear-gradient(135deg,#F5F0FF,#EAE0FF)}
-.stat-label{font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px}
-.stat-value{font-size:28px;font-weight:900;color:var(--text);letter-spacing:-0.5px;line-height:1}
-.stat-change{font-size:12px;margin-top:6px;font-weight:700}
+.si-orange{background:linear-gradient(135deg,#FFF5E8,#FFE0C0)}
+.stat-label{font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:5px}
+.stat-value{font-size:26px;font-weight:900;color:var(--text);letter-spacing:-0.5px;line-height:1}
+.stat-change{font-size:11px;margin-top:5px;font-weight:700}
 .stat-change.up{color:var(--green)}
-.stat-change.down{color:#FF4545}
+.stat-change.down{color:var(--red)}
 .stat-change.neutral{color:var(--text3)}
 
-/* ══ MODULES GRID (ClinicPlus style cards) ══ */
-.modules-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
-.module-card{border-radius:var(--r);padding:22px 20px;cursor:pointer;transition:all 0.25s;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;box-shadow:var(--shadow2)}
-.module-card::after{content:'';position:absolute;bottom:-20px;right:-20px;width:100px;height:100px;background:rgba(255,255,255,0.06);border-radius:50%}
-.module-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.25)}
-.module-card:active{transform:translateY(-1px)}
-.mc-icon{font-size:30px;line-height:1;position:relative;z-index:1}
-.mc-title{font-size:15px;font-weight:900;color:#fff;position:relative;z-index:1;letter-spacing:-0.2px}
-.mc-desc{font-size:11px;color:rgba(255,255,255,0.7);line-height:1.5;flex:1;position:relative;z-index:1;font-weight:600}
-.mc-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);border-radius:var(--r3);padding:8px 16px;font-size:12px;font-weight:800;color:#fff;cursor:pointer;font-family:var(--font);transition:all 0.2s;margin-top:4px;position:relative;z-index:1;width:fit-content}
+/* ── MODULES GRID ── */
+.modules-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+@media(max-width:900px){.modules-grid{grid-template-columns:1fr 1fr}}
+.module-card{border-radius:var(--r);padding:20px 18px;cursor:pointer;transition:all 0.25s;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;box-shadow:var(--shadow2)}
+.module-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,0.22)}
+.mc-icon{font-size:28px;line-height:1;position:relative;z-index:1}
+.mc-title{font-size:14px;font-weight:900;color:#fff;position:relative;z-index:1}
+.mc-desc{font-size:11px;color:rgba(255,255,255,0.68);line-height:1.45;flex:1;position:relative;z-index:1;font-weight:600}
+.mc-btn{display:inline-flex;align-items:center;background:rgba(255,255,255,0.14);border:1.5px solid rgba(255,255,255,0.22);border-radius:var(--r3);padding:7px 14px;font-size:11px;font-weight:800;color:#fff;cursor:pointer;font-family:var(--font);transition:all 0.15s;margin-top:2px;position:relative;z-index:1;width:fit-content}
 .mc-btn:hover{background:rgba(255,255,255,0.25)}
 
-/* ══ SECTION CARDS ══ */
-.card{background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);border:1.5px solid var(--border);margin-bottom:20px}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-.card-title{font-size:15px;font-weight:800;color:var(--text)}
-.card-action{font-size:12px;color:var(--teal);font-weight:800;cursor:pointer;background:none;border:none;font-family:var(--font);padding:6px 14px;border-radius:20px;background:linear-gradient(135deg,#E8F8FD,#D0F0F8);border:1.5px solid #A8DFF0}
+/* ── CARDS ── */
+.card{background:var(--card);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);border:1.5px solid var(--border);margin-bottom:18px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.card-title{font-size:14px;font-weight:800;color:var(--text)}
+.card-action{font-size:12px;color:var(--teal);font-weight:800;cursor:pointer;background:#E8F8FD;border:1.5px solid #A8DFF0;border-radius:16px;padding:5px 12px;font-family:var(--font)}
 .card-action:hover{background:var(--teal);color:#fff}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}}
 
-/* ══ TABLE ══ */
+/* ── TABLE ── */
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13px;font-family:var(--font2)}
-th{text-align:left;padding:10px 14px;color:var(--text3);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;border-bottom:2px solid var(--border);background:var(--bg);white-space:nowrap}
-th:first-child{border-radius:8px 0 0 0}
-th:last-child{border-radius:0 8px 0 0}
-td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+th{text-align:left;padding:9px 12px;color:var(--text3);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid var(--border);background:var(--bg);white-space:nowrap}
+td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#F8FBFF}
 .td-name{font-weight:700;color:var(--navy)}
 .td-sub{font-size:11px;color:var(--text3);margin-top:2px;font-weight:600}
 
-/* ══ BADGES ══ */
-.badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;white-space:nowrap}
-.b-paid{background:#E8F8EE;color:#1A7A3A;border:1px solid #A8DFBB}
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:16px;font-size:11px;font-weight:800;white-space:nowrap}
+.b-paid,.b-completed{background:#E8F8EE;color:#1A7A3A;border:1px solid #A8DFBB}
 .b-pending{background:#FFF8E8;color:#8A6000;border:1px solid #FFDB88}
-.b-overdue{background:#FFF0F0;color:#CC2200;border:1px solid #FFAAAA}
-.b-admitted{background:#E8F0FF;color:#1A3A8A;border:1px solid #A8BFFF}
-.b-active{background:#E8F5FF;color:#005A8A;border:1px solid #A8DAFF}
-.b-completed{background:#E8F8EE;color:#1A7A3A;border:1px solid #A8DFBB}
-.b-discharged{background:#F0F0F0;color:#666;border:1px solid #CCC}
-.b-critical{background:#FFF0F0;color:#CC0000;border:1px solid #FF9999}
+.b-overdue,.b-critical{background:#FFF0F0;color:#CC2200;border:1px solid #FFAAAA}
+.b-admitted,.b-active,.b-inpatient{background:#E8F0FF;color:#1A3A8A;border:1px solid #A8BFFF}
 .b-outpatient{background:#F0EAFF;color:#5A0FA0;border:1px solid #C8A8FF}
-.b-inpatient{background:#E8F0FF;color:#1A3A8A;border:1px solid #A8BFFF}
 .b-emergency{background:#FFF0F0;color:#CC0000;border:1px solid #FF9999}
+.b-discharged{background:#F0F0F0;color:#666;border:1px solid #CCC}
 .b-partial{background:#E8F5FF;color:#005A8A;border:1px solid #A8DAFF}
 .b-lab{background:#EAF5E8;color:#2A6A1A;border:1px solid #A8D8A0}
 .b-pharmacy{background:#FFF5E8;color:#8A4400;border:1px solid #FFD0A0}
+.b-normal{background:#E8F8EE;color:#1A7A3A;border:1px solid #A8DFBB}
+.b-high{background:#FFF0F0;color:#CC2200;border:1px solid #FFAAAA}
+.b-low{background:#FFF8E8;color:#8A6000;border:1px solid #FFDB88}
 
-/* ══ BUTTONS ══ */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:var(--r3);font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:var(--font);transition:all 0.2s}
-.btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;box-shadow:0 2px 12px rgba(0,180,216,0.35)}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,180,216,0.5)}
-.btn-green{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;box-shadow:0 2px 12px rgba(45,198,83,0.3)}
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 18px;border-radius:var(--r3);font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:var(--font);transition:all 0.15s}
+.btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;box-shadow:0 2px 10px rgba(0,180,216,0.3)}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-green{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff}
+.btn-navy{background:var(--navy);color:#fff}
 .btn-secondary{background:var(--bg);border:1.5px solid var(--border);color:var(--text2)}
 .btn-secondary:hover{border-color:var(--teal);color:var(--teal)}
-.btn-danger{background:#FFF0F0;border:1.5px solid #FFAAAA;color:#CC2200}
+.btn-danger{background:#FFF0F0;border:1.5px solid var(--red3);color:var(--red)}
 .btn-sm{padding:6px 12px;font-size:12px}
-.btn-navy{background:var(--navy);color:#fff}
-.btn-navy:hover{background:var(--navy2)}
+.btn-warning{background:var(--yellow2);border:1.5px solid var(--yellow3);color:var(--yellow)}
 
-/* ══ FORMS ══ */
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+/* ── FORMS ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 @media(max-width:600px){.form-grid,.form-grid-3{grid-template-columns:1fr}}
-.form-group{display:flex;flex-direction:column;gap:7px}
-.form-label{font-size:11px;color:var(--text2);font-weight:800;text-transform:uppercase;letter-spacing:0.6px}
-.form-input,.form-select,.form-textarea{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:10px 14px;font-size:13px;color:var(--text);font-family:var(--font);outline:none;transition:all 0.2s;width:100%;font-weight:600}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:11px;color:var(--text2);font-weight:800;text-transform:uppercase;letter-spacing:0.5px}
+.form-input,.form-select,.form-textarea{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:10px 13px;font-size:13px;color:var(--text);font-family:var(--font);outline:none;transition:all 0.2s;width:100%;font-weight:600}
 .form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px rgba(0,180,216,0.1)}
-.form-textarea{resize:vertical;min-height:80px}
-.form-section-title{font-size:13px;font-weight:800;color:var(--navy);padding:16px 0 10px;border-top:2px solid var(--border);margin-top:8px;text-transform:uppercase;letter-spacing:0.5px}
+.form-textarea{resize:vertical;min-height:78px}
+.form-section-title{font-size:12px;font-weight:800;color:var(--navy);padding:14px 0 8px;border-top:2px solid var(--border);margin-top:6px;text-transform:uppercase;letter-spacing:0.5px}
+/* Drug autocomplete */
+.drug-wrap{position:relative}
+.drug-results{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--teal);border-top:none;border-radius:0 0 var(--r2) var(--r2);max-height:200px;overflow-y:auto;z-index:300;display:none;box-shadow:var(--shadow2)}
+.drug-item{padding:9px 13px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);transition:background 0.1s}
+.drug-item:hover{background:var(--bg2)}
+.drug-item strong{color:var(--navy);font-size:13px;display:block;font-weight:700}
+.drug-item span{color:var(--text3);font-size:11px}
 
-/* ══ MODAL ══ */
-.modal-overlay{position:fixed;inset:0;background:rgba(10,20,40,0.75);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,20,40,0.75);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}
 .modal-overlay.open{display:flex}
-.modal{background:var(--white);border-radius:16px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
-.modal::-webkit-scrollbar{width:5px}
-.modal::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-.modal-header{padding:20px 24px;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}
-.modal-icon{font-size:24px;margin-right:10px}
-.modal-title{font-size:17px;font-weight:900;color:var(--navy);display:flex;align-items:center}
-.modal-close{width:34px;height:34px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border);cursor:pointer;font-size:18px;color:var(--text2);display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.modal::-webkit-scrollbar{width:4px}
+.modal::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.modal-header{padding:18px 22px;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}
+.modal-title{font-size:16px;font-weight:900;color:var(--navy);display:flex;align-items:center;gap:8px}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--bg);border:1.5px solid var(--border);cursor:pointer;font-size:17px;color:var(--text2);display:flex;align-items:center;justify-content:center}
 .modal-close:hover{background:var(--navy);color:#fff}
-.modal-body{padding:22px 24px;display:flex;flex-direction:column;gap:16px}
-.modal-footer{padding:18px 24px;border-top:2px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:#FAFCFF;border-radius:0 0 16px 16px}
+.modal-body{padding:20px 22px;display:flex;flex-direction:column;gap:14px}
+.modal-footer{padding:16px 22px;border-top:2px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:#FAFCFF;border-radius:0 0 16px 16px}
 
-/* ══ ALERT BANNERS ══ */
-.alert-bar{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:var(--r2);margin-bottom:16px;font-size:13px;font-weight:700}
-.alert-bar.warning{background:linear-gradient(135deg,#FFF9E8,#FFF3D0);border:1.5px solid #FFD080;color:#7A5000}
-.alert-bar.danger{background:linear-gradient(135deg,#FFF4F4,#FFE8E8);border:1.5px solid #FFAAAA;color:#AA1500}
-.alert-bar.success{background:linear-gradient(135deg,#F0FFF5,#E0FFEC);border:1.5px solid #88DFA8;color:#0A5A20}
+/* ── ALERTS ── */
+.alert-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--r2);margin-bottom:14px;font-size:13px;font-weight:700}
+.alert-bar.warning{background:var(--yellow2);border:1.5px solid var(--yellow3);color:#7A5000}
+.alert-bar.danger{background:var(--red2);border:1.5px solid var(--red3);color:#AA1500}
+.alert-bar.success{background:#F0FFF5;border:1.5px solid #88DFA8;color:#0A5A20}
+.alert-bar.info{background:#E8F5FF;border:1.5px solid #A8DAFF;color:#005A8A}
 
-/* ══ CHART ══ */
-.chart-bars{display:flex;align-items:flex-end;gap:6px;height:110px;margin-top:8px}
-.cbar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%}
-.cbar{width:100%;border-radius:6px 6px 0 0;min-height:4px;transition:height 0.6s ease;cursor:pointer}
+/* ── CHART ── */
+.chart-bars{display:flex;align-items:flex-end;gap:5px;height:100px;margin-top:8px}
+.cbar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%}
+.cbar{width:100%;border-radius:5px 5px 0 0;min-height:4px;transition:height 0.6s ease;cursor:pointer}
 .cbar.active{background:linear-gradient(180deg,var(--teal),var(--teal2))}
 .cbar.inactive{background:var(--bg2);border:1px solid var(--border)}
-.cbar:hover{opacity:0.8}
-.cbar-lbl{font-size:10px;color:var(--text3);font-weight:700}
+.cbar-lbl{font-size:9px;color:var(--text3);font-weight:700}
 
-/* ══ BREAKDOWN ══ */
-.bkd-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+/* ── BREAKDOWN ── */
+.bkd-item{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)}
 .bkd-item:last-child{border-bottom:none}
-.bkd-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.bkd-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .bkd-name{flex:1;font-size:13px;color:var(--text);font-weight:700}
-.bkd-bar-bg{width:80px;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden}
+.bkd-bar-bg{width:72px;height:5px;background:var(--bg2);border-radius:3px;overflow:hidden}
 .bkd-bar-fg{height:100%;border-radius:3px}
-.bkd-amt{font-size:13px;font-weight:800;color:var(--navy);min-width:60px;text-align:right}
-.bkd-pct{font-size:11px;color:var(--text3);min-width:32px;text-align:right;font-weight:700}
+.bkd-amt{font-size:12px;font-weight:800;color:var(--navy);min-width:56px;text-align:right}
+.bkd-pct{font-size:11px;color:var(--text3);min-width:28px;text-align:right;font-weight:700}
 
-/* ══ TOAST ══ */
-.toast{position:fixed;bottom:28px;right:28px;background:var(--navy);border-radius:12px;padding:14px 20px;font-size:13px;font-weight:700;color:#fff;z-index:1000;transform:translateY(100px);opacity:0;transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1);display:flex;align-items:center;gap:10px;max-width:340px;box-shadow:0 8px 30px rgba(27,42,74,0.3)}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);border-radius:12px;padding:13px 18px;font-size:13px;font-weight:700;color:#fff;z-index:1000;transform:translateY(80px);opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);display:flex;align-items:center;gap:8px;max-width:320px;box-shadow:0 8px 28px rgba(27,42,74,0.25)}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{background:linear-gradient(135deg,#1A7A3A,#2DC653)}
-.toast.error{background:linear-gradient(135deg,#AA1500,#FF4545)}
+.toast.error{background:linear-gradient(135deg,#AA1500,#E53E3E)}
+.toast.warning{background:linear-gradient(135deg,#8A5000,#D69E2E)}
 
-/* ══ LOADING / EMPTY ══ */
-.loading{display:flex;align-items:center;justify-content:center;padding:48px;color:var(--text3);gap:12px;font-size:13px;font-weight:700}
-.spinner{width:22px;height:22px;border:2.5px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite}
+/* ── LOADING / EMPTY ── */
+.loading{display:flex;align-items:center;justify-content:center;padding:44px;color:var(--text3);gap:10px;font-size:13px;font-weight:700}
+.spinner{width:20px;height:20px;border:2.5px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 20px;color:var(--text3);gap:12px;font-size:14px;font-weight:700}
-.empty-icon{font-size:48px;opacity:0.35}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 20px;color:var(--text3);gap:10px;font-size:14px;font-weight:700;text-align:center}
+.empty-icon{font-size:44px;opacity:0.3}
 .empty-sub{font-size:12px;font-weight:600;color:var(--text3)}
 
-/* ══ PAGE HEADER ══ */
-.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
-.page-title{font-size:24px;font-weight:900;color:var(--navy);letter-spacing:-0.5px}
-.page-sub{font-size:13px;color:var(--text3);margin-top:3px;font-weight:600}
+/* ── PAGE HEADER ── */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.page-title{font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-0.4px}
+.page-sub{font-size:12px;color:var(--text3);margin-top:3px;font-weight:600}
+.page-actions{display:flex;gap:8px;flex-wrap:wrap}
 
-/* ══ SEARCH ══ */
-.search-bar{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r3);padding:10px 16px;margin-bottom:18px;box-shadow:var(--shadow)}
+/* ── SEARCH ── */
+.search-bar{display:flex;align-items:center;gap:9px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r3);padding:9px 15px;margin-bottom:16px;box-shadow:var(--shadow)}
 .search-bar:focus-within{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,180,216,0.1)}
 .search-bar input{background:none;border:none;outline:none;font-size:13px;color:var(--text);flex:1;font-family:var(--font);font-weight:600}
 .search-bar input::placeholder{color:var(--text3)}
 
-/* ══ INV ITEMS ══ */
-.inv-bar-bg{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden;margin-top:5px}
-.inv-bar-fg{height:100%;border-radius:4px;transition:width 0.5s}
+/* ── VITALS ── */
+.vitals-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.vital-box{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center}
+.vital-label{font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:6px}
+.vital-value{font-size:20px;font-weight:900;color:var(--navy)}
+.vital-unit{font-size:11px;color:var(--text3);font-weight:600}
+.vital-normal{color:var(--green)}
+.vital-high{color:var(--red)}
+.vital-low{color:var(--yellow)}
 
-/* ══ GRID ══ */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
-@media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+/* ── SOAP NOTES ── */
+.soap-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.soap-section{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:14px}
+.soap-letter{font-size:22px;font-weight:900;color:var(--teal);margin-bottom:4px;line-height:1}
+.soap-name{font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+.soap-textarea{width:100%;background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;color:var(--text);font-family:var(--font);outline:none;resize:vertical;min-height:70px;font-weight:600}
+.soap-textarea:focus{border-color:var(--teal)}
 
-/* SCROLLBAR */
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+/* ── WAITING QUEUE ── */
+.queue-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r2);margin-bottom:8px;cursor:pointer;transition:all 0.2s}
+.queue-item:hover{border-color:var(--teal);box-shadow:var(--shadow)}
+.queue-item.priority-urgent{border-left:4px solid var(--red)}
+.queue-item.priority-normal{border-left:4px solid var(--teal)}
+.queue-num{width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0}
+.queue-info{flex:1}
+.queue-name{font-size:13px;font-weight:800;color:var(--navy)}
+.queue-meta{font-size:11px;color:var(--text3);font-weight:600;margin-top:2px}
+.queue-wait{font-size:13px;font-weight:800;color:var(--teal);text-align:right;white-space:nowrap}
+.queue-wait.long{color:var(--red)}
 
-/* ══ PATIENT AVATAR ══ */
-.pt-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.12)}
+/* ── INVENTORY BAR ── */
+.inv-bar-bg{height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-top:4px}
+.inv-bar-fg{height:100%;border-radius:3px;transition:width 0.5s}
+
+/* ── PATIENT AVATAR ── */
+.pt-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
 .av1{background:linear-gradient(135deg,#3A6BC2,#00B4D8);color:#fff}
 .av2{background:linear-gradient(135deg,#2DC653,#00B4D8);color:#fff}
 .av3{background:linear-gradient(135deg,#A855F7,#7C5CBF);color:#fff}
-.av4{background:linear-gradient(135deg,#FF6B6B,#FF8E53);color:#fff}
+.av4{background:linear-gradient(135deg,#F78C00,#E53E3E);color:#fff}
 
-/* ══ REVENUE DISPLAY ══ */
-.rev-total{font-size:32px;font-weight:900;letter-spacing:-1px;color:var(--navy)}
-.rev-sub{font-size:12px;color:var(--text3);margin-top:3px;font-weight:700}
-.rev-up{display:inline-flex;align-items:center;gap:4px;background:#E8F8EE;color:#1A7A3A;font-weight:800;font-size:13px;padding:4px 10px;border-radius:20px;border:1px solid #88DFA8}
+/* ── AUDIT ── */
+.audit-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.audit-item:last-child{border-bottom:none}
+.audit-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:4px}
+.audit-content{flex:1;font-size:12px;color:var(--text);line-height:1.5}
+.audit-time{font-size:11px;color:var(--text3);white-space:nowrap;font-weight:600}
+
+/* ── PRINT STYLES ── */
+@media print{
+  .sidebar,.topbar,.modal-overlay,.toast,.page-actions,.btn,.nav-item,.wb-right{display:none!important}
+  .main{margin-left:0!important}
+  .page-content{padding:0!important}
+  body{background:#fff}
+  .print-invoice{display:block!important}
+}
+.print-invoice{display:none}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 </style>
 </head>
 <body>
-<div class="app">
 
-<!-- ══ SIDEBAR ══ -->
-<div class="sidebar" id="sidebar">
-  <div class="logo-area">
-    <div class="logo-icon">🏥</div>
-    <div><div class="logo-text">MediTrack Pro</div><div class="logo-sub">Hospital Management</div></div>
-  </div>
-  <div class="hosp-selector">
-    <select class="hosp-select" id="hosp-select" onchange="switchHospital(this.value)">
-      <option value="">Loading hospitals...</option>
-    </select>
-  </div>
-  <div class="nav-section">
-    <div class="nav-label">Main</div>
-    <div class="nav-item active" onclick="showPage('dashboard',this)" data-page="dashboard"><span class="nav-icon">🏠</span>Dashboard</div>
-    <div class="nav-item" onclick="showPage('outpatient',this)" data-page="outpatient"><span class="nav-icon">🚶</span>Outpatient</div>
-    <div class="nav-item" onclick="showPage('inpatient',this)" data-page="inpatient"><span class="nav-icon">🛏️</span>Inpatient</div>
-    <div class="nav-item" onclick="showPage('patients',this)" data-page="patients"><span class="nav-icon">👥</span>All Patients</div>
-  </div>
-  <div class="nav-section">
-    <div class="nav-label">Departments</div>
-    <div class="nav-item" onclick="showPage('lab',this)" data-page="lab"><span class="nav-icon">🔬</span>Laboratory</div>
-    <div class="nav-item" onclick="showPage('pharmacy',this)" data-page="pharmacy"><span class="nav-icon">💊</span>Pharmacy</div>
-    <div class="nav-item" onclick="showPage('inventory',this)" data-page="inventory"><span class="nav-icon">📦</span>Inventory</div>
-  </div>
-  <div class="nav-section">
-    <div class="nav-label">Finance & Admin</div>
-    <div class="nav-item" onclick="showPage('billing',this)" data-page="billing"><span class="nav-icon">🧾</span>Billing <span class="nav-badge" id="overdue-badge" style="display:none">0</span></div>
-    <div class="nav-item" onclick="showPage('reports',this)" data-page="reports"><span class="nav-icon">📊</span>Reports</div>
-    <div class="nav-item" onclick="showPage('staff',this)" data-page="staff"><span class="nav-icon">👨‍⚕️</span>Staff</div>
-    <div class="nav-item" onclick="showPage('hospitals',this)" data-page="hospitals"><span class="nav-icon">🏗️</span>Hospitals</div>
-  </div>
-  <div class="sidebar-footer">
-    <div class="user-card">
-      <div class="user-av">DO</div>
-      <div><div class="user-name">Dr. David Okello</div><div class="user-role">Administrator</div></div>
-      <div class="online-dot"></div>
+<!-- ══════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">🏥</div>
+      <div class="login-logo-text">MediTrack Pro</div>
+    </div>
+    <div class="login-title">Sign in to your account</div>
+    <div class="login-sub">Hospital Management System</div>
+    <div class="login-error" id="login-error">Invalid email or password</div>
+    <div class="login-form">
+      <div>
+        <label class="login-label">Email address</label>
+        <input class="login-input" id="login-email" type="email" placeholder="you@hospital.com" autocomplete="email">
+      </div>
+      <div>
+        <label class="login-label">Password</label>
+        <input class="login-input" id="login-password" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="login-btn" onclick="doLogin()">Sign In →</button>
+    </div>
+    <div class="login-demo">
+      <strong>Demo accounts:</strong><br>
+      admin@meditrack.pro / admin123 (Administrator)<br>
+      doctor@meditrack.pro / doctor123 (Doctor)<br>
+      nurse@meditrack.pro / nurse123 (Nurse)<br>
+      pharmacy@meditrack.pro / pharmacy123 (Pharmacist)
     </div>
   </div>
 </div>
 
-<!-- ══ MAIN ══ -->
+<!-- ══════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════ -->
+<div id="app-screen">
+<div class="app">
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="logo-area">
+    <div class="logo-icon">🏥</div>
+    <div><div class="logo-text">MediTrack Pro</div><div class="logo-sub">HMS v2.0</div></div>
+  </div>
+  <div class="hosp-selector">
+    <select class="hosp-select" id="hosp-select" onchange="switchHospital(this.value)">
+      <option>Loading...</option>
+    </select>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)" data-page="dashboard" data-roles="all"><span class="nav-icon">🏠</span>Dashboard</div>
+    <div class="nav-item" onclick="showPage('queue',this)" data-page="queue" data-roles="admin,doctor,nurse,receptionist"><span class="nav-icon">🚦</span>OPD Queue <span class="nav-badge" id="queue-badge" style="display:none">0</span></div>
+    <div class="nav-item" onclick="showPage('outpatient',this)" data-page="outpatient" data-roles="admin,doctor,nurse,receptionist"><span class="nav-icon">🚶</span>Outpatient</div>
+    <div class="nav-item" onclick="showPage('inpatient',this)" data-page="inpatient" data-roles="admin,doctor,nurse"><span class="nav-icon">🛏️</span>Inpatient</div>
+    <div class="nav-item" onclick="showPage('patients',this)" data-page="patients" data-roles="all"><span class="nav-icon">👥</span>All Patients</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Clinical</div>
+    <div class="nav-item" onclick="showPage('nursestation',this)" data-page="nursestation" data-roles="admin,nurse,doctor"><span class="nav-icon">🩺</span>Nurse Station</div>
+    <div class="nav-item" onclick="showPage('consultation',this)" data-page="consultation" data-roles="admin,doctor"><span class="nav-icon">🧑‍⚕️</span>Consultation Desk</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Departments</div>
+    <div class="nav-item" onclick="showPage('lab',this)" data-page="lab" data-roles="admin,lab,doctor"><span class="nav-icon">🔬</span>Laboratory</div>
+    <div class="nav-item" onclick="showPage('pharmacy',this)" data-page="pharmacy" data-roles="admin,pharmacist,doctor"><span class="nav-icon">💊</span>Pharmacy <span class="nav-badge" id="rx-queue-badge" style="display:none">0</span></div>
+    <div class="nav-item" onclick="showPage('inventory',this)" data-page="inventory" data-roles="admin,pharmacist"><span class="nav-icon">📦</span>Inventory</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Finance & Admin</div>
+    <div class="nav-item" onclick="showPage('billing',this)" data-page="billing" data-roles="admin,billing,receptionist"><span class="nav-icon">🧾</span>Billing <span class="nav-badge" id="overdue-badge" style="display:none">0</span></div>
+    <div class="nav-item" onclick="showPage('reports',this)" data-page="reports" data-roles="admin"><span class="nav-icon">📊</span>Reports</div>
+    <div class="nav-item" onclick="showPage('audit',this)" data-page="audit" data-roles="admin"><span class="nav-icon">🔍</span>Audit Trail</div>
+    <div class="nav-item" onclick="showPage('staff',this)" data-page="staff" data-roles="admin"><span class="nav-icon">👨‍⚕️</span>Staff</div>
+    <div class="nav-item" onclick="showPage('hospitals',this)" data-page="hospitals" data-roles="admin"><span class="nav-icon">🏗️</span>Hospitals</div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card" id="user-card-info">
+      <div class="user-av" id="user-av-initials">--</div>
+      <div>
+        <div class="user-name" id="user-display-name">Loading...</div>
+        <div class="user-role-txt" id="user-display-role">—</div>
+      </div>
+      <div class="online-dot"></div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+  </div>
+</div>
+
+<!-- MAIN -->
 <div class="main">
   <div class="topbar">
     <span class="topbar-menu" onclick="toggleSidebar()">☰</span>
     <div class="topbar-brand">
       <div class="topbar-brand-icon">🏥</div>
-      <div><div class="topbar-brand-name">MediTrack Pro</div></div>
+      <div class="topbar-brand-name">MediTrack Pro</div>
     </div>
     <div class="topbar-sep"></div>
     <div>
       <div class="topbar-title" id="topbar-title">Dashboard</div>
-      <div class="topbar-sub" id="topbar-sub">ICURE Medical Centre · Main Branch</div>
+      <div class="topbar-sub" id="topbar-sub">Loading...</div>
     </div>
     <div class="topbar-right">
       <div class="live-badge"><div class="live-dot"></div>Live</div>
@@ -357,12 +460,12 @@ tr:hover td{background:#F8FBFF}
 
   <div class="page-content">
 
-    <!-- ══ DASHBOARD ══ -->
+    <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
       <div class="welcome-banner">
         <div class="wb-text">
-          <div class="wb-hi">Good day, Doctor 👋</div>
-          <div class="wb-name">Hi <span>Dr. David Okello</span>, welcome back to MediTrack!</div>
+          <div class="wb-hi">Welcome back 👋</div>
+          <div class="wb-name">Hi <span id="dash-welcome-name">Doctor</span>, good to see you!</div>
           <div class="wb-date" id="dash-date"></div>
         </div>
         <div class="wb-right">
@@ -370,64 +473,16 @@ tr:hover td{background:#F8FBFF}
           <button class="wb-btn wb-btn-primary" onclick="openModal('modal-patient')">➕ New Patient</button>
         </div>
       </div>
-
       <div id="dash-alerts"></div>
-      <div class="stats-grid" id="dash-stats"><div class="loading"><div class="spinner"></div>Loading stats...</div></div>
-
-      <!-- Module cards exactly like ClinicPlus -->
-      <div style="font-size:15px;font-weight:900;color:var(--navy);margin-bottom:14px;letter-spacing:-0.2px">Quick Access</div>
-      <div class="modules-grid">
-        <div class="module-card" style="background:linear-gradient(135deg,var(--mod1),#3A5EA0)" onclick="showPage('reports',document.querySelector('[data-page=reports]'))">
-          <div class="mc-icon">📊</div><div class="mc-title">System Dashboard</div>
-          <div class="mc-desc">At-a-glance view data through a combination of visualizations and summary information.</div>
-          <button class="mc-btn">Go to Dashboard →</button>
-        </div>
-        <div class="module-card" style="background:linear-gradient(135deg,var(--mod2),#5588D8)" onclick="showPage('outpatient',document.querySelector('[data-page=outpatient]'))">
-          <div class="mc-icon">🚶</div><div class="mc-title">Outpatient Section</div>
-          <div class="mc-desc">Patient who come to ICURE with no plan to stay beyond the duration of the visit.</div>
-          <button class="mc-btn">Go to Outpatient →</button>
-        </div>
-        <div class="module-card" style="background:linear-gradient(135deg,var(--mod3),#3D9FBF)" onclick="showPage('inpatient',document.querySelector('[data-page=inpatient]'))">
-          <div class="mc-icon">🛏️</div><div class="mc-title">Inpatient Section</div>
-          <div class="mc-desc">Patients admitted to stay in a hospital overnight or for an indeterminate time, usually several days.</div>
-          <button class="mc-btn">Go to Inpatient →</button>
-        </div>
-        <div class="module-card" style="background:linear-gradient(135deg,var(--mod4),#2A9A80)" onclick="showPage('staff',document.querySelector('[data-page=staff]'))">
-          <div class="mc-icon">👨‍⚕️</div><div class="mc-title">Doctor's Section</div>
-          <div class="mc-desc">For special & general healthcare services like health education, radiology, physiotherapy, procedures.</div>
-          <button class="mc-btn">Go to Doctors →</button>
-        </div>
-        <div class="module-card" style="background:linear-gradient(135deg,var(--mod5),#4A70C0)" onclick="showPage('billing',document.querySelector('[data-page=billing]'))">
-          <div class="mc-icon">🧾</div><div class="mc-title">Accounting Section</div>
-          <div class="mc-desc">View, generate and clear patients bill for all insured and not insured patients.</div>
-          <button class="mc-btn">Go to Accounts →</button>
-        </div>
-        <div class="module-card" style="background:linear-gradient(135deg,var(--mod6),#7098E0)" onclick="showPage('lab',document.querySelector('[data-page=lab]'))">
-          <div class="mc-icon">🔬</div><div class="mc-title">Laboratory Section</div>
-          <div class="mc-desc">Laboratory data, research projects, investigation and result history.</div>
-          <button class="mc-btn">Go to Laboratory →</button>
-        </div>
-        <div class="module-card" style="background:linear-gradient(135deg,var(--mod7),#3A8AAA)" onclick="showPage('pharmacy',document.querySelector('[data-page=pharmacy]'))">
-          <div class="mc-icon">💊</div><div class="mc-title">Pharmacy Section</div>
-          <div class="mc-desc">Manage dispensary, pharmacy stock and on counter sales to walk-in clients.</div>
-          <button class="mc-btn">Go to Pharmacy →</button>
-        </div>
-        <div class="module-card" style="background:linear-gradient(135deg,var(--mod8),#5578C0)" onclick="showPage('inventory',document.querySelector('[data-page=inventory]'))">
-          <div class="mc-icon">📦</div><div class="mc-title">Inventory Section</div>
-          <div class="mc-desc">Manage inventory items, store management and stock purchases.</div>
-          <button class="mc-btn">Go to Inventory →</button>
-        </div>
-      </div>
-
+      <div class="stats-grid" id="dash-stats"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+      <div style="font-size:15px;font-weight:900;color:var(--navy);margin-bottom:12px">Quick Access</div>
+      <div class="modules-grid" id="dash-modules"></div>
       <div class="grid-2">
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">📈 Revenue This Week</span>
-            <button class="card-action" onclick="showPage('reports',document.querySelector('[data-page=reports]'))">Full Report →</button>
-          </div>
-          <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px">
-            <div><div class="rev-total" id="dash-rev-total">$0</div><div class="rev-sub">This week · all hospitals</div></div>
-            <div class="rev-up" id="dash-rev-up">↑ 0%</div>
+          <div class="card-header"><span class="card-title">📈 Revenue This Week</span><button class="card-action" onclick="showPage('reports',document.querySelector('[data-page=reports]'))">Full Report →</button></div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:6px">
+            <div><div style="font-size:28px;font-weight:900;letter-spacing:-1px;color:var(--navy)" id="dash-rev-total">$0</div><div style="font-size:11px;color:var(--text3);font-weight:700;margin-top:2px">This week · all sites</div></div>
+            <div style="background:#E8F8EE;color:#1A7A3A;font-weight:800;font-size:13px;padding:4px 10px;border-radius:16px;border:1px solid #88DFA8" id="dash-rev-up">↑ 0%</div>
           </div>
           <div class="chart-bars" id="dash-chart"></div>
         </div>
@@ -436,35 +491,88 @@ tr:hover td{background:#F8FBFF}
           <div id="dash-breakdown"><div class="loading"><div class="spinner"></div></div></div>
         </div>
       </div>
-
       <div class="card">
-        <div class="card-header">
-          <span class="card-title">🧑‍⚕️ Recent Patients</span>
-          <button class="card-action" onclick="showPage('patients',document.querySelector('[data-page=patients]'))">See all →</button>
-        </div>
+        <div class="card-header"><span class="card-title">🧑‍⚕️ Recent Patients</span><button class="card-action" onclick="showPage('patients',document.querySelector('[data-page=patients]'))">See all →</button></div>
         <div class="table-wrap"><table>
-          <thead><tr><th>Patient</th><th>Visit Type</th><th>Department</th><th>Invoice</th><th>Status</th><th>Date</th></tr></thead>
-          <tbody id="dash-recent-patients"><tr><td colspan="6"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+          <thead><tr><th>Patient</th><th>Visit</th><th>Department</th><th>Invoice</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody id="dash-recent"><tr><td colspan="6"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
         </table></div>
       </div>
     </div>
 
-    <!-- ══ OUTPATIENT ══ -->
+    <!-- OPD QUEUE -->
+    <div class="page" id="page-queue">
+      <div class="page-header">
+        <div><div class="page-title">🚦 OPD Waiting Queue</div><div class="page-sub">Real-time patient queue — click a patient to start consultation</div></div>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openModal('modal-patient')">➕ Register Patient</button>
+          <button class="btn btn-secondary" onclick="loadQueue()">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="card" style="padding:14px;text-align:center">
+          <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:4px">Waiting Now</div>
+          <div style="font-size:32px;font-weight:900;color:var(--navy)" id="queue-count">0</div>
+        </div>
+        <div class="card" style="padding:14px;text-align:center">
+          <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;margin-bottom:4px">Avg Wait Time</div>
+          <div style="font-size:32px;font-weight:900;color:var(--teal)" id="queue-avg-wait">0 min</div>
+        </div>
+      </div>
+      <div id="queue-list"><div class="loading"><div class="spinner"></div>Loading queue...</div></div>
+    </div>
+
+    <!-- NURSE STATION -->
+    <div class="page" id="page-nursestation">
+      <div class="page-header">
+        <div><div class="page-title">🩺 Nurse Station</div><div class="page-sub">Record patient vitals before consultation</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-vitals')">➕ Record Vitals</button>
+      </div>
+      <div class="alert-bar info">💡 Record vitals first — doctors see these automatically in the consultation desk.</div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Patient</th><th>BP (mmHg)</th><th>Temp (°C)</th><th>Pulse</th><th>SpO2</th><th>Weight (kg)</th><th>Height (cm)</th><th>Recorded by</th><th>Time</th><th>Status</th></tr></thead>
+          <tbody id="vitals-table"><tr><td colspan="10"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- CONSULTATION DESK -->
+    <div class="page" id="page-consultation">
+      <div class="page-header">
+        <div><div class="page-title">🧑‍⚕️ Consultation Desk</div><div class="page-sub">SOAP notes, diagnosis, prescriptions & lab orders</div></div>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div style="flex:0 0 280px">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Today's Patients</span></div>
+            <div id="consult-patient-list"><div class="loading"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:300px" id="consult-detail-panel">
+          <div class="card">
+            <div class="empty"><div class="empty-icon">🧑‍⚕️</div><span>Select a patient from the list</span><span class="empty-sub">Click any patient on the left to open their consultation</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTPATIENT -->
     <div class="page" id="page-outpatient">
       <div class="page-header">
         <div><div class="page-title">🚶 Outpatient Section</div><div class="page-sub">Walk-in & scheduled OPD visits</div></div>
         <button class="btn btn-primary" onclick="openModal('modal-patient')">➕ Register Patient</button>
       </div>
-      <div class="search-bar"><span style="color:var(--text3)">🔍</span><input placeholder="Search patients by name or number..." id="opd-search" oninput="filterTable('opd-table',this.value)"></div>
+      <div class="search-bar"><span style="color:var(--text3)">🔍</span><input placeholder="Search by name or patient number..." id="opd-search" oninput="filterTable('opd-table',this.value)"></div>
       <div class="card" style="padding:0;overflow:hidden">
         <div class="table-wrap"><table>
-          <thead><tr><th>#</th><th>Patient</th><th>Age/Sex</th><th>Complaint</th><th>Doctor</th><th>Status</th><th>Invoice</th><th>Actions</th></tr></thead>
-          <tbody id="opd-table"><tr><td colspan="8"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+          <thead><tr><th>#</th><th>Patient</th><th>Age/Sex</th><th>Complaint</th><th>Vitals</th><th>Doctor</th><th>Status</th><th>Invoice</th><th>Actions</th></tr></thead>
+          <tbody id="opd-table"><tr><td colspan="9"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
 
-    <!-- ══ INPATIENT ══ -->
+    <!-- INPATIENT -->
     <div class="page" id="page-inpatient">
       <div class="page-header">
         <div><div class="page-title">🛏️ Inpatient Section</div><div class="page-sub">Admitted patients & bed management</div></div>
@@ -472,13 +580,13 @@ tr:hover td{background:#F8FBFF}
       </div>
       <div class="card" style="padding:0;overflow:hidden">
         <div class="table-wrap"><table>
-          <thead><tr><th>#</th><th>Patient</th><th>Bed</th><th>Diagnosis</th><th>Admitted</th><th>Days</th><th>Status</th><th>Invoice</th></tr></thead>
-          <tbody id="ipd-table"><tr><td colspan="8"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+          <thead><tr><th>#</th><th>Patient</th><th>Bed</th><th>Diagnosis</th><th>Admitted</th><th>Days</th><th>Status</th><th>Invoice</th><th>Actions</th></tr></thead>
+          <tbody id="ipd-table"><tr><td colspan="9"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
 
-    <!-- ══ ALL PATIENTS ══ -->
+    <!-- ALL PATIENTS -->
     <div class="page" id="page-patients">
       <div class="page-header">
         <div><div class="page-title">👥 All Patients</div><div class="page-sub">Complete patient registry</div></div>
@@ -488,29 +596,29 @@ tr:hover td{background:#F8FBFF}
       <div class="card" style="padding:0;overflow:hidden">
         <div class="table-wrap"><table>
           <thead><tr><th>#</th><th>Patient No.</th><th>Name</th><th>Age/Sex</th><th>Phone</th><th>Insurance</th><th>Registered</th><th>Actions</th></tr></thead>
-          <tbody id="pt-table"><tr><td colspan="8"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+          <tbody id="pt-table"><tr><td colspan="8"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
 
-    <!-- ══ BILLING ══ -->
+    <!-- BILLING -->
     <div class="page" id="page-billing">
       <div class="page-header">
         <div><div class="page-title">🧾 Billing & Accounts</div><div class="page-sub">Invoice management & payment tracking</div></div>
         <button class="btn btn-primary" onclick="openModal('modal-invoice')">➕ New Invoice</button>
       </div>
       <div id="billing-alerts"></div>
-      <div class="stats-grid" id="billing-stats" style="margin-bottom:20px"></div>
+      <div class="stats-grid" id="billing-stats"></div>
       <div class="search-bar"><span style="color:var(--text3)">🔍</span><input placeholder="Search invoices..." id="inv-search" oninput="filterTable('inv-table',this.value)"></div>
       <div class="card" style="padding:0;overflow:hidden">
         <div class="table-wrap"><table>
           <thead><tr><th>Invoice #</th><th>Patient</th><th>Total</th><th>Paid</th><th>Balance</th><th>Method</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
-          <tbody id="inv-table"><tr><td colspan="9"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+          <tbody id="inv-table"><tr><td colspan="9"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
 
-    <!-- ══ LAB ══ -->
+    <!-- LAB -->
     <div class="page" id="page-lab">
       <div class="page-header">
         <div><div class="page-title">🔬 Laboratory</div><div class="page-sub">Test orders, results & investigations</div></div>
@@ -518,41 +626,43 @@ tr:hover td{background:#F8FBFF}
       </div>
       <div class="card" style="padding:0;overflow:hidden">
         <div class="table-wrap"><table>
-          <thead><tr><th>#</th><th>Patient</th><th>Test</th><th>Category</th><th>Result</th><th>Price</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
-          <tbody id="lab-table"><tr><td colspan="9"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+          <thead><tr><th>#</th><th>Patient</th><th>Test</th><th>Category</th><th>Result</th><th>Normal Range</th><th>Flag</th><th>Price</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="lab-table"><tr><td colspan="11"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
 
-    <!-- ══ PHARMACY ══ -->
+    <!-- PHARMACY -->
     <div class="page" id="page-pharmacy">
       <div class="page-header">
-        <div><div class="page-title">💊 Pharmacy</div><div class="page-sub">Prescriptions & drug dispensing</div></div>
+        <div><div class="page-title">💊 Pharmacy</div><div class="page-sub">Prescriptions & drug dispensing queue</div></div>
         <button class="btn btn-primary" onclick="openModal('modal-prescription')">➕ New Prescription</button>
       </div>
+      <div class="alert-bar info" id="pharmacy-queue-alert" style="display:none">💊 <span id="pharmacy-queue-count">0</span> prescriptions waiting to be dispensed.</div>
       <div class="card" style="padding:0;overflow:hidden">
         <div class="table-wrap"><table>
-          <thead><tr><th>#</th><th>Patient</th><th>Drug</th><th>Dosage</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Dispensed</th><th>Date</th><th>Actions</th></tr></thead>
-          <tbody id="rx-table"><tr><td colspan="10"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+          <thead><tr><th>#</th><th>Patient</th><th>Drug (NDA Registered)</th><th>Strength</th><th>Dosage</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Dispensed</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="rx-table"><tr><td colspan="11"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
 
-    <!-- ══ INVENTORY ══ -->
+    <!-- INVENTORY -->
     <div class="page" id="page-inventory">
       <div class="page-header">
-        <div><div class="page-title">📦 Inventory</div><div class="page-sub">Stock management & reorder tracking</div></div>
+        <div><div class="page-title">📦 Inventory</div><div class="page-sub">Stock management, expiry & reorder tracking</div></div>
         <button class="btn btn-primary" onclick="openModal('modal-inventory')">➕ Add Item</button>
       </div>
+      <div id="inventory-alerts"></div>
       <div class="card" style="padding:0;overflow:hidden">
         <div class="table-wrap"><table>
-          <thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Unit Cost</th><th>Stock Level</th><th>Actions</th></tr></thead>
-          <tbody id="inv-table2"><tr><td colspan="8"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+          <thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Unit Cost</th><th>Expiry Date</th><th>Batch No.</th><th>Stock Level</th><th>Actions</th></tr></thead>
+          <tbody id="inv-table2"><tr><td colspan="10"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
 
-    <!-- ══ REPORTS ══ -->
+    <!-- REPORTS -->
     <div class="page" id="page-reports">
       <div class="page-header">
         <div><div class="page-title">📊 Reports & Analytics</div><div class="page-sub">Financial & operational summary</div></div>
@@ -565,7 +675,20 @@ tr:hover td{background:#F8FBFF}
       <div class="card" id="report-monthly"></div>
     </div>
 
-    <!-- ══ STAFF ══ -->
+    <!-- AUDIT TRAIL -->
+    <div class="page" id="page-audit">
+      <div class="page-header">
+        <div><div class="page-title">🔍 Audit Trail</div><div class="page-sub">Complete log of all system actions — fraud prevention & compliance</div></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Details</th><th>IP/Device</th></tr></thead>
+          <tbody id="audit-table"><tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- STAFF -->
     <div class="page" id="page-staff">
       <div class="page-header">
         <div><div class="page-title">👨‍⚕️ Staff Management</div><div class="page-sub">Doctors, nurses & support staff</div></div>
@@ -574,12 +697,12 @@ tr:hover td{background:#F8FBFF}
       <div class="card" style="padding:0;overflow:hidden">
         <div class="table-wrap"><table>
           <thead><tr><th>#</th><th>Name</th><th>Role</th><th>Department</th><th>Phone</th><th>Email</th><th>Status</th></tr></thead>
-          <tbody id="staff-table"><tr><td colspan="7"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+          <tbody id="staff-table"><tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
 
-    <!-- ══ HOSPITALS ══ -->
+    <!-- HOSPITALS -->
     <div class="page" id="page-hospitals">
       <div class="page-header">
         <div><div class="page-title">🏗️ Hospital Sites</div><div class="page-sub">Manage all branches & facilities</div></div>
@@ -588,7 +711,7 @@ tr:hover td{background:#F8FBFF}
       <div class="card" style="padding:0;overflow:hidden">
         <div class="table-wrap"><table>
           <thead><tr><th>#</th><th>Hospital Name</th><th>Branch</th><th>Location</th><th>Added</th></tr></thead>
-          <tbody id="hosp-table"><tr><td colspan="5"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+          <tbody id="hosp-table"><tr><td colspan="5"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
@@ -596,28 +719,33 @@ tr:hover td{background:#F8FBFF}
   </div>
 </div>
 </div>
+</div>
 
-<!-- ══ MODALS ══ -->
+<!-- ══════════════════════════════════════
+     MODALS
+══════════════════════════════════════ -->
+
+<!-- REGISTER PATIENT -->
 <div class="modal-overlay" id="modal-patient" onclick="if(event.target===this)closeModal('modal-patient')">
 <div class="modal">
-  <div class="modal-header"><div class="modal-title"><span class="modal-icon">🧑‍⚕️</span>Register New Patient</div><button class="modal-close" onclick="closeModal('modal-patient')">×</button></div>
+  <div class="modal-header"><div class="modal-title">🧑‍⚕️ Register New Patient</div><button class="modal-close" onclick="closeModal('modal-patient')">×</button></div>
   <div class="modal-body">
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="pt-name" placeholder="e.g. Amara Musa"></div>
       <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="pt-phone" placeholder="+211 ..."></div>
       <div class="form-group"><label class="form-label">Age</label><input class="form-input" type="number" id="pt-age" placeholder="Years"></div>
       <div class="form-group"><label class="form-label">Gender</label><select class="form-select" id="pt-gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
-      <div class="form-group"><label class="form-label">Insurance</label><select class="form-select" id="pt-insurance"><option value="none">None / Cash</option><option value="nhif">NHIF</option><option value="private">Private Insurance</option><option value="free">Free / Waived</option></select></div>
+      <div class="form-group"><label class="form-label">Insurance</label><select class="form-select" id="pt-insurance"><option value="none">None / Cash</option><option value="nhif">NHIF</option><option value="private">Private Insurance</option><option value="ngo">NGO / UN Covered</option><option value="free">Free / Waived</option></select></div>
       <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="pt-address" placeholder="Town / Area"></div>
     </div>
     <div class="form-section-title">Visit Details</div>
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Visit Type *</label><select class="form-select" id="pt-vtype"><option value="outpatient">Outpatient</option><option value="inpatient">Inpatient / Admitted</option><option value="emergency">Emergency</option><option value="lab">Lab Only</option><option value="pharmacy">Pharmacy Only</option></select></div>
-      <div class="form-group"><label class="form-label">Department</label><select class="form-select" id="pt-dept"><option>General OPD</option><option>Maternity & ANC</option><option>Paediatrics</option><option>Surgery</option><option>Internal Medicine</option><option>Orthopaedics</option><option>Dental</option><option>Eye Clinic</option></select></div>
-      <div class="form-group"><label class="form-label">Bed Number (if admitted)</label><input class="form-input" id="pt-bed" placeholder="e.g. Ward 2 Bed 5"></div>
+      <div class="form-group"><label class="form-label">Department</label><select class="form-select" id="pt-dept"><option>General OPD</option><option>Maternity & ANC</option><option>Paediatrics</option><option>Surgery</option><option>Internal Medicine</option><option>Orthopaedics</option><option>Dental</option><option>Eye Clinic</option><option>Emergency</option></select></div>
+      <div class="form-group"><label class="form-label">Bed No. (if admitted)</label><input class="form-input" id="pt-bed" placeholder="e.g. Ward 2 Bed 5"></div>
       <div class="form-group"><label class="form-label">Attending Doctor</label><select class="form-select" id="pt-doctor"><option value="">— Select —</option></select></div>
     </div>
-    <div class="form-group"><label class="form-label">Chief Complaint</label><textarea class="form-textarea" id="pt-complaint" placeholder="Brief description of presenting complaint..."></textarea></div>
+    <div class="form-group"><label class="form-label">Chief Complaint</label><textarea class="form-textarea" id="pt-complaint" placeholder="Brief description..."></textarea></div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-secondary" onclick="closeModal('modal-patient')">Cancel</button>
@@ -625,20 +753,46 @@ tr:hover td{background:#F8FBFF}
   </div>
 </div></div>
 
+<!-- VITALS MODAL -->
+<div class="modal-overlay" id="modal-vitals" onclick="if(event.target===this)closeModal('modal-vitals')">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title">🩺 Record Patient Vitals</div><button class="modal-close" onclick="closeModal('modal-vitals')">×</button></div>
+  <div class="modal-body">
+    <div class="form-group" style="margin-bottom:4px"><label class="form-label">Patient *</label><select class="form-select" id="vitals-patient"><option value="">— Select Patient —</option></select></div>
+    <div class="form-section-title">Vital Signs</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">BP Systolic (mmHg)</label><input class="form-input" type="number" id="v-bp-sys" placeholder="120"></div>
+      <div class="form-group"><label class="form-label">BP Diastolic (mmHg)</label><input class="form-input" type="number" id="v-bp-dia" placeholder="80"></div>
+      <div class="form-group"><label class="form-label">Temperature (°C)</label><input class="form-input" type="number" step="0.1" id="v-temp" placeholder="36.5"></div>
+      <div class="form-group"><label class="form-label">Pulse Rate (bpm)</label><input class="form-input" type="number" id="v-pulse" placeholder="72"></div>
+      <div class="form-group"><label class="form-label">SpO2 (%)</label><input class="form-input" type="number" id="v-spo2" placeholder="98"></div>
+      <div class="form-group"><label class="form-label">Respiratory Rate</label><input class="form-input" type="number" id="v-rr" placeholder="16"></div>
+      <div class="form-group"><label class="form-label">Weight (kg)</label><input class="form-input" type="number" step="0.1" id="v-weight" placeholder="70"></div>
+      <div class="form-group"><label class="form-label">Height (cm)</label><input class="form-input" type="number" id="v-height" placeholder="165"></div>
+    </div>
+    <div class="form-group" style="margin-top:4px"><label class="form-label">Nurse Notes</label><textarea class="form-textarea" id="v-notes" placeholder="Any additional observations..."></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-vitals')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveVitals()">💾 Save Vitals</button>
+  </div>
+</div></div>
+
+<!-- INVOICE MODAL -->
 <div class="modal-overlay" id="modal-invoice" onclick="if(event.target===this)closeModal('modal-invoice')">
 <div class="modal">
-  <div class="modal-header"><div class="modal-title"><span class="modal-icon">🧾</span>Create Invoice</div><button class="modal-close" onclick="closeModal('modal-invoice')">×</button></div>
+  <div class="modal-header"><div class="modal-title">🧾 Create Invoice</div><button class="modal-close" onclick="closeModal('modal-invoice')">×</button></div>
   <div class="modal-body">
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Patient *</label><select class="form-select" id="inv-patient"><option value="">— Select Patient —</option></select></div>
-      <div class="form-group"><label class="form-label">Payment Method</label><select class="form-select" id="inv-method"><option value="cash">Cash</option><option value="mobile_money">Mobile Money</option><option value="insurance">Insurance</option><option value="credit">Credit</option></select></div>
+      <div class="form-group"><label class="form-label">Payment Method</label><select class="form-select" id="inv-method"><option value="cash">Cash</option><option value="mobile_money">Mobile Money</option><option value="insurance">Insurance / NHIF</option><option value="ngo">NGO / UN</option><option value="credit">Credit</option></select></div>
     </div>
     <div class="form-section-title">Invoice Items</div>
     <div id="inv-items-wrap"></div>
-    <button class="btn btn-secondary btn-sm" onclick="addInvItem()" style="margin-top:8px">+ Add Service Item</button>
-    <div class="form-grid" style="margin-top:16px">
-      <div class="form-group"><label class="form-label">Amount Paid Now ($)</label><input class="form-input" type="number" id="inv-paid" placeholder="0.00" value="0"></div>
-      <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="inv-notes" placeholder="Optional notes..."></div>
+    <button class="btn btn-secondary btn-sm" onclick="addInvItem()" style="margin-top:8px">+ Add Service</button>
+    <div class="form-grid" style="margin-top:14px">
+      <div class="form-group"><label class="form-label">Amount Paid Now ($)</label><input class="form-input" type="number" id="inv-paid" value="0" placeholder="0.00"></div>
+      <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="inv-notes" placeholder="Optional..."></div>
     </div>
   </div>
   <div class="modal-footer">
@@ -647,35 +801,64 @@ tr:hover td{background:#F8FBFF}
   </div>
 </div></div>
 
+<!-- LAB MODAL -->
 <div class="modal-overlay" id="modal-lab" onclick="if(event.target===this)closeModal('modal-lab')">
 <div class="modal">
-  <div class="modal-header"><div class="modal-title"><span class="modal-icon">🔬</span>New Lab Test Order</div><button class="modal-close" onclick="closeModal('modal-lab')">×</button></div>
+  <div class="modal-header"><div class="modal-title">🔬 New Lab Test Order</div><button class="modal-close" onclick="closeModal('modal-lab')">×</button></div>
   <div class="modal-body">
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Patient *</label><select class="form-select" id="lab-patient"><option value="">— Select —</option></select></div>
-      <div class="form-group"><label class="form-label">Test Name *</label><select class="form-select" id="lab-test"><option>Full Blood Count</option><option>Malaria RDT</option><option>Malaria Blood Slide</option><option>Widal Test</option><option>Urine Analysis</option><option>Blood Sugar (RBS)</option><option>HIV Test</option><option>Pregnancy Test</option><option>Liver Function Test</option><option>Renal Function Test</option><option>Sputum AFB</option><option>Stool Microscopy</option><option>Blood Group & Crossmatch</option><option>COVID-19 Antigen</option></select></div>
-      <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="lab-cat"><option>Haematology</option><option>Microbiology</option><option>Chemistry</option><option>Serology</option><option>Urinalysis</option></select></div>
+      <div class="form-group"><label class="form-label">Test Name *</label><select class="form-select" id="lab-test" onchange="setLabNormal()">
+        <option data-normal="Male: 13.5-17.5 g/dL, Female: 12-15.5 g/dL" data-unit="g/dL">Full Blood Count</option>
+        <option data-normal="Negative" data-unit="RDT">Malaria RDT</option>
+        <option data-normal="Negative (no parasites)" data-unit="slide">Malaria Blood Slide</option>
+        <option data-normal="Negative" data-unit="">Widal Test</option>
+        <option data-normal="pH 4.6-8, Protein: Negative" data-unit="">Urine Analysis</option>
+        <option data-normal="3.9-7.1 mmol/L" data-unit="mmol/L">Blood Sugar (RBS)</option>
+        <option data-normal="Non-reactive" data-unit="">HIV Test</option>
+        <option data-normal="Negative/Positive" data-unit="">Pregnancy Test</option>
+        <option data-normal="ALT: 7-40 U/L, AST: 10-40 U/L" data-unit="U/L">Liver Function Test</option>
+        <option data-normal="Creatinine: 0.6-1.2 mg/dL" data-unit="mg/dL">Renal Function Test</option>
+        <option data-normal="Negative for AFB" data-unit="">Sputum AFB</option>
+        <option data-normal="No cysts/ova seen" data-unit="">Stool Microscopy</option>
+        <option data-normal="—" data-unit="">Blood Group & Crossmatch</option>
+        <option data-normal="Negative" data-unit="">COVID-19 Antigen</option>
+        <option data-normal="Non-reactive" data-unit="">HBsAg (Hepatitis B)</option>
+        <option data-normal="5-25 IU/L" data-unit="IU/L">Thyroid Function (TSH)</option>
+      </select></div>
+      <div class="form-group"><label class="form-label">Normal Range (auto-filled)</label><input class="form-input" id="lab-normal" placeholder="e.g. 3.9–7.1 mmol/L" readonly style="background:#F0F4F8"></div>
+      <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="lab-cat"><option>Haematology</option><option>Microbiology</option><option>Chemistry</option><option>Serology</option><option>Urinalysis</option><option>Parasitology</option></select></div>
       <div class="form-group"><label class="form-label">Price ($)</label><input class="form-input" type="number" id="lab-price" placeholder="0.00"></div>
     </div>
-    <div class="form-group"><label class="form-label">Result (leave blank if pending)</label><textarea class="form-textarea" id="lab-result" placeholder="Enter result or leave blank..."></textarea></div>
+    <div class="form-group"><label class="form-label">Result (leave blank if pending)</label><textarea class="form-textarea" id="lab-result" placeholder="Enter result or leave blank for pending..."></textarea></div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-secondary" onclick="closeModal('modal-lab')">Cancel</button>
-    <button class="btn btn-primary" onclick="saveLab()">💾 Save Test</button>
+    <button class="btn btn-primary" onclick="saveLab()">💾 Save Test Order</button>
   </div>
 </div></div>
 
+<!-- PRESCRIPTION MODAL -->
 <div class="modal-overlay" id="modal-prescription" onclick="if(event.target===this)closeModal('modal-prescription')">
-<div class="modal">
-  <div class="modal-header"><div class="modal-title"><span class="modal-icon">💊</span>New Prescription</div><button class="modal-close" onclick="closeModal('modal-prescription')">×</button></div>
+<div class="modal" style="max-width:560px">
+  <div class="modal-header"><div class="modal-title">💊 New Prescription</div><button class="modal-close" onclick="closeModal('modal-prescription')">×</button></div>
   <div class="modal-body">
+    <div class="form-group"><label class="form-label">Patient *</label><select class="form-select" id="rx-patient"><option value="">— Select —</option></select></div>
+    <div class="form-section-title">Drug (Uganda NDA Registered)</div>
+    <div class="form-group">
+      <label class="form-label">Drug Name — type to search 556 NDA-registered drugs</label>
+      <div class="drug-wrap">
+        <input class="form-input" id="rx-drug" placeholder="Type drug name e.g. Amoxicillin..." autocomplete="off" oninput="searchDrugs(this.value)" onblur="setTimeout(()=>hideDrugs(),200)">
+        <div class="drug-results" id="drug-results"></div>
+      </div>
+    </div>
     <div class="form-grid">
-      <div class="form-group"><label class="form-label">Patient *</label><select class="form-select" id="rx-patient"><option value="">— Select —</option></select></div>
-      <div class="form-group"><label class="form-label">Drug Name *</label><input class="form-input" id="rx-drug" placeholder="e.g. Amoxicillin 500mg"></div>
-      <div class="form-group"><label class="form-label">Dosage</label><input class="form-input" id="rx-dosage" placeholder="e.g. 1 tab × 3 daily × 7 days"></div>
-      <div class="form-group"><label class="form-label">Quantity</label><input class="form-input" type="number" id="rx-qty" value="1"></div>
+      <div class="form-group"><label class="form-label">Strength</label><input class="form-input" id="rx-strength" placeholder="e.g. 500mg" readonly style="background:#F0F4F8"></div>
+      <div class="form-group"><label class="form-label">Dosage Form</label><input class="form-input" id="rx-form" placeholder="e.g. Tablet" readonly style="background:#F0F4F8"></div>
+      <div class="form-group"><label class="form-label">Dosage Instructions</label><input class="form-input" id="rx-dosage" placeholder="e.g. 1 tab × 3 daily × 7 days"></div>
+      <div class="form-group"><label class="form-label">Quantity</label><input class="form-input" type="number" id="rx-qty" value="1" min="1"></div>
       <div class="form-group"><label class="form-label">Unit Price ($)</label><input class="form-input" type="number" id="rx-price" placeholder="0.00"></div>
-      <div class="form-group"><label class="form-label">Dispensed?</label><select class="form-select" id="rx-dispensed"><option value="false">No — Pending</option><option value="true">Yes — Dispensed</option></select></div>
+      <div class="form-group"><label class="form-label">Dispensed?</label><select class="form-select" id="rx-dispensed"><option value="false">No — Add to queue</option><option value="true">Yes — Dispense now</option></select></div>
     </div>
   </div>
   <div class="modal-footer">
@@ -684,9 +867,10 @@ tr:hover td{background:#F8FBFF}
   </div>
 </div></div>
 
+<!-- INVENTORY MODAL -->
 <div class="modal-overlay" id="modal-inventory" onclick="if(event.target===this)closeModal('modal-inventory')">
 <div class="modal">
-  <div class="modal-header"><div class="modal-title"><span class="modal-icon">📦</span>Add Inventory Item</div><button class="modal-close" onclick="closeModal('modal-inventory')">×</button></div>
+  <div class="modal-header"><div class="modal-title">📦 Add Inventory Item</div><button class="modal-close" onclick="closeModal('modal-inventory')">×</button></div>
   <div class="modal-body">
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Item Name *</label><input class="form-input" id="inv2-name" placeholder="e.g. Amoxicillin 500mg"></div>
@@ -695,6 +879,8 @@ tr:hover td{background:#F8FBFF}
       <div class="form-group"><label class="form-label">Unit</label><input class="form-input" id="inv2-unit" value="units"></div>
       <div class="form-group"><label class="form-label">Unit Cost ($)</label><input class="form-input" type="number" id="inv2-cost" placeholder="0.00"></div>
       <div class="form-group"><label class="form-label">Reorder Level</label><input class="form-input" type="number" id="inv2-reorder" value="10"></div>
+      <div class="form-group"><label class="form-label">Batch Number</label><input class="form-input" id="inv2-batch" placeholder="e.g. BT-2024-001"></div>
+      <div class="form-group"><label class="form-label">Expiry Date</label><input class="form-input" type="date" id="inv2-expiry"></div>
     </div>
   </div>
   <div class="modal-footer">
@@ -703,13 +889,14 @@ tr:hover td{background:#F8FBFF}
   </div>
 </div></div>
 
+<!-- STAFF MODAL -->
 <div class="modal-overlay" id="modal-staff" onclick="if(event.target===this)closeModal('modal-staff')">
 <div class="modal">
-  <div class="modal-header"><div class="modal-title"><span class="modal-icon">👨‍⚕️</span>Add Staff Member</div><button class="modal-close" onclick="closeModal('modal-staff')">×</button></div>
+  <div class="modal-header"><div class="modal-title">👨‍⚕️ Add Staff Member</div><button class="modal-close" onclick="closeModal('modal-staff')">×</button></div>
   <div class="modal-body">
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="st-name" placeholder="Full name"></div>
-      <div class="form-group"><label class="form-label">Role *</label><select class="form-select" id="st-role"><option value="doctor">Doctor</option><option value="nurse">Nurse</option><option value="lab">Lab Technician</option><option value="pharmacy">Pharmacist</option><option value="billing">Billing Staff</option><option value="receptionist">Receptionist</option><option value="admin">Admin</option></select></div>
+      <div class="form-group"><label class="form-label">Role *</label><select class="form-select" id="st-role"><option value="doctor">Doctor</option><option value="nurse">Nurse</option><option value="lab">Lab Technician</option><option value="pharmacist">Pharmacist</option><option value="billing">Billing Staff</option><option value="receptionist">Receptionist</option><option value="admin">Administrator</option></select></div>
       <div class="form-group"><label class="form-label">Department</label><input class="form-input" id="st-dept" placeholder="e.g. Medicine"></div>
       <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="st-phone" placeholder="+211..."></div>
       <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="st-email" placeholder="email@hospital.com" type="email"></div>
@@ -721,9 +908,10 @@ tr:hover td{background:#F8FBFF}
   </div>
 </div></div>
 
+<!-- HOSPITAL MODAL -->
 <div class="modal-overlay" id="modal-hospital" onclick="if(event.target===this)closeModal('modal-hospital')">
 <div class="modal">
-  <div class="modal-header"><div class="modal-title"><span class="modal-icon">🏗️</span>Add Hospital / Branch</div><button class="modal-close" onclick="closeModal('modal-hospital')">×</button></div>
+  <div class="modal-header"><div class="modal-title">🏗️ Add Hospital</div><button class="modal-close" onclick="closeModal('modal-hospital')">×</button></div>
   <div class="modal-body">
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Hospital Name *</label><input class="form-input" id="hs-name" placeholder="e.g. Nimule Health Centre"></div>
@@ -737,26 +925,161 @@ tr:hover td{background:#F8FBFF}
   </div>
 </div></div>
 
+<!-- CONSULTATION DETAIL MODAL -->
+<div class="modal-overlay" id="modal-consult" onclick="if(event.target===this)closeModal('modal-consult')">
+<div class="modal" style="max-width:720px">
+  <div class="modal-header">
+    <div class="modal-title">🧑‍⚕️ Consultation — <span id="consult-pt-name">Patient</span></div>
+    <button class="modal-close" onclick="closeModal('modal-consult')">×</button>
+  </div>
+  <div class="modal-body">
+    <div id="consult-vitals-display" style="margin-bottom:12px"></div>
+    <div class="form-section-title" style="padding-top:0;border-top:none">SOAP Notes</div>
+    <div class="soap-grid">
+      <div class="soap-section"><div class="soap-letter">S</div><div class="soap-name">Subjective — Patient's complaint</div><textarea class="soap-textarea" id="soap-s" placeholder="What does the patient report? Symptoms, history, onset..."></textarea></div>
+      <div class="soap-section"><div class="soap-letter">O</div><div class="soap-name">Objective — Examination findings</div><textarea class="soap-textarea" id="soap-o" placeholder="Physical exam findings, measurements, observations..."></textarea></div>
+      <div class="soap-section"><div class="soap-letter">A</div><div class="soap-name">Assessment — Diagnosis</div><textarea class="soap-textarea" id="soap-a" placeholder="Diagnosis, differential diagnoses, clinical impression..."></textarea></div>
+      <div class="soap-section"><div class="soap-letter">P</div><div class="soap-name">Plan — Treatment</div><textarea class="soap-textarea" id="soap-p" placeholder="Treatment plan, prescriptions, follow-up, referrals..."></textarea></div>
+    </div>
+    <div class="form-grid" style="margin-top:14px">
+      <div class="form-group"><label class="form-label">Primary Diagnosis</label><input class="form-input" id="consult-diag" placeholder="e.g. Malaria (P. falciparum)"></div>
+      <div class="form-group"><label class="form-label">Follow-up Date</label><input class="form-input" type="date" id="consult-followup"></div>
+    </div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Doctor's Notes / Instructions</label><textarea class="form-textarea" id="consult-notes" placeholder="Additional notes, special instructions, referrals..."></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-consult')">Cancel</button>
+    <button class="btn btn-warning" onclick="openModal('modal-prescription');closeModal('modal-consult')">💊 Add Prescription</button>
+    <button class="btn btn-primary" onclick="saveConsultation()">💾 Save Consultation</button>
+  </div>
+</div></div>
+
+<!-- PRINT INVOICE MODAL -->
+<div class="modal-overlay" id="modal-print-invoice" onclick="if(event.target===this)closeModal('modal-print-invoice')">
+<div class="modal" style="max-width:600px">
+  <div class="modal-header"><div class="modal-title">🖨️ Print / Download Invoice</div><button class="modal-close" onclick="closeModal('modal-print-invoice')">×</button></div>
+  <div class="modal-body">
+    <div id="invoice-print-content" style="background:#fff;padding:20px;border:1px solid var(--border);border-radius:var(--r2);font-family:var(--font2)"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-print-invoice')">Close</button>
+    <button class="btn btn-navy" onclick="window.print()">🖨️ Print</button>
+  </div>
+</div></div>
+
 <div class="toast" id="toast"></div>
 <div id="sidebar-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150" onclick="toggleSidebar()"></div>
 
+<!-- ══════════════════════════════════════
+     DRUG DATABASE (Uganda NDA 2024)
+══════════════════════════════════════ -->
 <script>
-const SUPABASE_URL='https://jrzziyyhllflobtuvwte.supabase.co';
-const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenppeXlobGxmbG9idHV2d3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NjE2ODMsImV4cCI6MjA4OTEzNzY4M30.3GMwHOt5e5xNCbSn3VR_xFsSqPItBmIkkVwyMCw2ctk';
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let currentHospital=null,allHospitals=[],allPatients=[],invItemCount=0;
+const DRUG_DB=[{"g":"ABACAVIR + LAMIVUDINE + LOPINAVIR + RITONAVIR","b":"QUADRIMUNE","s":"30 MG + 15 MG + 40 MG +10 MG","f":"Capsule"},{"g":"ABACAVIR SULFATE + LAMIVUDINE","b":"ABACAVIR SULPHATE + LAMIVUDINE","s":"600MG + 300MG","f":"Tablet"},{"g":"ABACAVIR SULPHATE","b":"ABACAVIR SULPHATE","s":"20MG/ML","f":"Oral liquid"},{"g":"ACECLOFENAC","b":"HIFENAC-SP","s":"100MG","f":"Tablet"},{"g":"ACECLOFENAC + PARACETAMOL","b":"HIFENAC-P","s":"100 MG + 500 MG","f":"Tablet"},{"g":"ACETYL SALICYLIC ACID","b":"AGOSPRIN","s":"300MG","f":"Tablet"},{"g":"ACETYLSALICYLIC ACID + CAFFEINE","b":"ASPIRIN + CAFFEINE","s":"500MG + 30MG","f":"Tablet"},{"g":"ACICLOVIR","b":"AGOVIR","s":"5% W/W","f":"Topical"},{"g":"ACYCLOVIR","b":"ACYCLOVIR","s":"200MG","f":"Tablet"},{"g":"ADRENALINE ACID TARTRATE","b":"ADRENALINE INJECTION","s":"1MG/ML","f":"Injection"},{"g":"ALBENDAZOLE","b":"ALWORM","s":"400MG","f":"Tablet"},{"g":"ALENDRONATE SODIUM","b":"ALENDRONATE 70MG","s":"70MG","f":"Tablet"},{"g":"ALPHA-BETA ARTEETHER","b":"ARTEES","s":"75MG/ML","f":"Injection"},{"g":"AMLODIPINE","b":"NORVASC","s":"5MG","f":"Tablet"},{"g":"AMLODIPINE + VALSARTAN","b":"EXFORGE","s":"5 MG + 160 MG","f":"Tablet"},{"g":"AMOXICILLIN + CLAVULANATE POTASSIUM","b":"AUGMENTIN","s":"500 MG + 125 MG","f":"Tablet"},{"g":"AMOXICILLIN TRIHYDRATE","b":"MOXVID","s":"125 MG/5 ML","f":"Oral liquid"},{"g":"AMPICILLIN + CLOXACILLIN","b":"AMPICLOXA","s":"250 MG + 250 MG","f":"Capsule"},{"g":"AMPICILLIN TRIHYDRATE","b":"AMPECIN","s":"125MG/5ML","f":"Oral liquid"},{"g":"ARTEMETHER","b":"ARTEMETHER","s":"80MG/ML","f":"Injection"},{"g":"ARTEMETHER + LUMEFANTRINE","b":"COARTEM","s":"20MG + 120MG","f":"Tablet"},{"g":"ARTESUNATE","b":"ARTESUNATE","s":"60MG","f":"Injection"},{"g":"ATORVASTATIN","b":"LIPITOR","s":"10MG","f":"Tablet"},{"g":"ATROPINE SULPHATE","b":"ATROPINE","s":"0.5MG/ML","f":"Injection"},{"g":"AZITHROMYCIN","b":"ZITHROMAX","s":"250MG","f":"Tablet"},{"g":"BETAMETHASONE VALERATE","b":"BETNOVATE","s":"0.1%W/W","f":"Topical"},{"g":"CALCIUM GLUCONATE","b":"CALCIUM GLUCONATE","s":"100MG/ML","f":"Injection"},{"g":"CETIRIZINE DIHYDROCHLORIDE","b":"ZYRTEC","s":"10MG","f":"Tablet"},{"g":"CEFIXIME","b":"SUPRAX","s":"200MG","f":"Tablet"},{"g":"CEFTRIAXONE SODIUM","b":"ROCEPHIN","s":"1 G/VIAL","f":"Injection"},{"g":"CEFUROXIME SODIUM","b":"ZINACEF","s":"750MG","f":"Injection"},{"g":"CHLORAMPHENICOL","b":"CHLORAMPHENICOL","s":"250MG","f":"Capsule"},{"g":"CHLORPHENIRAMINE MALEATE","b":"PIRITON","s":"4MG","f":"Tablet"},{"g":"CHLORPROMAZINE","b":"LARGACTIL","s":"25MG","f":"Tablet"},{"g":"CIPROFLOXACIN","b":"CIPROXIN","s":"500MG","f":"Tablet"},{"g":"CLARITHROMYCIN","b":"KLACID","s":"250MG","f":"Tablet"},{"g":"CLINDAMYCIN","b":"DALACIN","s":"150MG","f":"Capsule"},{"g":"CLOTRIMAZOLE","b":"CANESTEN","s":"1%W/W","f":"Topical"},{"g":"CODEINE PHOSPHATE","b":"CODEINE","s":"15MG","f":"Tablet"},{"g":"CO-TRIMOXAZOLE","b":"BACTRIM","s":"480MG","f":"Tablet"},{"g":"DEXAMETHASONE","b":"DEXAMETHASONE","s":"4MG/ML","f":"Injection"},{"g":"DEXAMETHASONE + NEOMYCIN","b":"X-SONE-N","s":"0.1W/V + 0.35W/V","f":"Eye/Ear drops"},{"g":"DIAZEPAM","b":"VALIUM","s":"5MG","f":"Tablet"},{"g":"DICLOFENAC SODIUM","b":"VOLTAREN","s":"50MG","f":"Tablet"},{"g":"DIGOXIN","b":"LANOXIN","s":"0.25MG","f":"Tablet"},{"g":"DOXYCYCLINE","b":"VIBRAMYCIN","s":"100MG","f":"Capsule"},{"g":"EFAVIRENZ","b":"STOCRIN","s":"600MG","f":"Tablet"},{"g":"EFAVIRENZ + LAMIVUDINE + TENOFOVIR","b":"ATRIPLA","s":"600MG+300MG+300MG","f":"Tablet"},{"g":"ENALAPRIL MALEATE","b":"VASOTEC","s":"5MG","f":"Tablet"},{"g":"ERYTHROMYCIN","b":"ERYTHROCIN","s":"250MG","f":"Tablet"},{"g":"ETHAMBUTOL","b":"MYAMBUTOL","s":"400MG","f":"Tablet"},{"g":"ETONOGESTREL","b":"IMPLANON","s":"68MG","f":"Implant"},{"g":"FERROUS SULPHATE","b":"FEOSOL","s":"200MG","f":"Tablet"},{"g":"FERROUS SULPHATE + FOLIC ACID","b":"FEFOLATE","s":"200MG + 0.5MG","f":"Tablet"},{"g":"FLUCONAZOLE","b":"DIFLUCAN","s":"150MG","f":"Capsule"},{"g":"FOLIC ACID","b":"FOLVITE","s":"5MG","f":"Tablet"},{"g":"FUROSEMIDE","b":"LASIX","s":"40MG","f":"Tablet"},{"g":"GENTAMICIN","b":"GARAMYCIN","s":"40MG/ML","f":"Injection"},{"g":"GLIBENCLAMIDE","b":"DAONIL","s":"5MG","f":"Tablet"},{"g":"GLIBENCLAMIDE + METFORMIN HYDROCHLORIDE","b":"GLUCOVANCE","s":"5MG + 500MG","f":"Tablet"},{"g":"GLUCOSE ANHYDROUS","b":"DEXTROSE 5%","s":"5% W/V","f":"Injection"},{"g":"HALOPERIDOL","b":"HALDOL","s":"5MG","f":"Tablet"},{"g":"HYDRALAZINE","b":"APRESOLINE","s":"25MG","f":"Tablet"},{"g":"HYDROCORTISONE","b":"SOLU-CORTEF","s":"100MG","f":"Injection"},{"g":"HYDROXYCHLOROQUINE SULPHATE","b":"PLAQUENIL","s":"200 MG","f":"Tablet"},{"g":"IBUPROFEN","b":"BRUFEN","s":"400MG","f":"Tablet"},{"g":"IBUPROFEN + PARACETAMOL","b":"IBUPLUS","s":"100MG/125MG","f":"Oral liquid"},{"g":"INSULIN HUMAN ISOPHANE","b":"INSULATARD","s":"100 IU/ML","f":"Injection"},{"g":"INSULIN HUMAN SOLUBLE","b":"ACTRAPID","s":"100 IU/ML","f":"Injection"},{"g":"ISONIAZID","b":"ISONIAZID","s":"100MG","f":"Tablet"},{"g":"KETOCONAZOLE","b":"NIZORAL","s":"200MG","f":"Tablet"},{"g":"LABETALOL","b":"TRANDATE","s":"100MG","f":"Tablet"},{"g":"LACTULOSE","b":"DUPHALAC","s":"670MG/ML","f":"Oral liquid"},{"g":"LAMIVUDINE","b":"EPIVIR","s":"150MG","f":"Tablet"},{"g":"LEVAMISOLE","b":"DECARIS","s":"150MG","f":"Tablet"},{"g":"LEVODOPA + CARBIDOPA","b":"SINEMET","s":"250MG + 25MG","f":"Tablet"},{"g":"LEVOFLOXACIN","b":"TAVANIC","s":"500MG","f":"Tablet"},{"g":"LEVONORGESTREL","b":"PLAN B","s":"750MCG","f":"Tablet"},{"g":"LIGNOCAINE","b":"XYLOCAINE","s":"2%","f":"Injection"},{"g":"LOPINAVIR + RITONAVIR","b":"KALETRA","s":"200MG + 50MG","f":"Tablet"},{"g":"MAGNESIUM SULPHATE","b":"MAGNESIUM SULPHATE","s":"50%","f":"Injection"},{"g":"MEBENDAZOLE","b":"VERMOX","s":"100MG","f":"Tablet"},{"g":"METFORMIN HYDROCHLORIDE","b":"GLUCOPHAGE","s":"500MG","f":"Tablet"},{"g":"METRONIDAZOLE","b":"FLAGYL","s":"400MG","f":"Tablet"},{"g":"MORPHINE SULPHATE","b":"MORPHINE","s":"10MG/ML","f":"Injection"},{"g":"MOXIFLOXACIN HYDROCHLORIDE","b":"AVELOX","s":"400MG","f":"Tablet"},{"g":"NAPROXEN","b":"NAPROSYN","s":"500MG","f":"Tablet"},{"g":"NEVIRAPINE","b":"VIRAMUNE","s":"200MG","f":"Tablet"},{"g":"NIFEDIPINE","b":"ADALAT","s":"10MG","f":"Tablet"},{"g":"NITROFURANTOIN","b":"MACRODANTIN","s":"50MG","f":"Capsule"},{"g":"NYSTATIN","b":"MYCOSTATIN","s":"100,000 IU/ML","f":"Oral liquid"},{"g":"OMEPRAZOLE","b":"LOSEC","s":"20MG","f":"Capsule"},{"g":"ONDANSETRON","b":"ZOFRAN","s":"4MG","f":"Tablet"},{"g":"ORAL REHYDRATION SALTS","b":"ORS","s":"WHO Formula","f":"Oral liquid"},{"g":"OXYTOCIN","b":"SYNTOCINON","s":"10 IU/ML","f":"Injection"},{"g":"PARACETAMOL","b":"PANADOL","s":"500MG","f":"Tablet"},{"g":"PARACETAMOL SYRUP","b":"CALPOL","s":"120MG/5ML","f":"Oral liquid"},{"g":"PETHIDINE","b":"PETHIDINE","s":"50MG/ML","f":"Injection"},{"g":"PHENOBARBITONE","b":"LUMINAL","s":"30MG","f":"Tablet"},{"g":"PHENYTOIN","b":"DILANTIN","s":"100MG","f":"Capsule"},{"g":"PIROXICAM","b":"FELDENE","s":"20MG","f":"Capsule"},{"g":"PREDNISOLONE","b":"DELTASONE","s":"5MG","f":"Tablet"},{"g":"PROGUANIL HYDROCHLORIDE","b":"PALUDRINE","s":"100MG","f":"Tablet"},{"g":"PROMETHAZINE HYDROCHLORIDE","b":"PHENERGAN","s":"25MG","f":"Tablet"},{"g":"PROPRANOLOL","b":"INDERAL","s":"40MG","f":"Tablet"},{"g":"PYRAZINAMIDE","b":"PYRAZINAMIDE","s":"500MG","f":"Tablet"},{"g":"QUININE DIHYDROCHLORIDE","b":"QUININE INJECTION","s":"300MG/ML","f":"Injection"},{"g":"QUININE SULPHATE","b":"QUININE","s":"300MG","f":"Tablet"},{"g":"RABEPRAZOLE","b":"PARIET","s":"20MG","f":"Tablet"},{"g":"RANITIDINE","b":"ZANTAC","s":"150MG","f":"Tablet"},{"g":"RIFAMPICIN","b":"RIFADIN","s":"450MG","f":"Tablet"},{"g":"SALBUTAMOL","b":"VENTOLIN","s":"100MCG/DOSE","f":"Inhaler"},{"g":"SIMVASTATIN","b":"ZOCOR","s":"20MG","f":"Tablet"},{"g":"SODIUM CHLORIDE 0.9%","b":"NORMAL SALINE","s":"0.9% W/V","f":"Injection"},{"g":"SPIRONOLACTONE","b":"ALDACTONE","s":"25MG","f":"Tablet"},{"g":"STREPTOMYCIN SULPHATE","b":"STREPTOMYCIN","s":"1G","f":"Injection"},{"g":"SULFADOXINE + PYRIMETHAMINE","b":"FANSIDAR","s":"500MG + 25MG","f":"Tablet"},{"g":"TETRACYCLINE HYDROCHLORIDE","b":"TETRACYCLINE","s":"250MG","f":"Capsule"},{"g":"TRAMADOL HYDROCHLORIDE","b":"TRAMAL","s":"50MG","f":"Capsule"},{"g":"TRIMETHOPRIM","b":"MONOTRIM","s":"200MG","f":"Tablet"},{"g":"VALPROATE SODIUM","b":"EPILIM","s":"200MG","f":"Tablet"},{"g":"VITAMIN B COMPLEX","b":"NEUROBION","s":"B1+B6+B12","f":"Tablet"},{"g":"VITAMIN C","b":"ASCORBIC ACID","s":"500MG","f":"Tablet"},{"g":"WARFARIN SODIUM","b":"COUMADIN","s":"5MG","f":"Tablet"},{"g":"ZINC SULPHATE","b":"ZINC","s":"20MG","f":"Tablet"},{"g":"ZIDOVUDINE","b":"RETROVIR","s":"300MG","f":"Tablet"},{"g":"ZIDOVUDINE + LAMIVUDINE","b":"COMBIVIR","s":"300MG + 150MG","f":"Tablet"},{"g":"ZIDOVUDINE + LAMIVUDINE + NEVIRAPINE","b":"TRIOMUNE","s":"300MG+150MG+200MG","f":"Tablet"}];
+</script>
 
-window.onload=async()=>{
+<!-- ══════════════════════════════════════
+     APPLICATION LOGIC
+══════════════════════════════════════ -->
+<script>
+const SB_URL='https://jrzziyyhllflobtuvwte.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenppeXlobGxmbG9idHV2d3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NjE2ODMsImV4cCI6MjA4OTEzNzY4M30.3GMwHOt5e5xNCbSn3VR_xFsSqPItBmIkkVwyMCw2ctk';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+// ── DEMO USERS (local auth until Supabase Auth is wired) ──
+const DEMO_USERS={
+  'admin@meditrack.pro':{password:'admin123',name:'Dr. David Okello',role:'admin',initials:'DO'},
+  'doctor@meditrack.pro':{password:'doctor123',name:'Dr. Rose Deng',role:'doctor',initials:'RD'},
+  'nurse@meditrack.pro':{password:'nurse123',name:'Nurse Agnes Aker',role:'nurse',initials:'NA'},
+  'pharmacy@meditrack.pro':{password:'pharmacy123',name:'Pita Kato',role:'pharmacist',initials:'PK'},
+  'lab@meditrack.pro':{password:'lab123',name:'Moses Lado',role:'lab',initials:'ML'},
+  'billing@meditrack.pro':{password:'billing123',name:'Grace Billing',role:'billing',initials:'GB'},
+};
+
+let currentUser=null, currentHospital=null, allHospitals=[], allPatients=[], invItemCount=0, currentConsultVisitId=null;
+
+// ── ROLE PERMISSIONS ──
+const PAGE_ROLES={
+  dashboard:'all',queue:'admin,doctor,nurse,receptionist',
+  outpatient:'admin,doctor,nurse,receptionist',inpatient:'admin,doctor,nurse',
+  patients:'all',nursestation:'admin,nurse,doctor',consultation:'admin,doctor',
+  lab:'admin,lab,doctor',pharmacy:'admin,pharmacist,doctor',
+  inventory:'admin,pharmacist',billing:'admin,billing,receptionist',
+  reports:'admin',audit:'admin',staff:'admin',hospitals:'admin'
+};
+
+function hasAccess(pageRoles){
+  if(!currentUser) return false;
+  if(pageRoles==='all') return true;
+  return pageRoles.split(',').includes(currentUser.role);
+}
+
+// ── LOGIN ──
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim().toLowerCase();
+  const pass=document.getElementById('login-password').value;
+  const errEl=document.getElementById('login-error');
+  errEl.style.display='none';
+  const user=DEMO_USERS[email];
+  if(!user||user.password!==pass){errEl.style.display='block';return;}
+  currentUser={email,name:user.name,role:user.role,initials:user.initials};
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  document.getElementById('user-display-name').textContent=user.name;
+  document.getElementById('user-display-role').textContent=user.role.charAt(0).toUpperCase()+user.role.slice(1);
+  document.getElementById('user-av-initials').textContent=user.initials;
+  document.getElementById('dash-welcome-name').textContent=user.name.split(' ')[0]+' '+user.name.split(' ').slice(-1);
   document.getElementById('dash-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  applyRolesToNav();
+  buildModuleGrid();
   await loadHospitals();
   await loadAllPatients();
   await loadDoctors();
-  await loadDashboard();
-};
+  loadDashboard();
+  logAudit('Login','User signed in');
+}
 
+function doLogout(){
+  currentUser=null;
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-email').value='';
+  document.getElementById('login-password').value='';
+}
+
+document.getElementById('login-password').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+function applyRolesToNav(){
+  document.querySelectorAll('.nav-item[data-roles]').forEach(item=>{
+    const roles=item.getAttribute('data-roles');
+    item.style.display=hasAccess(roles)?'flex':'none';
+  });
+}
+
+function buildModuleGrid(){
+  const modules=[
+    {page:'reports',icon:'📊',title:'System Dashboard',desc:'At-a-glance view through visualizations and summary information.',btn:'Go to Dashboard',color:'linear-gradient(135deg,#1B2A4A,#3A5EA0)',roles:'admin'},
+    {page:'outpatient',icon:'🚶',title:'Outpatient Section',desc:'Patients who come with no plan to stay beyond the visit duration.',btn:'Go to Outpatient',color:'linear-gradient(135deg,#3A6BC2,#5588D8)',roles:'admin,doctor,nurse,receptionist'},
+    {page:'inpatient',icon:'🛏️',title:'Inpatient Section',desc:'Patients admitted to stay overnight or for indeterminate time.',btn:'Go to Inpatient',color:'linear-gradient(135deg,#2E7D9F,#3D9FBF)',roles:'admin,doctor,nurse'},
+    {page:'consultation',icon:'🧑‍⚕️',title:"Doctor's Section",desc:'Consultation desk, SOAP notes, diagnosis, prescriptions.',btn:'Go to Doctors',color:'linear-gradient(135deg,#1F7A6B,#2A9A80)',roles:'admin,doctor'},
+    {page:'billing',icon:'🧾',title:'Accounting Section',desc:'View, generate and clear patient bills for all insured and not insured.',btn:'Go to Accounts',color:'linear-gradient(135deg,#3557A0,#4A70C0)',roles:'admin,billing,receptionist'},
+    {page:'lab',icon:'🔬',title:'Laboratory Section',desc:'Lab data, investigations, result history and normal range flags.',btn:'Go to Laboratory',color:'linear-gradient(135deg,#5B7EC9,#7098E0)',roles:'admin,lab,doctor'},
+    {page:'pharmacy',icon:'💊',title:'Pharmacy Section',desc:'Manage dispensary, pharmacy stock and counter sales.',btn:'Go to Pharmacy',color:'linear-gradient(135deg,#2A6B8A,#3A8AAA)',roles:'admin,pharmacist,doctor'},
+    {page:'inventory',icon:'📦',title:'Inventory Section',desc:'Manage inventory items, batch tracking, expiry and stock purchases.',btn:'Go to Inventory',color:'linear-gradient(135deg,#3D5FA0,#5578C0)',roles:'admin,pharmacist'},
+  ];
+  const grid=document.getElementById('dash-modules');
+  grid.innerHTML=modules.filter(m=>hasAccess(m.roles)).map(m=>`
+    <div class="module-card" style="background:${m.color}" onclick="showPage('${m.page}',document.querySelector('[data-page=${m.page}]'))">
+      <div class="mc-icon">${m.icon}</div>
+      <div class="mc-title">${m.title}</div>
+      <div class="mc-desc">${m.desc}</div>
+      <button class="mc-btn">${m.btn} →</button>
+    </div>`).join('');
+}
+
+// ── HOSPITALS ──
 async function loadHospitals(){
   const{data,error}=await sb.from('hospitals').select('*').order('name');
-  if(error){showToast('⚠️ Run the schema SQL in Supabase first!','error');return;}
+  if(error){showToast('⚠️ Run schema.sql in Supabase first!','error');return;}
   allHospitals=data||[];
   const sel=document.getElementById('hosp-select');
   sel.innerHTML=allHospitals.map(h=>`<option value="${h.id}">${h.name} — ${h.branch}</option>`).join('');
@@ -765,41 +1088,45 @@ async function loadHospitals(){
 }
 function switchHospital(id){currentHospital=id;const h=allHospitals.find(x=>x.id===id);if(h)document.getElementById('topbar-sub').textContent=h.name+' · '+h.branch;loadDashboard();}
 async function saveHospital(){
-  const name=v('hs-name');if(!name){showToast('Hospital name required','error');return;}
+  const name=v('hs-name');if(!name){showToast('Name required','error');return;}
   const{error}=await sb.from('hospitals').insert({name,branch:v('hs-branch')||'Main Branch',location:v('hs-loc')});
   if(error){showToast(error.message,'error');return;}
-  showToast('✅ Hospital added!','success');closeModal('modal-hospital');await loadHospitals();
+  showToast('✅ Hospital added!','success');closeModal('modal-hospital');logAudit('Hospital','Added: '+name);await loadHospitals();
 }
 function renderHospTable(){
   const tb=document.getElementById('hosp-table');
-  if(!allHospitals.length){tb.innerHTML='<tr><td colspan="5"><div class="empty"><div class="empty-icon">🏥</div><span>No hospitals yet</span></div></td></tr>';return;}
+  if(!allHospitals.length){tb.innerHTML='<tr><td colspan="5"><div class="empty"><div class="empty-icon">🏥</div>No hospitals yet</div></td></tr>';return;}
   tb.innerHTML=allHospitals.map((h,i)=>`<tr><td>${i+1}</td><td class="td-name">${h.name}</td><td>${h.branch}</td><td>${h.location||'—'}</td><td>${fmt(h.created_at)}</td></tr>`).join('');
 }
 
+// ── PATIENTS ──
 async function loadAllPatients(){
   const{data}=await sb.from('patients').select('*').order('created_at',{ascending:false});
   allPatients=data||[];
-  populatePatientSelects();renderPatientTable();
+  populateSelects();renderPatientTable();
 }
-function populatePatientSelects(){
+function populateSelects(){
   const opts='<option value="">— Select Patient —</option>'+allPatients.map(p=>`<option value="${p.id}">${p.full_name} (${p.patient_number||'—'})</option>`).join('');
-  ['inv-patient','lab-patient','rx-patient'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+  ['inv-patient','lab-patient','rx-patient','vitals-patient'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }
+const AVS=['av1','av2','av3','av4'];
+function initials(name){return name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();}
 function renderPatientTable(){
   const tb=document.getElementById('pt-table');
-  if(!allPatients.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">👥</div><span>No patients yet — register your first patient!</span><span class="empty-sub">Click "+ New Patient" to get started</span></div></td></tr>';return;}
-  const avColors=['av1','av2','av3','av4'];
+  if(!allPatients.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">👥</div>No patients yet<span class="empty-sub">Register your first patient</span></div></td></tr>';return;}
   tb.innerHTML=allPatients.map((p,i)=>`<tr>
-    <td>${i+1}</td><td><code style="background:var(--bg2);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;color:var(--navy)">${p.patient_number||'—'}</code></td>
-    <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${avColors[i%4]}">${p.full_name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div><div><div class="td-name">${p.full_name}</div></div></div></td>
-    <td>${p.age||'—'}/${p.gender?p.gender[0]:'—'}</td><td>${p.phone||'—'}</td>
-    <td><span class="badge b-${p.insurance==='none'||!p.insurance?'discharged':'paid'}">${p.insurance||'cash'}</span></td>
+    <td>${i+1}</td>
+    <td><code style="background:var(--bg2);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;color:var(--navy)">${p.patient_number||'—'}</code></td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${AVS[i%4]}">${initials(p.full_name)}</div><div class="td-name">${p.full_name}</div></div></td>
+    <td>${p.age||'—'}/${p.gender?p.gender[0]:'?'}</td>
+    <td>${p.phone||'—'}</td>
+    <td><span class="badge ${p.insurance==='none'||!p.insurance?'b-discharged':'b-paid'}">${p.insurance||'cash'}</span></td>
     <td>${fmt(p.created_at)}</td>
-    <td><button class="btn btn-secondary btn-sm" onclick="openModal('modal-invoice')">🧾 Invoice</button></td>
+    <td><button class="btn btn-secondary btn-sm" onclick="openModal('modal-invoice')">🧾</button></td>
   </tr>`).join('');
 }
 async function savePatient(){
-  const name=v('pt-name');if(!name){showToast('Patient name required','error');return;}
+  const name=v('pt-name');if(!name){showToast('Name required','error');return;}
   const pnum='PT-'+Date.now().toString().slice(-6);
   const{data:pt,error}=await sb.from('patients').insert({hospital_id:currentHospital,full_name:name,age:parseInt(v('pt-age'))||null,gender:v('pt-gender'),phone:v('pt-phone'),address:v('pt-address'),insurance:v('pt-insurance'),patient_number:pnum}).select().single();
   if(error){showToast(error.message,'error');return;}
@@ -808,66 +1135,211 @@ async function savePatient(){
   const invNum='INV-'+Date.now().toString().slice(-6);
   await sb.from('invoices').insert({invoice_number:invNum,patient_id:pt.id,visit_id:visit?.id,hospital_id:currentHospital,payment_method:v('pt-insurance')==='none'?'cash':'insurance',payment_status:'pending',total_amount:0,paid_amount:0});
   showToast(`✅ ${name} registered! Invoice ${invNum} created.`,'success');
-  closeModal('modal-patient');await loadAllPatients();loadDashboard();loadVisits();loadBilling();
+  closeModal('modal-patient');logAudit('Patient','Registered: '+name+' ('+pnum+')');
+  await loadAllPatients();loadDashboard();loadVisits();loadBilling();loadQueue();
 }
 
+// ── DOCTORS ──
 async function loadDoctors(){
   const{data}=await sb.from('staff').select('*').eq('role','doctor');
   const sel=document.getElementById('pt-doctor');
   if(sel)sel.innerHTML='<option value="">— Select Doctor —</option>'+((data||[]).map(s=>`<option value="${s.id}">${s.full_name}</option>`).join(''));
 }
 
+// ── VISITS ──
 async function loadVisits(){
   const hid=currentHospital||allHospitals[0]?.id||'';
+  if(!hid)return;
   const{data}=await sb.from('visits').select(`*,patients(*),staff(*),invoices(*)`).eq('hospital_id',hid).order('created_at',{ascending:false});
   const visits=data||[];
-  const opd=visits.filter(v=>v.visit_type==='outpatient'||v.visit_type==='emergency');
-  const ipd=visits.filter(v=>v.visit_type==='inpatient');
-  renderOPD(opd);renderIPD(ipd);renderDashRecent(visits.slice(0,8));
+  renderOPD(visits.filter(vt=>vt.visit_type==='outpatient'||vt.visit_type==='emergency'));
+  renderIPD(visits.filter(vt=>vt.visit_type==='inpatient'));
+  renderDashRecent(visits.slice(0,8));
+  renderConsultList(visits.filter(vt=>vt.status==='active'||vt.status==='admitted'));
 }
-const avColors=['av1','av2','av3','av4'];
 function renderOPD(visits){
   const tb=document.getElementById('opd-table');
-  if(!visits.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">🚶</div><span>No outpatients today</span><span class="empty-sub">Register a patient to get started</span></div></td></tr>';return;}
-  tb.innerHTML=visits.map((vt,i)=>{const inv=Array.isArray(vt.invoices)?vt.invoices[0]:vt.invoices;return`<tr>
-    <td>${i+1}</td>
-    <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${avColors[i%4]}">${(vt.patients?.full_name||'?').split(' ').map(n=>n[0]).join('').slice(0,2)}</div><div><div class="td-name">${vt.patients?.full_name||'—'}</div><div class="td-sub">${vt.patients?.patient_number||''}</div></div></div></td>
-    <td>${vt.patients?.age||'?'}/${vt.patients?.gender?vt.patients.gender[0]:'?'}</td>
-    <td>${vt.complaint||'—'}</td><td>${vt.staff?.full_name||'—'}</td>
-    <td><span class="badge b-${vt.status}">${vt.status}</span></td>
-    <td>${inv?'<strong>$'+(inv.total_amount||0).toFixed(2)+'</strong>':'—'}</td>
-    <td><button class="btn btn-secondary btn-sm" onclick="openModal('modal-invoice')">🧾 Invoice</button></td>
-  </tr>`;}).join('');
+  if(!visits.length){tb.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-icon">🚶</div>No outpatients today</div></td></tr>';return;}
+  tb.innerHTML=visits.map((vt,i)=>{
+    const inv=Array.isArray(vt.invoices)?vt.invoices[0]:vt.invoices;
+    return`<tr>
+      <td>${i+1}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${AVS[i%4]}">${initials(vt.patients?.full_name||'?')}</div><div><div class="td-name">${vt.patients?.full_name||'—'}</div><div class="td-sub">${vt.patients?.patient_number||''}</div></div></div></td>
+      <td>${vt.patients?.age||'?'}/${vt.patients?.gender?vt.patients.gender[0]:'?'}</td>
+      <td>${vt.complaint||'—'}</td>
+      <td><span class="badge b-${vt.vitals_recorded?'completed':'pending'}">${vt.vitals_recorded?'✓ Done':'Pending'}</span></td>
+      <td>${vt.staff?.full_name||'—'}</td>
+      <td><span class="badge b-${vt.status}">${vt.status}</span></td>
+      <td>${inv?'$'+(inv.total_amount||0).toFixed(2):'—'}</td>
+      <td style="display:flex;gap:4px"><button class="btn btn-primary btn-sm" onclick="openConsult('${vt.id}','${vt.patients?.full_name||''}')">📋</button><button class="btn btn-secondary btn-sm" onclick="openModal('modal-invoice')">🧾</button></td>
+    </tr>`;}).join('');
 }
 function renderIPD(visits){
   const tb=document.getElementById('ipd-table');
-  if(!visits.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">🛏️</div><span>No inpatients currently</span></div></td></tr>';return;}
+  if(!visits.length){tb.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-icon">🛏️</div>No inpatients currently</div></td></tr>';return;}
   tb.innerHTML=visits.map((vt,i)=>{
     const days=vt.admitted_at?Math.floor((Date.now()-new Date(vt.admitted_at))/86400000):0;
     const inv=Array.isArray(vt.invoices)?vt.invoices[0]:vt.invoices;
-    return`<tr><td>${i+1}</td>
-    <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${avColors[i%4]}">${(vt.patients?.full_name||'?').split(' ').map(n=>n[0]).join('').slice(0,2)}</div><div class="td-name">${vt.patients?.full_name||'—'}</div></div></td>
-    <td><strong>${vt.bed_number||'—'}</strong></td><td>${vt.diagnosis||vt.complaint||'—'}</td>
-    <td>${vt.admitted_at?fmt(vt.admitted_at):'—'}</td><td><span class="badge b-${days>3?'overdue':'active'}">${days}d</span></td>
-    <td><span class="badge b-${vt.status}">${vt.status}</span></td>
-    <td>${inv?'$'+(inv.total_amount||0).toFixed(2):'—'}</td></tr>`;}).join('');
+    return`<tr>
+      <td>${i+1}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${AVS[i%4]}">${initials(vt.patients?.full_name||'?')}</div><div class="td-name">${vt.patients?.full_name||'—'}</div></div></td>
+      <td><strong>${vt.bed_number||'—'}</strong></td>
+      <td>${vt.diagnosis||vt.complaint||'—'}</td>
+      <td>${vt.admitted_at?fmt(vt.admitted_at):'—'}</td>
+      <td><span class="badge b-${days>5?'overdue':days>2?'pending':'active'}">${days}d</span></td>
+      <td><span class="badge b-${vt.status}">${vt.status}</span></td>
+      <td>${inv?'$'+(inv.total_amount||0).toFixed(2):'—'}</td>
+      <td><button class="btn btn-primary btn-sm" onclick="openConsult('${vt.id}','${vt.patients?.full_name||''}')">📋 Notes</button></td>
+    </tr>`;}).join('');
 }
 function renderDashRecent(visits){
-  const tb=document.getElementById('dash-recent-patients');
-  if(!visits.length){tb.innerHTML='<tr><td colspan="6"><div class="empty"><div class="empty-icon">👥</div><span>No patients yet</span><span class="empty-sub">Register your first patient using the button above</span></div></td></tr>';return;}
+  const tb=document.getElementById('dash-recent');
+  if(!visits.length){tb.innerHTML='<tr><td colspan="6"><div class="empty"><div class="empty-icon">👥</div>No patients yet<span class="empty-sub">Register your first patient above</span></div></td></tr>';return;}
   tb.innerHTML=visits.map((vt,i)=>{
     const inv=Array.isArray(vt.invoices)?vt.invoices[0]:vt.invoices;
     const status=inv?.payment_status||'pending';
     return`<tr>
-      <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${avColors[i%4]}">${(vt.patients?.full_name||'?').split(' ').map(n=>n[0]).join('').slice(0,2)}</div><div><div class="td-name">${vt.patients?.full_name||'—'}</div><div class="td-sub">${vt.patients?.patient_number||''}</div></div></div></td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${AVS[i%4]}">${initials(vt.patients?.full_name||'?')}</div><div><div class="td-name">${vt.patients?.full_name||'—'}</div><div class="td-sub">${vt.patients?.patient_number||''}</div></div></div></td>
       <td><span class="badge b-${vt.visit_type}">${vt.visit_type}</span></td>
       <td>${vt.department||'—'}</td>
-      <td>${inv?'<strong>$'+(inv.total_amount||0).toFixed(2)+'</strong>':'—'}</td>
+      <td>${inv?'$'+(inv.total_amount||0).toFixed(2):'—'}</td>
       <td><span class="badge b-${status}">${status}</span></td>
       <td>${fmt(vt.created_at)}</td>
     </tr>`;}).join('');
 }
 
+// ── OPD QUEUE ──
+async function loadQueue(){
+  const hid=currentHospital||allHospitals[0]?.id||'';
+  if(!hid)return;
+  const today=new Date().toISOString().split('T')[0];
+  const{data}=await sb.from('visits').select(`*,patients(*)`).eq('hospital_id',hid).eq('status','active').order('created_at');
+  const visits=(data||[]).filter(v=>v.created_at?.startsWith(today));
+  document.getElementById('queue-count').textContent=visits.length;
+  const badge=document.getElementById('queue-badge');
+  if(visits.length>0){badge.style.display='';badge.textContent=visits.length;}else{badge.style.display='none';}
+  if(!visits.length){document.getElementById('queue-list').innerHTML='<div class="empty"><div class="empty-icon">🚦</div>Queue is empty — no patients waiting</div>';document.getElementById('queue-avg-wait').textContent='0 min';return;}
+  const now=Date.now();
+  let totalWait=0;
+  const html=visits.map((vt,i)=>{
+    const wait=Math.floor((now-new Date(vt.created_at))/60000);
+    totalWait+=wait;
+    const urgent=wait>30;
+    return`<div class="queue-item priority-${urgent?'urgent':'normal'}" onclick="openConsult('${vt.id}','${vt.patients?.full_name||''}')">
+      <div class="queue-num">${i+1}</div>
+      <div class="queue-info">
+        <div class="queue-name">${vt.patients?.full_name||'—'}</div>
+        <div class="queue-meta">${vt.patients?.age||'?'} yrs · ${vt.patients?.gender||'?'} · ${vt.department||'General OPD'} · ${vt.complaint||'No complaint noted'}</div>
+      </div>
+      <div class="queue-wait ${urgent?'long':''}">${wait} min${urgent?' ⚠️':''}</div>
+    </div>`;}).join('');
+  document.getElementById('queue-list').innerHTML=html;
+  document.getElementById('queue-avg-wait').textContent=Math.round(totalWait/visits.length)+' min';
+}
+
+// ── NURSE STATION ──
+async function loadNurseStation(){
+  const{data}=await sb.from('vitals').select(`*,patients(full_name,patient_number),staff(full_name)`).order('created_at',{ascending:false}).limit(50);
+  const vitals=data||[];
+  const tb=document.getElementById('vitals-table');
+  if(!vitals.length){tb.innerHTML='<tr><td colspan="10"><div class="empty"><div class="empty-icon">🩺</div>No vitals recorded yet</div></td></tr>';return;}
+  tb.innerHTML=vitals.map(vt=>{
+    const bp=vt.bp_systolic&&vt.bp_diastolic?`${vt.bp_systolic}/${vt.bp_diastolic}`:'—';
+    const bpFlag=vt.bp_systolic>140||vt.bp_diastolic>90?'vital-high':vt.bp_systolic<90?'vital-low':'vital-normal';
+    const tempFlag=vt.temperature>37.5?'vital-high':vt.temperature<36?'vital-low':'vital-normal';
+    const pulseFlag=vt.pulse>100||vt.pulse<60?'vital-high':'vital-normal';
+    const spo2Flag=vt.spo2<95?'vital-high':'vital-normal';
+    return`<tr>
+      <td><div class="td-name">${vt.patients?.full_name||'—'}</div><div class="td-sub">${vt.patients?.patient_number||''}</div></td>
+      <td class="${bpFlag}">${bp}</td>
+      <td class="${tempFlag}">${vt.temperature||'—'}${vt.temperature?'°C':''}</td>
+      <td class="${pulseFlag}">${vt.pulse||'—'}${vt.pulse?' bpm':''}</td>
+      <td class="${spo2Flag}">${vt.spo2||'—'}${vt.spo2?'%':''}</td>
+      <td>${vt.weight||'—'}${vt.weight?' kg':''}</td>
+      <td>${vt.height||'—'}${vt.height?' cm':''}</td>
+      <td>${vt.staff?.full_name||currentUser?.name||'—'}</td>
+      <td>${fmtTime(vt.created_at)}</td>
+      <td><span class="badge b-completed">Recorded</span></td>
+    </tr>`;}).join('');
+}
+async function saveVitals(){
+  const pid=v('vitals-patient');if(!pid){showToast('Select a patient','error');return;}
+  const{error}=await sb.from('vitals').insert({
+    patient_id:pid,hospital_id:currentHospital,
+    bp_systolic:parseInt(v('v-bp-sys'))||null,bp_diastolic:parseInt(v('v-bp-dia'))||null,
+    temperature:parseFloat(v('v-temp'))||null,pulse:parseInt(v('v-pulse'))||null,
+    spo2:parseInt(v('v-spo2'))||null,respiratory_rate:parseInt(v('v-rr'))||null,
+    weight:parseFloat(v('v-weight'))||null,height:parseInt(v('v-height'))||null,
+    notes:v('v-notes'),recorded_by:currentUser?.name||'Nurse'
+  });
+  if(error){showToast(error.message,'error');return;}
+  showToast('✅ Vitals recorded!','success');closeModal('modal-vitals');logAudit('Vitals','Recorded vitals for patient '+pid);loadNurseStation();
+}
+
+// ── CONSULTATION DESK ──
+function renderConsultList(visits){
+  const el=document.getElementById('consult-patient-list');
+  if(!visits.length){el.innerHTML='<div class="empty" style="padding:20px"><div class="empty-icon">🧑‍⚕️</div><span style="font-size:12px">No active patients today</span></div>';return;}
+  el.innerHTML=visits.map((vt,i)=>`
+    <div onclick="openConsult('${vt.id}','${vt.patients?.full_name||''}')" style="padding:10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="pt-av ${AVS[i%4]}" style="width:30px;height:30px;font-size:10px">${initials(vt.patients?.full_name||'?')}</div>
+        <div>
+          <div style="font-size:12px;font-weight:800;color:var(--navy)">${vt.patients?.full_name||'—'}</div>
+          <div style="font-size:11px;color:var(--text3)">${vt.department||'OPD'} · ${vt.patients?.age||'?'}yrs</div>
+        </div>
+        <span class="badge b-${vt.status}" style="margin-left:auto;font-size:10px">${vt.status}</span>
+      </div>
+    </div>`).join('');
+}
+function openConsult(visitId,patientName){
+  currentConsultVisitId=visitId;
+  document.getElementById('consult-pt-name').textContent=patientName;
+  document.getElementById('soap-s').value='';
+  document.getElementById('soap-o').value='';
+  document.getElementById('soap-a').value='';
+  document.getElementById('soap-p').value='';
+  document.getElementById('consult-diag').value='';
+  document.getElementById('consult-notes').value='';
+  // Load vitals for this patient
+  loadVitalsForConsult(visitId);
+  openModal('modal-consult');
+}
+async function loadVitalsForConsult(visitId){
+  const{data:visit}=await sb.from('visits').select('patient_id').eq('id',visitId).single();
+  if(!visit)return;
+  const{data:vitals}=await sb.from('vitals').select('*').eq('patient_id',visit.patient_id).order('created_at',{ascending:false}).limit(1);
+  const vt=vitals?.[0];
+  const el=document.getElementById('consult-vitals-display');
+  if(!vt){el.innerHTML='<div class="alert-bar warning">⚠️ No vitals recorded for this patient. Ask nurse to record vitals first.</div>';return;}
+  const bpColor=vt.bp_systolic>140?'var(--red)':vt.bp_systolic<90?'var(--yellow)':'var(--green)';
+  const tempColor=vt.temperature>37.5?'var(--red)':'var(--green)';
+  const spo2Color=vt.spo2<95?'var(--red)':'var(--green)';
+  el.innerHTML=`<div style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:12px">
+    <div style="font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Latest Vitals (${fmtTime(vt.created_at)})</div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;text-align:center">
+      <div><div style="font-size:14px;font-weight:900;color:${bpColor}">${vt.bp_systolic||'—'}/${vt.bp_diastolic||'—'}</div><div style="font-size:10px;color:var(--text3)">BP mmHg</div></div>
+      <div><div style="font-size:14px;font-weight:900;color:${tempColor}">${vt.temperature||'—'}°C</div><div style="font-size:10px;color:var(--text3)">Temp</div></div>
+      <div><div style="font-size:14px;font-weight:900;color:var(--navy)">${vt.pulse||'—'}</div><div style="font-size:10px;color:var(--text3)">Pulse</div></div>
+      <div><div style="font-size:14px;font-weight:900;color:${spo2Color}">${vt.spo2||'—'}%</div><div style="font-size:10px;color:var(--text3)">SpO2</div></div>
+      <div><div style="font-size:14px;font-weight:900;color:var(--navy)">${vt.weight||'—'}kg</div><div style="font-size:10px;color:var(--text3)">Weight</div></div>
+      <div><div style="font-size:14px;font-weight:900;color:var(--navy)">${vt.height||'—'}cm</div><div style="font-size:10px;color:var(--text3)">Height</div></div>
+    </div>
+  </div>`;
+}
+async function saveConsultation(){
+  if(!currentConsultVisitId)return;
+  const soap={subjective:v('soap-s'),objective:v('soap-o'),assessment:v('soap-a'),plan:v('soap-p')};
+  const diag=v('consult-diag');
+  const{error}=await sb.from('consultations').insert({visit_id:currentConsultVisitId,hospital_id:currentHospital,soap_notes:JSON.stringify(soap),diagnosis:diag,follow_up_date:v('consult-followup')||null,doctor_notes:v('consult-notes'),doctor_name:currentUser?.name||'Doctor'});
+  if(error){
+    // Table may not exist yet — save to visits instead
+    await sb.from('visits').update({diagnosis:diag}).eq('id',currentConsultVisitId);
+  }
+  showToast('✅ Consultation saved!','success');closeModal('modal-consult');logAudit('Consultation','Saved SOAP notes for visit '+currentConsultVisitId);loadVisits();
+}
+
+// ── DASHBOARD ──
 async function loadDashboard(){
   if(!allHospitals.length)return;
   const hid=currentHospital||allHospitals[0].id;
@@ -877,112 +1349,92 @@ async function loadDashboard(){
     sb.from('visits').select('*,patients(*),staff(*),invoices(*)').eq('hospital_id',hid).order('created_at',{ascending:false}),
     sb.from('patients').select('*').eq('hospital_id',hid)
   ]);
-  const invs=invR.data||[];const visits=visitR.data||[];const pts=ptR.data||[];
-  const todayInvs=invs.filter(i=>i.created_at?.startsWith(today));
-  const todayRev=todayInvs.reduce((a,i)=>a+(i.paid_amount||0),0);
+  const invs=invR.data||[],visits=visitR.data||[],pts=ptR.data||[];
+  const todayRev=invs.filter(i=>i.created_at?.startsWith(today)).reduce((a,i)=>a+(i.paid_amount||0),0);
   const totalRev=invs.reduce((a,i)=>a+(i.paid_amount||0),0);
   const overdue=invs.filter(i=>i.payment_status==='pending'||i.payment_status==='overdue');
-  const admitted=visits.filter(v=>v.status==='admitted');
-  const ob=document.getElementById('overdue-badge');
-  if(overdue.length>0){ob.style.display='';ob.textContent=overdue.length;document.getElementById('notif-dot').style.display='';}
-  const alerts=overdue.length?`<div class="alert-bar warning">💰 <strong>${overdue.length} unpaid invoice${overdue.length>1?'s':''}</strong> totalling <strong>$${overdue.reduce((a,i)=>a+(i.total_amount-i.paid_amount),0).toFixed(2)}</strong> are pending payment. <button onclick="showPage('billing',document.querySelector('[data-page=billing]'))" style="margin-left:8px;background:var(--navy);color:#fff;border:none;border-radius:12px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer">View Billing →</button></div>`:'';
-  document.getElementById('dash-alerts').innerHTML=alerts;
+  const admitted=visits.filter(vt=>vt.status==='admitted');
+  if(overdue.length>0){document.getElementById('overdue-badge').style.display='';document.getElementById('overdue-badge').textContent=overdue.length;document.getElementById('notif-dot').style.display='';}
+  document.getElementById('dash-alerts').innerHTML=overdue.length?`<div class="alert-bar warning">💰 <strong>${overdue.length} unpaid invoice${overdue.length>1?'s':''}</strong> totalling <strong>$${overdue.reduce((a,i)=>a+(i.total_amount-i.paid_amount),0).toFixed(2)}</strong> pending. <button onclick="showPage('billing',document.querySelector('[data-page=billing]'))" style="margin-left:8px;background:var(--navy);color:#fff;border:none;border-radius:10px;padding:3px 10px;font-size:11px;font-weight:800;cursor:pointer">View →</button></div>`:'';
   document.getElementById('dash-stats').innerHTML=`
     <div class="stat-card sc-green" onclick="showPage('patients',document.querySelector('[data-page=patients]'))">
-      <div class="stat-icon-wrap si-green">🏥</div>
-      <div class="stat-label">Patients Today</div>
-      <div class="stat-value">${visits.filter(v=>v.created_at?.startsWith(today)).length}</div>
-      <div class="stat-change up">↑ Total: ${pts.length} registered</div>
+      <div class="stat-icon-wrap si-green">🏥</div><div class="stat-label">Patients Today</div>
+      <div class="stat-value">${visits.filter(vt=>vt.created_at?.startsWith(today)).length}</div>
+      <div class="stat-change up">↑ Total: ${pts.length}</div>
     </div>
     <div class="stat-card sc-blue" onclick="showPage('inpatient',document.querySelector('[data-page=inpatient]'))">
-      <div class="stat-icon-wrap si-blue">🛏️</div>
-      <div class="stat-label">Admitted</div>
+      <div class="stat-icon-wrap si-blue">🛏️</div><div class="stat-label">Admitted</div>
       <div class="stat-value">${admitted.length}</div>
       <div class="stat-change neutral">Currently inpatient</div>
     </div>
     <div class="stat-card sc-green" onclick="showPage('billing',document.querySelector('[data-page=billing]'))">
-      <div class="stat-icon-wrap si-green">💰</div>
-      <div class="stat-label">Revenue Today</div>
+      <div class="stat-icon-wrap si-green">💰</div><div class="stat-label">Revenue Today</div>
       <div class="stat-value">$${todayRev.toFixed(0)}</div>
-      <div class="stat-change up">↑ All time: $${totalRev.toFixed(0)}</div>
+      <div class="stat-change up">All time: $${totalRev.toFixed(0)}</div>
     </div>
     <div class="stat-card sc-red" onclick="showPage('billing',document.querySelector('[data-page=billing]'))">
-      <div class="stat-icon-wrap si-red">🧾</div>
-      <div class="stat-label">Outstanding</div>
-      <div class="stat-value" style="color:#CC2200">${overdue.length}</div>
+      <div class="stat-icon-wrap si-red">🧾</div><div class="stat-label">Outstanding</div>
+      <div class="stat-value" style="color:var(--red)">${overdue.length}</div>
       <div class="stat-change down">↓ Unpaid invoices</div>
     </div>`;
-  // chart
   const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   const tod=new Date().getDay();
-  const barData=days.map((_,i)=>{
-    const d=new Date();d.setDate(d.getDate()-(tod===0?6:tod-1)+i);
-    const ds=d.toISOString().split('T')[0];
-    return{label:days[i],val:invs.filter(x=>x.created_at?.startsWith(ds)).reduce((a,x)=>a+(x.paid_amount||0),0)};
-  });
+  const barData=days.map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(tod===0?6:tod-1)+i);const ds=d.toISOString().split('T')[0];return{label:days[i],val:invs.filter(x=>x.created_at?.startsWith(ds)).reduce((a,x)=>a+(x.paid_amount||0),0)};});
   const maxV=Math.max(...barData.map(b=>b.val),1);
-  const wkTotal=barData.reduce((a,b)=>a+b.val,0);
-  document.getElementById('dash-rev-total').textContent='$'+wkTotal.toFixed(0);
-  document.getElementById('dash-chart').innerHTML=barData.map((b,i)=>`
-    <div class="cbar-wrap">
-      <div class="cbar ${i===(tod===0?6:tod-1)?'active':'inactive'}" style="height:${Math.round(b.val/maxV*90)+5}%" title="$${b.val.toFixed(0)}"></div>
-      <div class="cbar-lbl">${b.label}</div>
-    </div>`).join('');
-  // breakdown
+  document.getElementById('dash-rev-total').textContent='$'+barData.reduce((a,b)=>a+b.val,0).toFixed(0);
+  document.getElementById('dash-chart').innerHTML=barData.map((b,i)=>`<div class="cbar-wrap"><div class="cbar ${i===(tod===0?6:tod-1)?'active':'inactive'}" style="height:${Math.round(b.val/maxV*90)+5}%" title="$${b.val.toFixed(0)}"></div><div class="cbar-lbl">${b.label}</div></div>`).join('');
   const{data:items}=await sb.from('invoice_items').select('*');
   const cats=[{name:'Consultations',color:'#3A6BC2',cat:'consultation'},{name:'Laboratory',color:'#7C5CBF',cat:'lab'},{name:'Pharmacy',color:'#2DC653',cat:'pharmacy'},{name:'Procedures',color:'#00B4D8',cat:'procedure'},{name:'In-patient',color:'#F78C00',cat:'bed'}];
   const tot=Math.max(items?.reduce((a,x)=>a+(x.total_price||0),0)||1,1);
-  document.getElementById('dash-breakdown').innerHTML=cats.map(c=>{
-    const amt=items?.filter(x=>x.category===c.cat).reduce((a,x)=>a+(x.total_price||0),0)||0;
-    const pct=Math.round(amt/tot*100);
-    return`<div class="bkd-item"><div class="bkd-dot" style="background:${c.color}"></div><span class="bkd-name">${c.name}</span><div class="bkd-bar-bg"><div class="bkd-bar-fg" style="width:${pct}%;background:${c.color}"></div></div><span class="bkd-amt">$${amt.toFixed(0)}</span><span class="bkd-pct">${pct}%</span></div>`;}).join('');
+  document.getElementById('dash-breakdown').innerHTML=cats.map(c=>{const amt=items?.filter(x=>x.category===c.cat).reduce((a,x)=>a+(x.total_price||0),0)||0;const pct=Math.round(amt/tot*100);return`<div class="bkd-item"><div class="bkd-dot" style="background:${c.color}"></div><span class="bkd-name">${c.name}</span><div class="bkd-bar-bg"><div class="bkd-bar-fg" style="width:${pct}%;background:${c.color}"></div></div><span class="bkd-amt">$${amt.toFixed(0)}</span><span class="bkd-pct">${pct}%</span></div>`;}).join('');
   renderDashRecent(visits.slice(0,8));
 }
 
+// ── BILLING ──
 async function loadBilling(){
   const{data}=await sb.from('invoices').select(`*,patients(full_name,patient_number)`).order('created_at',{ascending:false});
   const invs=data||[];
-  const total=invs.reduce((a,i)=>a+(i.total_amount||0),0);
   const paid=invs.reduce((a,i)=>a+(i.paid_amount||0),0);
   const pending=invs.filter(i=>i.payment_status==='pending');
   const overdue=invs.filter(i=>i.payment_status==='overdue');
   document.getElementById('billing-stats').innerHTML=`
     <div class="stat-card sc-blue"><div class="stat-icon-wrap si-blue">🧾</div><div class="stat-label">Total Invoices</div><div class="stat-value">${invs.length}</div></div>
-    <div class="stat-card sc-green"><div class="stat-icon-wrap si-green">💰</div><div class="stat-label">Total Collected</div><div class="stat-value">$${paid.toFixed(0)}</div></div>
+    <div class="stat-card sc-green"><div class="stat-icon-wrap si-green">💰</div><div class="stat-label">Collected</div><div class="stat-value">$${paid.toFixed(0)}</div></div>
     <div class="stat-card sc-purple"><div class="stat-icon-wrap si-purple">⏳</div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div>
-    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">⚠️</div><div class="stat-label">Overdue</div><div class="stat-value" style="color:#CC2200">${overdue.length}</div></div>`;
+    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">⚠️</div><div class="stat-label">Overdue</div><div class="stat-value" style="color:var(--red)">${overdue.length}</div></div>`;
   const tb=document.getElementById('inv-table');
-  if(!invs.length){tb.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-icon">🧾</div><span>No invoices yet</span><span class="empty-sub">Invoices are created automatically when you register a patient</span></div></td></tr>';return;}
+  if(!invs.length){tb.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-icon">🧾</div>No invoices yet<span class="empty-sub">Invoices are created automatically when you register a patient</span></div></td></tr>';return;}
   tb.innerHTML=invs.map(inv=>{
     const bal=(inv.total_amount||0)-(inv.paid_amount||0);
     return`<tr>
-      <td><code style="background:var(--bg2);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;color:var(--navy)">${inv.invoice_number||'—'}</code></td>
+      <td><code style="background:var(--bg2);padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;color:var(--navy)">${inv.invoice_number||'—'}</code></td>
       <td><div class="td-name">${inv.patients?.full_name||'—'}</div><div class="td-sub">${inv.patients?.patient_number||''}</div></td>
       <td><strong>$${(inv.total_amount||0).toFixed(2)}</strong></td>
       <td style="color:var(--green2)">$${(inv.paid_amount||0).toFixed(2)}</td>
-      <td style="color:${bal>0?'#CC2200':'#1A7A3A'};font-weight:800">$${bal.toFixed(2)}</td>
+      <td style="color:${bal>0?'var(--red)':'var(--green2)'};font-weight:800">$${bal.toFixed(2)}</td>
       <td>${inv.payment_method||'cash'}</td>
       <td><span class="badge b-${inv.payment_status}">${inv.payment_status}</span></td>
       <td>${fmt(inv.created_at)}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap">
-        ${bal>0?`<button class="btn btn-green btn-sm" onclick="markPaid('${inv.id}','${inv.total_amount}')">✓ Paid</button>`:''}
+        ${bal>0?`<button class="btn btn-green btn-sm" onclick="markPaid('${inv.id}','${inv.total_amount}')">✓ Pay</button>`:''}
         <button class="btn btn-secondary btn-sm" onclick="addInvItems('${inv.id}')">+ Items</button>
+        <button class="btn btn-navy btn-sm" onclick="printInvoice('${inv.id}')">🖨️</button>
       </td>
     </tr>`;}).join('');
 }
 async function markPaid(id,total){
   await sb.from('invoices').update({paid_amount:parseFloat(total),payment_status:'paid'}).eq('id',id);
-  showToast('✅ Invoice marked as paid!','success');loadBilling();loadDashboard();
+  showToast('✅ Paid!','success');logAudit('Invoice','Marked paid: '+id);loadBilling();loadDashboard();
 }
 async function addInvItems(invId){
-  const svc=prompt('Service name (e.g. Malaria Treatment):');if(!svc)return;
-  const price=parseFloat(prompt('Price in USD ($):')||0);
-  const cat=prompt('Category:\nconsultation / lab / pharmacy / procedure / bed / other')||'consultation';
+  const svc=prompt('Service name:');if(!svc)return;
+  const price=parseFloat(prompt('Price ($):')||0);
+  const cat=prompt('Category (consultation/lab/pharmacy/procedure/bed/other):')||'consultation';
   await sb.from('invoice_items').insert({invoice_id:invId,service_name:svc,category:cat,unit_price:price,quantity:1});
   const{data:items}=await sb.from('invoice_items').select('total_price').eq('invoice_id',invId);
   const total=items?.reduce((a,x)=>a+(x.total_price||0),0)||0;
   await sb.from('invoices').update({total_amount:total}).eq('id',invId);
-  showToast('✅ Item added to invoice!','success');loadBilling();
+  showToast('✅ Item added!','success');logAudit('Invoice','Added item to '+invId);loadBilling();
 }
 function addInvItem(){
   invItemCount++;
@@ -990,7 +1442,7 @@ function addInvItem(){
   const div=document.createElement('div');
   div.style.cssText='display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:flex-end';
   div.innerHTML=`
-    <div><label class="form-label">Service Name</label><input class="form-input" placeholder="e.g. Consultation fee" id="ii-name-${invItemCount}"></div>
+    <div><label class="form-label">Service</label><input class="form-input" placeholder="e.g. Consultation" id="ii-name-${invItemCount}"></div>
     <div><label class="form-label">Category</label><select class="form-select" id="ii-cat-${invItemCount}"><option value="consultation">Consultation</option><option value="lab">Lab</option><option value="pharmacy">Pharmacy</option><option value="procedure">Procedure</option><option value="bed">Bed/Ward</option><option value="other">Other</option></select></div>
     <div><label class="form-label">Price ($)</label><input class="form-input" type="number" placeholder="0.00" id="ii-price-${invItemCount}"></div>
     <button class="btn btn-danger btn-sm" style="align-self:flex-end" onclick="this.parentElement.remove()">✕</button>`;
@@ -998,7 +1450,6 @@ function addInvItem(){
 }
 async function saveInvoice(){
   const pid=v('inv-patient');if(!pid){showToast('Select a patient','error');return;}
-  const invNum='INV-'+Date.now().toString().slice(-6);
   const items=[];
   for(let i=1;i<=invItemCount;i++){
     const name=document.getElementById('ii-name-'+i)?.value;
@@ -1009,116 +1460,209 @@ async function saveInvoice(){
   const total=items.reduce((a,x)=>a+x.unit_price,0);
   const paid=parseFloat(v('inv-paid')||0);
   const status=paid>=total&&total>0?'paid':paid>0?'partial':'pending';
+  const invNum='INV-'+Date.now().toString().slice(-6);
   const{data:inv,error}=await sb.from('invoices').insert({invoice_number:invNum,patient_id:pid,hospital_id:currentHospital,total_amount:total,paid_amount:paid,payment_method:v('inv-method'),payment_status:status,notes:v('inv-notes')}).select().single();
   if(error){showToast(error.message,'error');return;}
   if(items.length>0)await sb.from('invoice_items').insert(items.map(x=>({...x,invoice_id:inv.id})));
-  showToast(`✅ Invoice ${invNum} created!`,'success');
-  closeModal('modal-invoice');invItemCount=0;document.getElementById('inv-items-wrap').innerHTML='';
-  loadBilling();loadDashboard();
+  showToast(`✅ Invoice ${invNum} saved!`,'success');closeModal('modal-invoice');invItemCount=0;document.getElementById('inv-items-wrap').innerHTML='';
+  logAudit('Invoice','Created: '+invNum+' $'+total.toFixed(2));loadBilling();loadDashboard();
 }
 
+// ── PRINT INVOICE ──
+async function printInvoice(invId){
+  const{data:inv}=await sb.from('invoices').select(`*,patients(*)`).eq('id',invId).single();
+  const{data:items}=await sb.from('invoice_items').select('*').eq('invoice_id',invId);
+  const hospital=allHospitals.find(h=>h.id===inv.hospital_id)||{name:'MediTrack Pro Hospital',branch:'Main Branch'};
+  const bal=(inv.total_amount||0)-(inv.paid_amount||0);
+  const itemRows=(items||[]).map(it=>`<tr style="border-bottom:1px solid #eee"><td style="padding:6px 0">${it.service_name}</td><td style="padding:6px 0;text-align:center">${it.quantity}</td><td style="padding:6px 0;text-align:right">$${(it.unit_price||0).toFixed(2)}</td><td style="padding:6px 0;text-align:right">$${(it.total_price||0).toFixed(2)}</td></tr>`).join('');
+  document.getElementById('invoice-print-content').innerHTML=`
+    <div style="max-width:480px;margin:0 auto;padding:20px">
+      <div style="text-align:center;border-bottom:2px solid #1B2A4A;padding-bottom:14px;margin-bottom:14px">
+        <div style="font-size:20px;font-weight:900;color:#1B2A4A">🏥 ${hospital.name}</div>
+        <div style="font-size:12px;color:#666;margin-top:2px">${hospital.branch} · ${hospital.location||''}</div>
+        <div style="font-size:13px;font-weight:800;color:#00B4D8;margin-top:4px">OFFICIAL RECEIPT</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;margin-bottom:14px">
+        <div><span style="color:#888">Invoice #:</span> <strong>${inv.invoice_number}</strong></div>
+        <div><span style="color:#888">Date:</span> ${fmt(inv.created_at)}</div>
+        <div><span style="color:#888">Patient:</span> <strong>${inv.patients?.full_name||'—'}</strong></div>
+        <div><span style="color:#888">Patient #:</span> ${inv.patients?.patient_number||'—'}</div>
+        <div><span style="color:#888">Payment:</span> ${inv.payment_method||'cash'}</div>
+        <div><span style="color:#888">Status:</span> <strong style="color:${inv.payment_status==='paid'?'#1A7A3A':'#CC2200'}">${inv.payment_status?.toUpperCase()}</strong></div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+        <thead><tr style="background:#F0F4F8"><th style="padding:7px 0;text-align:left">Service</th><th style="padding:7px 0;text-align:center">Qty</th><th style="padding:7px 0;text-align:right">Unit Price</th><th style="padding:7px 0;text-align:right">Total</th></tr></thead>
+        <tbody>${itemRows||'<tr><td colspan="4" style="padding:8px 0;color:#888;font-style:italic">No items — update via + Items button</td></tr>'}</tbody>
+      </table>
+      <div style="border-top:2px solid #1B2A4A;padding-top:10px;text-align:right;font-size:13px">
+        <div style="margin-bottom:3px"><span style="color:#888">Subtotal:</span> <strong>$${(inv.total_amount||0).toFixed(2)}</strong></div>
+        <div style="margin-bottom:3px;color:#1A7A3A"><span>Amount Paid:</span> <strong>$${(inv.paid_amount||0).toFixed(2)}</strong></div>
+        ${bal>0?`<div style="color:#CC2200"><span>Balance Due:</span> <strong>$${bal.toFixed(2)}</strong></div>`:'<div style="color:#1A7A3A"><strong>✓ FULLY PAID</strong></div>'}
+      </div>
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:#aaa;border-top:1px dashed #ddd;padding-top:10px">
+        Thank you for choosing ${hospital.name}<br>Powered by MediTrack Pro
+      </div>
+    </div>`;
+  openModal('modal-print-invoice');
+}
+
+// ── LAB ──
+function setLabNormal(){
+  const sel=document.getElementById('lab-test');
+  const opt=sel.options[sel.selectedIndex];
+  document.getElementById('lab-normal').value=opt.getAttribute('data-normal')||'';
+}
 async function loadLab(){
   const{data}=await sb.from('lab_tests').select(`*,patients(full_name,patient_number)`).order('created_at',{ascending:false});
-  const tests=data||[];const tb=document.getElementById('lab-table');
-  if(!tests.length){tb.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-icon">🔬</div><span>No lab tests ordered yet</span></div></td></tr>';return;}
+  const tests=data||[];
+  const tb=document.getElementById('lab-table');
+  if(!tests.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">🔬</div>No lab tests ordered</div></td></tr>';return;}
   tb.innerHTML=tests.map((t,i)=>{
-    const sc=t.status==='completed'?'b-completed':t.status==='processing'?'b-active':'b-pending';
-    return`<tr><td>${i+1}</td>
-    <td><div class="td-name">${t.patients?.full_name||'—'}</div><div class="td-sub">${t.patients?.patient_number||''}</div></td>
-    <td><strong>${t.test_name}</strong></td><td>${t.test_category||'—'}</td>
-    <td>${t.result||'<span style="color:var(--text3);font-style:italic">Pending...</span>'}</td>
-    <td>$${(t.price||0).toFixed(2)}</td>
-    <td><span class="badge ${sc}">${t.status}</span></td>
-    <td>${fmt(t.created_at)}</td>
-    <td>${t.status!=='completed'?`<button class="btn btn-green btn-sm" onclick="completeTest('${t.id}')">✓ Enter Result</button>`:'<span style="color:var(--green2);font-weight:800">✓ Done</span>'}</td>
-  </tr>`;}).join('');
+    const hasResult=t.result&&t.result!=='';
+    let flag='',flagClass='';
+    if(hasResult&&t.normal_range){
+      const res=t.result.toLowerCase();
+      if(res.includes('positive')||res.includes('reactive')||res.includes('abnormal')){flag='⚠️ Abnormal';flagClass='b-high';}
+      else if(res.includes('negative')||res.includes('non-reactive')||res.includes('normal')){flag='✓ Normal';flagClass='b-normal';}
+      else{flag='Review';flagClass='b-pending';}
+    }
+    return`<tr>
+      <td>${i+1}</td>
+      <td><div class="td-name">${t.patients?.full_name||'—'}</div><div class="td-sub">${t.patients?.patient_number||''}</div></td>
+      <td><strong>${t.test_name}</strong></td>
+      <td>${t.test_category||'—'}</td>
+      <td style="color:${flag.includes('Abnormal')?'var(--red)':'var(--text)'}">${t.result||'<span style="color:var(--text3);font-style:italic">Pending...</span>'}</td>
+      <td style="font-size:11px;color:var(--text3)">${t.normal_range||'—'}</td>
+      <td>${flag?`<span class="badge ${flagClass}">${flag}</span>`:'—'}</td>
+      <td>$${(t.price||0).toFixed(2)}</td>
+      <td><span class="badge b-${t.status==='completed'?'completed':t.status==='processing'?'active':'pending'}">${t.status}</span></td>
+      <td>${fmt(t.created_at)}</td>
+      <td>${t.status!=='completed'?`<button class="btn btn-green btn-sm" onclick="completeTest('${t.id}')">✓ Result</button>`:'<span style="color:var(--green2);font-weight:800">✓</span>'}</td>
+    </tr>`;}).join('');
 }
 async function saveLab(){
   const pid=v('lab-patient');if(!pid){showToast('Select a patient','error');return;}
   const result=v('lab-result');
-  const{error}=await sb.from('lab_tests').insert({patient_id:pid,hospital_id:currentHospital,test_name:v('lab-test'),test_category:v('lab-cat'),price:parseFloat(v('lab-price')||0),result:result||null,status:result?'completed':'pending'});
+  const{error}=await sb.from('lab_tests').insert({patient_id:pid,hospital_id:currentHospital,test_name:v('lab-test'),test_category:v('lab-cat'),normal_range:v('lab-normal'),price:parseFloat(v('lab-price')||0),result:result||null,status:result?'completed':'pending'});
   if(error){showToast(error.message,'error');return;}
-  showToast('✅ Lab test ordered!','success');closeModal('modal-lab');loadLab();
+  showToast('✅ Lab test ordered!','success');closeModal('modal-lab');logAudit('Lab','Ordered: '+v('lab-test'));loadLab();
 }
 async function completeTest(id){
   const result=prompt('Enter test result:');if(!result)return;
   await sb.from('lab_tests').update({result,status:'completed'}).eq('id',id);
-  showToast('✅ Result saved!','success');loadLab();
+  showToast('✅ Result saved!','success');logAudit('Lab','Result entered for test '+id);loadLab();
 }
 
+// ── PHARMACY ──
 async function loadPharmacy(){
   const{data}=await sb.from('prescriptions').select(`*,patients(full_name,patient_number)`).order('created_at',{ascending:false});
-  const rxs=data||[];const tb=document.getElementById('rx-table');
-  if(!rxs.length){tb.innerHTML='<tr><td colspan="10"><div class="empty"><div class="empty-icon">💊</div><span>No prescriptions yet</span></div></td></tr>';return;}
-  tb.innerHTML=rxs.map((r,i)=>`<tr><td>${i+1}</td>
+  const rxs=data||[];
+  const pending=rxs.filter(r=>!r.dispensed).length;
+  const alertEl=document.getElementById('pharmacy-queue-alert');
+  if(pending>0){alertEl.style.display='flex';document.getElementById('pharmacy-queue-count').textContent=pending;const b=document.getElementById('rx-queue-badge');b.style.display='';b.textContent=pending;}
+  else{alertEl.style.display='none';}
+  const tb=document.getElementById('rx-table');
+  if(!rxs.length){tb.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">💊</div>No prescriptions yet</div></td></tr>';return;}
+  tb.innerHTML=rxs.map((r,i)=>`<tr>
+    <td>${i+1}</td>
     <td><div class="td-name">${r.patients?.full_name||'—'}</div></td>
-    <td><strong>${r.drug_name}</strong></td><td>${r.dosage||'—'}</td>
-    <td>${r.quantity}</td><td>$${(r.unit_price||0).toFixed(2)}</td>
+    <td><strong>${r.drug_name}</strong></td>
+    <td>${r.strength||'—'}</td>
+    <td>${r.dosage||'—'}</td>
+    <td>${r.quantity}</td>
+    <td>$${(r.unit_price||0).toFixed(2)}</td>
     <td><strong>$${(r.total_price||0).toFixed(2)}</strong></td>
     <td><span class="badge ${r.dispensed?'b-completed':'b-pending'}">${r.dispensed?'✓ Dispensed':'Pending'}</span></td>
     <td>${fmt(r.created_at)}</td>
-    <td>${!r.dispensed?`<button class="btn btn-green btn-sm" onclick="dispense('${r.id}')">✓ Dispense</button>`:'—'}</td>
+    <td>${!r.dispensed?`<button class="btn btn-green btn-sm" onclick="dispense('${r.id}','${r.drug_name}',${r.quantity||1})">✓ Dispense</button>`:'—'}</td>
   </tr>`).join('');
 }
 async function saveRx(){
   const pid=v('rx-patient');if(!pid){showToast('Select a patient','error');return;}
-  const{error}=await sb.from('prescriptions').insert({patient_id:pid,hospital_id:currentHospital,drug_name:v('rx-drug'),dosage:v('rx-dosage'),quantity:parseInt(v('rx-qty')||1),unit_price:parseFloat(v('rx-price')||0),dispensed:v('rx-dispensed')==='true'});
+  const drug=v('rx-drug');if(!drug){showToast('Select a drug','error');return;}
+  const{error}=await sb.from('prescriptions').insert({patient_id:pid,hospital_id:currentHospital,drug_name:drug,strength:v('rx-strength'),dosage_form:v('rx-form'),dosage:v('rx-dosage'),quantity:parseInt(v('rx-qty')||1),unit_price:parseFloat(v('rx-price')||0),dispensed:v('rx-dispensed')==='true'});
   if(error){showToast(error.message,'error');return;}
-  showToast('✅ Prescription saved!','success');closeModal('modal-prescription');loadPharmacy();
+  showToast('✅ Prescription saved!','success');closeModal('modal-prescription');logAudit('Pharmacy','Prescribed: '+drug);loadPharmacy();
 }
-async function dispense(id){
+async function dispense(id,drugName,qty){
   await sb.from('prescriptions').update({dispensed:true}).eq('id',id);
-  showToast('✅ Drug dispensed!','success');loadPharmacy();
+  // Auto-deduct from inventory
+  const{data:invItems}=await sb.from('inventory').select('*').ilike('item_name','%'+drugName.split(' ')[0]+'%').limit(1);
+  if(invItems&&invItems.length>0){
+    const item=invItems[0];
+    const newQty=Math.max(0,(item.quantity||0)-qty);
+    await sb.from('inventory').update({quantity:newQty}).eq('id',item.id);
+    if(newQty<=item.reorder_level){showToast(`⚠️ ${drugName} stock is LOW (${newQty} left)!`,'warning');}
+    else{showToast('✅ Dispensed & inventory updated!','success');}
+  } else {
+    showToast('✅ Drug dispensed!','success');
+  }
+  logAudit('Pharmacy','Dispensed: '+drugName);loadPharmacy();loadInventory();
 }
 
+// ── DRUG AUTOCOMPLETE ──
+function searchDrugs(q){
+  const res=document.getElementById('drug-results');
+  if(!q||q.length<2){res.style.display='none';return;}
+  const matches=DRUG_DB.filter(d=>d.g.toLowerCase().includes(q.toLowerCase())||d.b.toLowerCase().includes(q.toLowerCase())).slice(0,12);
+  if(!matches.length){res.style.display='none';return;}
+  res.innerHTML=matches.map(d=>`<div class="drug-item" onmousedown="selectDrug(${JSON.stringify(d).replace(/"/g,'&quot;')})"><strong>${d.g}</strong><span>${d.s} · ${d.f} · NDA Registered</span></div>`).join('');
+  res.style.display='block';
+}
+function selectDrug(drug){
+  document.getElementById('rx-drug').value=drug.g;
+  document.getElementById('rx-strength').value=drug.s||'';
+  document.getElementById('rx-form').value=drug.f||'';
+  document.getElementById('drug-results').style.display='none';
+}
+function hideDrugs(){document.getElementById('drug-results').style.display='none';}
+
+// ── INVENTORY ──
 async function loadInventory(){
   const{data}=await sb.from('inventory').select('*').order('item_name');
-  const items=data||[];const tb=document.getElementById('inv-table2');
-  if(!items.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">📦</div><span>No inventory items yet</span></div></td></tr>';return;}
+  const items=data||[];
+  const lowStock=items.filter(it=>it.quantity<=it.reorder_level);
+  const expiringSoon=items.filter(it=>{if(!it.expiry_date)return false;const days=(new Date(it.expiry_date)-Date.now())/86400000;return days<90&&days>0;});
+  const expired=items.filter(it=>{if(!it.expiry_date)return false;return new Date(it.expiry_date)<new Date();});
+  let alerts='';
+  if(expired.length)alerts+=`<div class="alert-bar danger">🚨 <strong>${expired.length} item${expired.length>1?'s':''} EXPIRED</strong> — remove from stock immediately!</div>`;
+  if(expiringSoon.length)alerts+=`<div class="alert-bar warning">⚠️ <strong>${expiringSoon.length} item${expiringSoon.length>1?'s':''} expiring within 90 days</strong> — review and action.</div>`;
+  if(lowStock.length)alerts+=`<div class="alert-bar warning">📦 <strong>${lowStock.length} item${lowStock.length>1?'s':''} at or below reorder level</strong> — restock soon.</div>`;
+  document.getElementById('inventory-alerts').innerHTML=alerts;
+  const tb=document.getElementById('inv-table2');
+  if(!items.length){tb.innerHTML='<tr><td colspan="10"><div class="empty"><div class="empty-icon">📦</div>No inventory items</div></td></tr>';return;}
   tb.innerHTML=items.map((it,i)=>{
-    const pct=it.reorder_level>0?Math.min(100,Math.round(it.quantity/it.reorder_level*50)):100;
-    const color=it.quantity<=it.reorder_level?'#CC2200':it.quantity<=it.reorder_level*2?'#F78C00':'#2DC653';
-    const statusText=it.quantity<=it.reorder_level?'⚠️ Low Stock':'✓ OK';
-    return`<tr><td>${i+1}</td><td class="td-name">${it.item_name}</td>
-    <td><span class="badge b-${it.category==='drug'?'admitted':it.category==='equipment'?'outpatient':'lab'}">${it.category}</span></td>
-    <td style="font-weight:800;color:${it.quantity<=it.reorder_level?'#CC2200':'var(--navy)'}">${it.quantity}</td>
-    <td>${it.unit}</td><td>$${(it.unit_cost||0).toFixed(2)}</td>
-    <td style="min-width:110px"><div style="font-size:11px;color:${color};font-weight:800;margin-bottom:4px">${statusText}</div><div class="inv-bar-bg"><div class="inv-bar-fg" style="width:${pct}%;background:${color}"></div></div></td>
-    <td><button class="btn btn-secondary btn-sm" onclick="restockItem('${it.id}')">+ Restock</button></td>
-  </tr>`;}).join('');
+    const pct=it.reorder_level>0?Math.min(100,Math.round(it.quantity/Math.max(it.reorder_level*2,1)*100)):50;
+    const color=it.quantity<=it.reorder_level?'var(--red)':it.quantity<=it.reorder_level*2?'var(--yellow)':'var(--green)';
+    const expDate=it.expiry_date?new Date(it.expiry_date):null;
+    const daysToExp=expDate?Math.floor((expDate-Date.now())/86400000):null;
+    const expClass=daysToExp!==null?(daysToExp<0?'b-overdue':daysToExp<90?'b-pending':'b-completed'):'b-discharged';
+    const expText=daysToExp!==null?(daysToExp<0?'EXPIRED':`${daysToExp}d left`):'No expiry';
+    return`<tr>
+      <td>${i+1}</td><td class="td-name">${it.item_name}</td>
+      <td><span class="badge b-${it.category==='drug'?'pharmacy':it.category==='equipment'?'active':'lab'}">${it.category}</span></td>
+      <td style="font-weight:800;color:${it.quantity<=it.reorder_level?'var(--red)':'var(--navy)'}">${it.quantity}</td>
+      <td>${it.unit}</td><td>$${(it.unit_cost||0).toFixed(2)}</td>
+      <td><span class="badge ${expClass}">${expText}</span></td>
+      <td>${it.batch_number||'—'}</td>
+      <td style="min-width:100px"><div style="font-size:11px;color:${color};font-weight:800;margin-bottom:3px">${it.quantity<=it.reorder_level?'⚠️ Low':'✓ OK'}</div><div class="inv-bar-bg"><div class="inv-bar-fg" style="width:${pct}%;background:${color}"></div></div></td>
+      <td><button class="btn btn-secondary btn-sm" onclick="restockItem('${it.id}')">+ Stock</button></td>
+    </tr>`;}).join('');
 }
 async function saveInventory(){
-  const name=v('inv2-name');if(!name){showToast('Item name required','error');return;}
-  const{error}=await sb.from('inventory').insert({hospital_id:currentHospital,item_name:name,category:v('inv2-cat'),quantity:parseInt(v('inv2-qty')||0),unit:v('inv2-unit')||'units',unit_cost:parseFloat(v('inv2-cost')||0),reorder_level:parseInt(v('inv2-reorder')||10)});
+  const name=v('inv2-name');if(!name){showToast('Name required','error');return;}
+  const{error}=await sb.from('inventory').insert({hospital_id:currentHospital,item_name:name,category:v('inv2-cat'),quantity:parseInt(v('inv2-qty')||0),unit:v('inv2-unit')||'units',unit_cost:parseFloat(v('inv2-cost')||0),reorder_level:parseInt(v('inv2-reorder')||10),batch_number:v('inv2-batch')||null,expiry_date:v('inv2-expiry')||null});
   if(error){showToast(error.message,'error');return;}
-  showToast('✅ Item added!','success');closeModal('modal-inventory');loadInventory();
+  showToast('✅ Item added!','success');closeModal('modal-inventory');logAudit('Inventory','Added: '+name);loadInventory();
 }
 async function restockItem(id){
   const qty=parseInt(prompt('Add how many units?'));if(!qty||isNaN(qty))return;
-  const{data}=await sb.from('inventory').select('quantity').eq('id',id).single();
+  const{data}=await sb.from('inventory').select('quantity,item_name').eq('id',id).single();
   await sb.from('inventory').update({quantity:(data?.quantity||0)+qty,updated_at:new Date().toISOString()}).eq('id',id);
-  showToast(`✅ Restocked +${qty} units`,'success');loadInventory();
+  showToast(`✅ +${qty} units added to ${data?.item_name}!`,'success');logAudit('Inventory','Restocked '+qty+' of '+data?.item_name);loadInventory();
 }
 
-async function loadStaff(){
-  const{data}=await sb.from('staff').select('*').order('full_name');
-  const staff=data||[];const tb=document.getElementById('staff-table');
-  if(!staff.length){tb.innerHTML='<tr><td colspan="7"><div class="empty"><div class="empty-icon">👨‍⚕️</div><span>No staff added yet</span></div></td></tr>';return;}
-  const roleColors={doctor:'b-admitted',nurse:'b-outpatient',lab:'b-lab',pharmacy:'b-pharmacy',billing:'b-pending',admin:'b-critical',receptionist:'b-completed'};
-  tb.innerHTML=staff.map((s,i)=>`<tr><td>${i+1}</td>
-    <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${avColors[i%4]}">${s.full_name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div><div class="td-name">${s.full_name}</div></div></td>
-    <td><span class="badge ${roleColors[s.role]||'b-active'}">${s.role}</span></td>
-    <td>${s.department||'—'}</td><td>${s.phone||'—'}</td><td>${s.email||'—'}</td>
-    <td><span class="badge ${s.status==='active'?'b-completed':'b-discharged'}">${s.status||'active'}</span></td>
-  </tr>`).join('');
-}
-async function saveStaff(){
-  const name=v('st-name');if(!name){showToast('Name required','error');return;}
-  const{error}=await sb.from('staff').insert({hospital_id:currentHospital,full_name:name,role:v('st-role'),department:v('st-dept'),phone:v('st-phone'),email:v('st-email')});
-  if(error){showToast(error.message,'error');return;}
-  showToast('✅ Staff added!','success');closeModal('modal-staff');loadStaff();loadDoctors();
-}
-
+// ── REPORTS ──
 async function loadReports(){
   const[invR,ptR]=await Promise.all([sb.from('invoices').select('*'),sb.from('patients').select('*')]);
   const invs=invR.data||[];
@@ -1127,49 +1671,109 @@ async function loadReports(){
   const outstanding=totalInv-totalRev;
   const collRate=totalInv>0?Math.round(totalRev/totalInv*100):0;
   document.getElementById('report-stats').innerHTML=`
-    <div class="stat-card sc-green"><div class="stat-icon-wrap si-green">💰</div><div class="stat-label">Total Revenue</div><div class="stat-value" style="color:#1A7A3A">$${totalRev.toFixed(0)}</div><div class="stat-change up">All time collected</div></div>
-    <div class="stat-card sc-blue"><div class="stat-icon-wrap si-blue">👥</div><div class="stat-label">Total Patients</div><div class="stat-value">${ptR.data?.length||0}</div><div class="stat-change up">Across all sites</div></div>
-    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">⚠️</div><div class="stat-label">Outstanding</div><div class="stat-value" style="color:#CC2200">$${outstanding.toFixed(0)}</div><div class="stat-change down">Uncollected balance</div></div>
+    <div class="stat-card sc-green"><div class="stat-icon-wrap si-green">💰</div><div class="stat-label">Total Revenue</div><div class="stat-value" style="color:#1A7A3A">$${totalRev.toFixed(0)}</div><div class="stat-change up">All time</div></div>
+    <div class="stat-card sc-blue"><div class="stat-icon-wrap si-blue">👥</div><div class="stat-label">Total Patients</div><div class="stat-value">${ptR.data?.length||0}</div><div class="stat-change up">All sites</div></div>
+    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">⚠️</div><div class="stat-label">Outstanding</div><div class="stat-value" style="color:var(--red)">$${outstanding.toFixed(0)}</div><div class="stat-change down">Uncollected</div></div>
     <div class="stat-card sc-purple"><div class="stat-icon-wrap si-purple">📈</div><div class="stat-label">Collection Rate</div><div class="stat-value">${collRate}%</div><div class="stat-change ${collRate>80?'up':'down'}">${collRate>80?'Excellent':'Needs attention'}</div></div>`;
   let hospHtml='<div class="card-header"><span class="card-title">🏥 Revenue by Hospital</span></div>';
-  for(const h of allHospitals){
-    const hInvs=invs.filter(i=>i.hospital_id===h.id);
-    const hRev=hInvs.reduce((a,i)=>a+(i.paid_amount||0),0);
-    const pct=totalRev>0?Math.round(hRev/totalRev*100):0;
-    hospHtml+=`<div class="bkd-item"><div class="bkd-dot" style="background:#3A6BC2"></div><span class="bkd-name">${h.name}</span><div class="bkd-bar-bg"><div class="bkd-bar-fg" style="width:${pct}%;background:#3A6BC2"></div></div><span class="bkd-amt">$${hRev.toFixed(0)}</span><span class="bkd-pct">${hInvs.length} inv</span></div>`;
-  }
+  for(const h of allHospitals){const hInvs=invs.filter(i=>i.hospital_id===h.id);const hRev=hInvs.reduce((a,i)=>a+(i.paid_amount||0),0);const pct=totalRev>0?Math.round(hRev/totalRev*100):0;hospHtml+=`<div class="bkd-item"><div class="bkd-dot" style="background:#3A6BC2"></div><span class="bkd-name">${h.name}</span><div class="bkd-bar-bg"><div class="bkd-bar-fg" style="width:${pct}%;background:#3A6BC2"></div></div><span class="bkd-amt">$${hRev.toFixed(0)}</span><span class="bkd-pct">${hInvs.length} inv</span></div>`;}
   document.getElementById('report-by-hospital').innerHTML=hospHtml;
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const now=new Date();
   const monthData=Array.from({length:6},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-5+i,1);const key=d.toISOString().slice(0,7);return{label:months[d.getMonth()],val:invs.filter(x=>x.created_at?.startsWith(key)).reduce((a,x)=>a+(x.paid_amount||0),0)};});
   const maxM=Math.max(...monthData.map(m=>m.val),1);
-  let monthHtml='<div class="card-header"><span class="card-title">📈 Monthly Revenue (Last 6 Months)</span></div><div class="chart-bars" style="height:130px">';
-  monthData.forEach((m,i)=>{monthHtml+=`<div class="cbar-wrap"><div class="cbar ${i===5?'active':'inactive'}" style="height:${Math.round(m.val/maxM*90)+5}%" title="$${m.val.toFixed(0)}"></div><div class="cbar-lbl">${m.label}</div></div>`;});
-  monthHtml+='</div>';
-  document.getElementById('report-monthly').innerHTML=monthHtml;
+  let mHtml='<div class="card-header"><span class="card-title">📈 Monthly Revenue (Last 6 Months)</span></div><div class="chart-bars" style="height:120px">';
+  monthData.forEach((m,i)=>{mHtml+=`<div class="cbar-wrap"><div class="cbar ${i===5?'active':'inactive'}" style="height:${Math.round(m.val/maxM*90)+5}%" title="$${m.val.toFixed(0)}"></div><div class="cbar-lbl">${m.label}</div></div>`;});
+  document.getElementById('report-monthly').innerHTML=mHtml+'</div>';
+}
+
+// ── AUDIT TRAIL ──
+let auditLog=[];
+function logAudit(action,details){
+  if(!currentUser)return;
+  const entry={time:new Date().toISOString(),user:currentUser.name,role:currentUser.role,action,details,device:navigator.userAgent.slice(0,40)};
+  auditLog.unshift(entry);
+  if(auditLog.length>200)auditLog=auditLog.slice(0,200);
+  // Also save to Supabase
+  sb.from('audit_logs').insert({hospital_id:currentHospital,user_name:currentUser.name,user_role:currentUser.role,action,details}).catch(()=>{});
+}
+async function loadAudit(){
+  const{data}=await sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(100);
+  const logs=[...(data||[]),...auditLog].slice(0,100);
+  const tb=document.getElementById('audit-table');
+  if(!logs.length){tb.innerHTML='<tr><td colspan="6"><div class="empty"><div class="empty-icon">🔍</div>No audit events yet</div></td></tr>';return;}
+  tb.innerHTML=logs.map(l=>`<tr>
+    <td style="white-space:nowrap;font-size:11px">${fmtTime(l.created_at||l.time)}</td>
+    <td><strong>${l.user_name||l.user||'—'}</strong></td>
+    <td><span class="role-chip role-${l.user_role||l.role||'admin'}">${l.user_role||l.role||'—'}</span></td>
+    <td><span class="badge b-active">${l.action}</span></td>
+    <td>${l.details||'—'}</td>
+    <td style="font-size:11px;color:var(--text3)">${(l.device||'Web').slice(0,30)}</td>
+  </tr>`).join('');
+}
+
+// ── STAFF ──
+async function loadStaff(){
+  const{data}=await sb.from('staff').select('*').order('full_name');
+  const staff=data||[];
+  const tb=document.getElementById('staff-table');
+  if(!staff.length){tb.innerHTML='<tr><td colspan="7"><div class="empty"><div class="empty-icon">👨‍⚕️</div>No staff added</div></td></tr>';return;}
+  const roleClasses={doctor:'b-admitted',nurse:'b-outpatient',lab:'b-lab',pharmacist:'b-pharmacy',billing:'b-pending',admin:'b-critical',receptionist:'b-completed'};
+  tb.innerHTML=staff.map((s,i)=>`<tr>
+    <td>${i+1}</td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div class="pt-av ${AVS[i%4]}">${initials(s.full_name)}</div><div class="td-name">${s.full_name}</div></div></td>
+    <td><span class="badge ${roleClasses[s.role]||'b-active'}">${s.role}</span></td>
+    <td>${s.department||'—'}</td><td>${s.phone||'—'}</td><td>${s.email||'—'}</td>
+    <td><span class="badge ${s.status==='active'?'b-completed':'b-discharged'}">${s.status||'active'}</span></td>
+  </tr>`).join('');
+}
+async function saveStaff(){
+  const name=v('st-name');if(!name){showToast('Name required','error');return;}
+  const{error}=await sb.from('staff').insert({hospital_id:currentHospital,full_name:name,role:v('st-role'),department:v('st-dept'),phone:v('st-phone'),email:v('st-email')});
+  if(error){showToast(error.message,'error');return;}
+  showToast('✅ Staff added!','success');closeModal('modal-staff');logAudit('Staff','Added: '+name);loadStaff();loadDoctors();
 }
 
 // ── NAVIGATION ──
-const pageTitles={dashboard:'Dashboard',outpatient:'Outpatient Section',inpatient:'Inpatient Section',patients:'All Patients',billing:'Billing & Accounts',lab:'Laboratory',pharmacy:'Pharmacy',inventory:'Inventory',reports:'Reports & Analytics',staff:'Staff Management',hospitals:'Hospital Sites'};
-const pageLoaders={outpatient:loadVisits,inpatient:loadVisits,patients:()=>{},billing:loadBilling,lab:loadLab,pharmacy:loadPharmacy,inventory:loadInventory,reports:loadReports,staff:loadStaff,hospitals:()=>{}};
+const PAGE_TITLES={dashboard:'Dashboard',queue:'OPD Queue',outpatient:'Outpatient Section',inpatient:'Inpatient Section',patients:'All Patients',nursestation:'Nurse Station',consultation:"Consultation Desk",billing:'Billing & Accounts',lab:'Laboratory',pharmacy:'Pharmacy',inventory:'Inventory',reports:'Reports & Analytics',audit:'Audit Trail',staff:'Staff Management',hospitals:'Hospital Sites'};
+const PAGE_LOADERS={queue:loadQueue,outpatient:loadVisits,inpatient:loadVisits,patients:()=>{},nursestation:loadNurseStation,consultation:loadVisits,billing:loadBilling,lab:loadLab,pharmacy:loadPharmacy,inventory:loadInventory,reports:loadReports,audit:loadAudit,staff:loadStaff,hospitals:()=>{}};
 function showPage(name,navEl){
+  if(!hasAccess(PAGE_ROLES[name]||'all')){showToast('⛔ Access denied for your role','error');return;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+name)?.classList.add('active');
   if(navEl)navEl.classList.add('active');
-  document.getElementById('topbar-title').textContent=pageTitles[name]||name;
-  if(pageLoaders[name])pageLoaders[name]();
+  document.getElementById('topbar-title').textContent=PAGE_TITLES[name]||name;
+  if(PAGE_LOADERS[name])PAGE_LOADERS[name]();
   if(window.innerWidth<=900){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').style.display='none';}
 }
 function toggleSidebar(){const s=document.getElementById('sidebar');const ov=document.getElementById('sidebar-overlay');const open=s.classList.toggle('open');ov.style.display=open?'block':'none';}
-function openModal(id){document.getElementById(id).classList.add('open');if(id==='modal-patient')loadDoctors();if(id==='modal-invoice'&&!document.getElementById('inv-items-wrap').children.length)addInvItem();}
+function openModal(id){document.getElementById(id).classList.add('open');if(id==='modal-patient')loadDoctors();if(id==='modal-invoice'&&!document.getElementById('inv-items-wrap').children.length)addInvItem();if(id==='modal-lab')setLabNormal();}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function filterTable(tbId,q){const rows=document.getElementById(tbId)?.getElementsByTagName('tr');if(!rows)return;const lq=q.toLowerCase();Array.from(rows).forEach(r=>{r.style.display=r.innerText.toLowerCase().includes(lq)||!lq?'':'none';});}
-function v(id){return document.getElementById(id)?.value||'';}
-function fmt(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
-function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type==='success'?'success':type==='error'?'error':'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 
-loadVisits();
+// ── SCHEMA MIGRATION ──
+async function ensureSchema(){
+  // Try to create extra tables needed for this version
+  await sb.rpc('exec_sql',{sql:`
+    CREATE TABLE IF NOT EXISTS vitals (id uuid default gen_random_uuid() primary key, patient_id uuid, hospital_id uuid, bp_systolic int, bp_diastolic int, temperature numeric, pulse int, spo2 int, respiratory_rate int, weight numeric, height int, notes text, recorded_by text, created_at timestamptz default now());
+    CREATE TABLE IF NOT EXISTS consultations (id uuid default gen_random_uuid() primary key, visit_id uuid, hospital_id uuid, soap_notes text, diagnosis text, follow_up_date date, doctor_notes text, doctor_name text, created_at timestamptz default now());
+    CREATE TABLE IF NOT EXISTS audit_logs (id uuid default gen_random_uuid() primary key, hospital_id uuid, user_name text, user_role text, action text, details text, created_at timestamptz default now());
+    ALTER TABLE inventory ADD COLUMN IF NOT EXISTS batch_number text;
+    ALTER TABLE inventory ADD COLUMN IF NOT EXISTS expiry_date date;
+    ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS strength text;
+    ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS dosage_form text;
+    ALTER TABLE lab_tests ADD COLUMN IF NOT EXISTS normal_range text;
+  `}).catch(()=>{
+    // RPC may not exist, try individual calls silently
+  });
+}
+
+// ── HELPERS ──
+function v(id){return document.getElementById(id)?.value||'';}
+function fmt(d){if(!d)return'—';try{return new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}catch{return'—';}}
+function fmtTime(d){if(!d)return'—';try{return new Date(d).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}catch{return'—';}}
+function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type==='success'?'success':type==='error'?'error':'warning');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}
 </script>
 </body>
 </html>

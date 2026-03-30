@@ -388,6 +388,7 @@ tr:hover td{background:#F8FBFF}
 .sec-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px}
 .sec-ok{background:#E8F8EE;color:#1A7A3A;border:1px solid #A8DFBB}
 .sec-warn{background:var(--red2);color:var(--red);border:1px solid var(--red3)}
+.active-filter{background:var(--navy)!important;color:#fff!important;border-color:var(--navy)!important}
 </style>
 </head>
 <body>
@@ -465,6 +466,14 @@ tr:hover td{background:#F8FBFF}
     <div class="nav-item" onclick="showPage('billing',this)" data-page="billing" data-roles="admin,billing,receptionist"><span class="nav-icon">🧾</span>Billing <span class="nav-badge" id="overdue-badge" style="display:none">0</span></div>
     <div class="nav-item" onclick="showPage('insurance',this)" data-page="insurance" data-roles="admin,billing"><span class="nav-icon">🏦</span>Insurance Claims</div>
     <div class="nav-item" onclick="showPage('reports',this)" data-page="reports" data-roles="admin"><span class="nav-icon">📊</span>Reports & HMIS</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Clinical Records</div>
+    <div class="nav-item" onclick="showPage('appointments',this)" data-page="appointments" data-roles="admin,doctor,nurse,receptionist"><span class="nav-icon">📅</span>Appointments</div>
+    <div class="nav-item" onclick="showPage('diagnoses',this)" data-page="diagnoses" data-roles="admin,doctor"><span class="nav-icon">🩻</span>Diagnoses</div>
+    <div class="nav-item" onclick="showPage('allergies',this)" data-page="allergies" data-roles="admin,doctor,nurse,pharmacist"><span class="nav-icon">⚠️</span>Allergies</div>
+    <div class="nav-item" onclick="showPage('referrals',this)" data-page="referrals" data-roles="admin,doctor"><span class="nav-icon">🔀</span>Referrals</div>
+    <div class="nav-item" onclick="showPage('beds',this)" data-page="beds" data-roles="admin,nurse"><span class="nav-icon">🛏️</span>Bed Map</div>
   </div>
   <div class="nav-section">
     <div class="nav-label">Admin</div>
@@ -785,6 +794,87 @@ tr:hover td{background:#F8FBFF}
         </table></div>
       </div>
     </div>
+
+
+    <!-- APPOINTMENTS -->
+    <div class="page" id="page-appointments">
+      <div class="page-header">
+        <div><div class="page-title">📅 Appointments</div><div class="page-sub">Schedule, confirm, and track patient appointments</div></div>
+        <div class="page-actions">
+          <div style="display:flex;gap:6px;flex-wrap:wrap" id="appt-filter-btns">
+            <button class="btn btn-secondary btn-sm active-filter" onclick="filterAppts('all',this)">All</button>
+            <button class="btn btn-secondary btn-sm" onclick="filterAppts('today',this)">Today</button>
+            <button class="btn btn-secondary btn-sm" onclick="filterAppts('upcoming',this)">Upcoming</button>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-appointment')">➕ Schedule</button>
+        </div>
+      </div>
+      <div class="stats-grid" id="appt-stats"></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Patient</th><th>Date</th><th>Time</th><th>Type</th><th>Doctor</th><th>Department</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="appt-table"><tr><td colspan="9"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- DIAGNOSES -->
+    <div class="page" id="page-diagnoses">
+      <div class="page-header">
+        <div><div class="page-title">🩻 Diagnoses</div><div class="page-sub">ICD-10 coded diagnosis records per patient</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-diagnosis')">➕ Add Diagnosis</button>
+      </div>
+      <div class="search-bar"><span style="color:var(--text3)">🔍</span><input placeholder="Search by patient or diagnosis..." id="diag-search" oninput="filterTable('diag-table',this.value)"></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Patient</th><th>ICD-10</th><th>Diagnosis</th><th>Type</th><th>Severity</th><th>Chronic</th><th>Diagnosed By</th><th>Date</th><th>Status</th></tr></thead>
+          <tbody id="diag-table"><tr><td colspan="9"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ALLERGIES -->
+    <div class="page" id="page-allergies">
+      <div class="page-header">
+        <div><div class="page-title">⚠️ Allergies</div><div class="page-sub">Patient allergy records — critical for prescribing</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-allergy')">➕ Record Allergy</button>
+      </div>
+      <div id="allergy-critical-alert"></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Patient</th><th>Allergen</th><th>Type</th><th>Reaction</th><th>Severity</th><th>Active</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="allergy-table"><tr><td colspan="8"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- REFERRALS -->
+    <div class="page" id="page-referrals">
+      <div class="page-header">
+        <div><div class="page-title">🔀 Referrals</div><div class="page-sub">Internal and external patient referrals</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-referral')">➕ New Referral</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Patient</th><th>Referred To</th><th>Department</th><th>Reason</th><th>Urgency</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="referral-table"><tr><td colspan="8"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- BED MAP -->
+    <div class="page" id="page-beds">
+      <div class="page-header">
+        <div><div class="page-title">🛏️ Bed Map</div><div class="page-sub">Visual ward grid — real-time bed status</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-bed-add')">➕ Add Bed</button>
+      </div>
+      <div class="stats-grid" id="bed-stats"></div>
+      <div class="alert-bar info" style="margin-bottom:14px">
+        🟢 Available &nbsp;&nbsp; 🔴 Occupied &nbsp;&nbsp; 🟡 Maintenance &nbsp;&nbsp; 🔵 Reserved &nbsp;&nbsp; Click occupied bed to view or release patient.
+      </div>
+      <div id="bed-wards"></div>
+    </div>
+
 
   </div><!-- end page-content -->
 </div><!-- end main -->
@@ -1244,6 +1334,135 @@ tr:hover td{background:#F8FBFF}
   </div>
 </div></div>
 
+<!-- APPOINTMENT MODAL -->
+<div class="modal-overlay" id="modal-appointment" onclick="if(event.target===this)closeModal('modal-appointment')">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title">📅 Schedule Appointment</div><button class="modal-close" onclick="closeModal('modal-appointment')">×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Patient *</label><select class="form-select" id="appt-patient"><option value="">— Select —</option></select></div>
+      <div class="form-group"><label class="form-label">Doctor</label><select class="form-select" id="appt-doctor"><option value="">— Any Doctor —</option></select></div>
+      <div class="form-group"><label class="form-label">Date *</label><input class="form-input" type="date" id="appt-date"></div>
+      <div class="form-group"><label class="form-label">Time *</label><input class="form-input" type="time" id="appt-time" value="09:00"></div>
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="appt-type"><option value="new_visit">New Visit</option><option value="follow_up" selected>Follow-up</option><option value="procedure">Procedure</option><option value="lab">Lab</option><option value="imaging">Imaging</option><option value="vaccination">Vaccination</option><option value="anc">ANC</option><option value="other">Other</option></select></div>
+      <div class="form-group"><label class="form-label">Department</label><select class="form-select" id="appt-dept"><option>General OPD</option><option>Maternity & ANC</option><option>Paediatrics</option><option>Surgery</option><option>Internal Medicine</option><option>Orthopaedics</option><option>Dental</option><option>Eye Clinic</option><option>Emergency</option><option>ENT</option><option>Dermatology</option><option>Cardiology</option><option>Psychiatry</option></select></div>
+    </div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Reason</label><input class="form-input" id="appt-reason" placeholder="Reason for appointment..."></div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Notes</label><textarea class="form-textarea" id="appt-notes" placeholder="Additional notes..." style="min-height:56px"></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-appointment')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveAppointment()">💾 Schedule</button>
+  </div>
+</div></div>
+
+<!-- DIAGNOSIS MODAL -->
+<div class="modal-overlay" id="modal-diagnosis" onclick="if(event.target===this)closeModal('modal-diagnosis')">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title">🩻 Add Diagnosis</div><button class="modal-close" onclick="closeModal('modal-diagnosis')">×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Patient *</label><select class="form-select" id="diag-patient"><option value="">— Select —</option></select></div>
+      <div class="form-group"><label class="form-label">Diagnosis Type</label><select class="form-select" id="diag-type"><option value="primary">Primary</option><option value="secondary">Secondary</option><option value="differential">Differential</option><option value="provisional">Provisional</option><option value="final">Final</option></select></div>
+    </div>
+    <div class="form-group" style="margin-top:8px">
+      <label class="form-label">ICD-10 Search</label>
+      <div class="auto-wrap">
+        <input class="form-input" id="diag-icd-search" placeholder="Type diagnosis e.g. Malaria, Typhoid..." oninput="searchDiagICD(this.value)" onblur="setTimeout(()=>hideDiagICD(),200)">
+        <div class="auto-results" id="diag-icd-results"></div>
+      </div>
+    </div>
+    <div id="diag-icd-selected" style="display:none;background:var(--bg);border:1.5px solid var(--teal);border-radius:var(--r2);padding:9px 12px;font-size:12px;margin-top:6px"></div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Diagnosis Text *</label><input class="form-input" id="diag-text" placeholder="Full diagnosis description"></div>
+    <div class="form-grid" style="margin-top:8px">
+      <div class="form-group"><label class="form-label">Severity</label><select class="form-select" id="diag-severity"><option value="">— Select —</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option><option value="critical">Critical</option></select></div>
+      <div class="form-group"><label class="form-label">Chronic Condition?</label><select class="form-select" id="diag-chronic"><option value="false">No — Acute</option><option value="true">Yes — Chronic</option></select></div>
+    </div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Notes</label><textarea class="form-textarea" id="diag-notes" style="min-height:56px" placeholder="Additional clinical notes..."></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-diagnosis')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveDiagnosis()">💾 Save Diagnosis</button>
+  </div>
+</div></div>
+
+<!-- ALLERGY MODAL -->
+<div class="modal-overlay" id="modal-allergy" onclick="if(event.target===this)closeModal('modal-allergy')">
+<div class="modal" style="max-width:500px">
+  <div class="modal-header"><div class="modal-title">⚠️ Record Allergy</div><button class="modal-close" onclick="closeModal('modal-allergy')">×</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Patient *</label><select class="form-select" id="alrg-patient"><option value="">— Select —</option></select></div>
+    <div class="form-grid" style="margin-top:8px">
+      <div class="form-group"><label class="form-label">Allergen *</label><input class="form-input" id="alrg-allergen" placeholder="e.g. Penicillin, Peanuts, Latex"></div>
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="alrg-type"><option value="drug">Drug</option><option value="food">Food</option><option value="environmental">Environmental</option><option value="latex">Latex</option><option value="other">Other</option></select></div>
+      <div class="form-group"><label class="form-label">Reaction</label><input class="form-input" id="alrg-reaction" placeholder="e.g. Anaphylaxis, Rash, Urticaria"></div>
+      <div class="form-group"><label class="form-label">Severity *</label><select class="form-select" id="alrg-severity"><option value="mild">Mild</option><option value="moderate" selected>Moderate</option><option value="severe">Severe</option><option value="life_threatening">Life-threatening ⚠️</option></select></div>
+    </div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Notes</label><textarea class="form-textarea" id="alrg-notes" style="min-height:52px" placeholder="Additional details..."></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-allergy')">Cancel</button>
+    <button class="btn btn-danger" onclick="saveAllergy()">⚠️ Record Allergy</button>
+  </div>
+</div></div>
+
+<!-- REFERRAL MODAL -->
+<div class="modal-overlay" id="modal-referral" onclick="if(event.target===this)closeModal('modal-referral')">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title">🔀 New Referral</div><button class="modal-close" onclick="closeModal('modal-referral')">×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Patient *</label><select class="form-select" id="ref-patient"><option value="">— Select —</option></select></div>
+      <div class="form-group"><label class="form-label">Urgency</label><select class="form-select" id="ref-urgency"><option value="routine">Routine</option><option value="urgent">Urgent</option><option value="emergency">Emergency</option></select></div>
+      <div class="form-group"><label class="form-label">Department</label><select class="form-select" id="ref-dept"><option>General OPD</option><option>Surgery</option><option>Internal Medicine</option><option>Maternity & ANC</option><option>Paediatrics</option><option>Orthopaedics</option><option>Cardiology</option><option>Neurology</option><option>Oncology</option><option>Psychiatry</option></select></div>
+      <div class="form-group"><label class="form-label">Referred To (External)</label><input class="form-input" id="ref-external" placeholder="Hospital / Clinic name"></div>
+    </div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Reason for Referral *</label><input class="form-input" id="ref-reason" placeholder="Specific reason..."></div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Clinical Summary</label><textarea class="form-textarea" id="ref-summary" style="min-height:72px" placeholder="Relevant history, investigations done, current treatment, reason for referral..."></textarea></div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Additional Notes</label><textarea class="form-textarea" id="ref-notes" style="min-height:48px" placeholder="Transport, special instructions..."></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-referral')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveReferral()">📤 Create Referral</button>
+  </div>
+</div></div>
+
+<!-- BED ADD MODAL -->
+<div class="modal-overlay" id="modal-bed-add" onclick="if(event.target===this)closeModal('modal-bed-add')">
+<div class="modal" style="max-width:500px">
+  <div class="modal-header"><div class="modal-title">🛏️ Add Bed</div><button class="modal-close" onclick="closeModal('modal-bed-add')">×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Ward / Unit *</label><select class="form-select" id="bed-ward"><option>General Ward</option><option>Male Ward</option><option>Female Ward</option><option>Paediatric Ward</option><option>Maternity Ward</option><option>ICU</option><option>NICU</option><option>Isolation Ward</option><option>Private Ward</option><option>VIP Ward</option><option>Surgical Ward</option><option>Emergency Bay</option></select></div>
+      <div class="form-group"><label class="form-label">Bed Number *</label><input class="form-input" id="bed-number" placeholder="e.g. 1A, B4, ICU-2"></div>
+      <div class="form-group"><label class="form-label">Bed Type</label><select class="form-select" id="bed-type"><option value="general">General</option><option value="icu">ICU</option><option value="nicu">NICU</option><option value="maternity">Maternity</option><option value="pediatric">Paediatric</option><option value="isolation">Isolation</option><option value="private">Private</option><option value="vip">VIP</option></select></div>
+      <div class="form-group"><label class="form-label">Daily Rate ($)</label><input class="form-input" type="number" id="bed-rate" value="0" placeholder="0.00"></div>
+      <div class="form-group"><label class="form-label">Floor</label><input class="form-input" id="bed-floor" placeholder="e.g. Ground, 1st Floor"></div>
+    </div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Notes</label><input class="form-input" id="bed-notes" placeholder="Special features, equipment..."></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-bed-add')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveBed()">💾 Add Bed</button>
+  </div>
+</div></div>
+
+<!-- DISCHARGE MODAL -->
+<div class="modal-overlay" id="modal-discharge" onclick="if(event.target===this)closeModal('modal-discharge')">
+<div class="modal" style="max-width:520px">
+  <div class="modal-header"><div class="modal-title">✅ Discharge Patient</div><button class="modal-close" onclick="closeModal('modal-discharge')">×</button></div>
+  <div class="modal-body">
+    <div class="alert-bar info" style="margin-bottom:10px">Discharging: <strong id="discharge-pt-name">Patient</strong></div>
+    <div class="form-group"><label class="form-label">Discharge Condition</label><select class="form-select" id="discharge-condition"><option value="improved">Improved / Recovered</option><option value="stable">Stable — follow-up needed</option><option value="referred">Referred to higher facility</option><option value="against_advice">Against Medical Advice (DAMA)</option><option value="deceased">Deceased</option></select></div>
+    <div class="form-group" style="margin-top:10px"><label class="form-label">Discharge Notes / Summary</label><textarea class="form-textarea" id="discharge-notes" style="min-height:90px" placeholder="Summary of hospital stay, treatment given, discharge medications, instructions to patient, follow-up plan..."></textarea></div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Follow-up Date</label><input class="form-input" type="date" id="discharge-followup"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-discharge')">Cancel</button>
+    <button class="btn btn-green" onclick="confirmDischarge()">✅ Confirm Discharge</button>
+  </div>
+</div></div>
+
 <div class="toast" id="toast"></div>
 <div id="sidebar-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150" onclick="toggleSidebar()"></div>
 
@@ -1520,7 +1739,7 @@ function initApp(){
 }
 
 // ── ROLES ──
-const PAGE_ROLES={dashboard:'all',queue:'admin,doctor,nurse,receptionist',outpatient:'admin,doctor,nurse,receptionist',inpatient:'admin,doctor,nurse',patients:'all',nursestation:'admin,nurse,doctor',consultation:'admin,doctor',patient360:'admin,doctor,nurse',lab:'admin,lab,doctor',pharmacy:'admin,pharmacist,doctor',inventory:'admin,pharmacist',billing:'admin,billing,receptionist',insurance:'admin,billing',reports:'admin',audit:'admin',staff:'admin',hospitals:'admin'};
+const PAGE_ROLES={dashboard:'all',queue:'admin,doctor,nurse,receptionist',outpatient:'admin,doctor,nurse,receptionist',inpatient:'admin,doctor,nurse',patients:'all',nursestation:'admin,nurse,doctor',consultation:'admin,doctor',patient360:'admin,doctor,nurse',lab:'admin,lab,doctor',pharmacy:'admin,pharmacist,doctor',inventory:'admin,pharmacist',billing:'admin,billing,receptionist',insurance:'admin,billing',reports:'admin',audit:'admin',staff:'admin',hospitals:'admin',appointments:'admin,doctor,nurse,receptionist',diagnoses:'admin,doctor',allergies:'admin,doctor,nurse,pharmacist',referrals:'admin,doctor',beds:'admin,nurse'};
 function hasAccess(roles){if(!CU)return false;if(!roles||roles==='all')return true;return roles.split(',').includes(CU.role);}
 function applyRoles(){document.querySelectorAll('.nav-item[data-roles]').forEach(el=>{const r=el.getAttribute('data-roles');el.style.display=hasAccess(r)?'flex':'none';});}
 
@@ -1758,7 +1977,7 @@ function renderIPD(visits){
       <td><span class="badge b-${days>5?'overdue':days>2?'pending':'active'}">${days}d</span></td>
       <td><span class="badge b-${vt.status}">${vt.status}</span></td>
       <td style="color:${bal>0?'var(--red)':'var(--green2)'};font-weight:800">$${bal.toFixed(2)}</td>
-      <td><button class="btn btn-primary btn-sm" onclick="openConsult('${vt.id}','${vt.patients?.full_name||''}','${vt.patient_id||''}')">📋</button></td>
+      <td style="display:flex;gap:4px"><button class="btn btn-primary btn-sm" onclick="openConsult('${vt.id}','${vt.patients?.full_name||''}','${vt.patient_id||''}')">📋</button><button class="btn btn-green btn-sm" onclick="openDischarge('${vt.id}','${vt.patients?.full_name||'Patient'}')">✅ DC</button></td>
     </tr>`;}).join('');
 }
 function renderDashRecent(visits){
@@ -2546,8 +2765,8 @@ async function saveStaff(){
 }
 
 // ── NAVIGATION ──
-const PTITLES={dashboard:'Dashboard',queue:'OPD Queue',outpatient:'Outpatient',inpatient:'Inpatient',patients:'All Patients',nursestation:'Nurse Station',consultation:'Consultation Desk',patient360:'Patient 360°',lab:'Laboratory',pharmacy:'Pharmacy',inventory:'Inventory',billing:'Billing',insurance:'Insurance Claims',reports:'Reports & HMIS',audit:'Audit Trail',staff:'Staff',hospitals:'Hospitals'};
-const PLOADERS={queue:loadQueue,outpatient:loadVisits,inpatient:loadVisits,patients:()=>{},nursestation:loadNurseStation,consultation:loadVisits,patient360:()=>{},lab:loadLab,pharmacy:loadPharmacy,inventory:loadInventory,billing:loadBilling,insurance:loadInsurance,reports:loadReports,audit:loadAudit,staff:loadStaff,hospitals:()=>{}};
+const PTITLES={dashboard:'Dashboard',queue:'OPD Queue',outpatient:'Outpatient',inpatient:'Inpatient',patients:'All Patients',nursestation:'Nurse Station',consultation:'Consultation Desk',patient360:'Patient 360°',lab:'Laboratory',pharmacy:'Pharmacy',inventory:'Inventory',billing:'Billing',insurance:'Insurance Claims',reports:'Reports & HMIS',audit:'Audit Trail',staff:'Staff',hospitals:'Hospitals',appointments:'Appointments',diagnoses:'Diagnoses',allergies:'Allergies',referrals:'Referrals',beds:'Bed Map'};
+const PLOADERS={queue:loadQueue,outpatient:loadVisits,inpatient:loadVisits,patients:()=>{},nursestation:loadNurseStation,consultation:loadVisits,patient360:()=>{},lab:loadLab,pharmacy:loadPharmacy,inventory:loadInventory,billing:loadBilling,insurance:loadInsurance,reports:loadReports,audit:loadAudit,staff:loadStaff,hospitals:()=>{},appointments:loadAppointments,diagnoses:loadDiagnoses,allergies:loadAllergies,referrals:loadReferrals,beds:loadBeds};
 function showPage(name,navEl){
   if(!hasAccess(PAGE_ROLES[name]||'all')){showToast('⛔ Access denied for your role','error');return;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -2565,6 +2784,285 @@ function filterTable(tbId,q){const rows=document.getElementById(tbId)?.getElemen
 function v(id){return document.getElementById(id)?.value||'';}
 function fmt(d){if(!d)return'—';try{return new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}catch{return'—';}}
 function fmtTime(d){if(!d)return'—';try{return new Date(d).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}catch{return'—';}}
+// ── APPOINTMENTS ──
+let allAppointments=[], apptFilter='all';
+async function loadAppointments(){
+  const[{data:a},{data:p},{data:d}]=await Promise.all([
+    sb.from('appointments').select('*,patients(full_name,patient_number),staff(full_name)').eq('hospital_id',currentHospital).order('appointment_date',{ascending:false}).limit(300).catch(()=>({data:[]})),
+    sb.from('patients').select('id,full_name,patient_number').eq('hospital_id',currentHospital).order('full_name'),
+    sb.from('staff').select('id,full_name').eq('hospital_id',currentHospital).eq('role','doctor'),
+  ]);
+  allAppointments=a||[];
+  const ptOpts='<option value="">— Select —</option>'+((p||[]).map(x=>`<option value="${x.id}">${x.full_name} (${x.patient_number||'—'})</option>`).join(''));
+  ['appt-patient','diag-patient','alrg-patient','ref-patient'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=ptOpts;});
+  const drOpts='<option value="">— Any Doctor —</option>'+((d||[]).map(x=>`<option value="${x.id}">${x.full_name}</option>`).join(''));
+  const apptDoc=document.getElementById('appt-doctor');if(apptDoc)apptDoc.innerHTML=drOpts;
+  renderAppointments();
+  // Stats
+  const today=new Date().toISOString().split('T')[0];
+  const todayA=allAppointments.filter(a=>a.appointment_date===today);
+  const upcoming=allAppointments.filter(a=>a.appointment_date>today&&a.status!=='cancelled');
+  const completed=allAppointments.filter(a=>a.status==='completed');
+  const noShows=allAppointments.filter(a=>a.status==='no_show');
+  document.getElementById('appt-stats').innerHTML=`
+    <div class="stat-card sc-blue"><div class="stat-icon-wrap si-blue">📅</div><div class="stat-label">Today</div><div class="stat-value">${todayA.length}</div></div>
+    <div class="stat-card sc-green"><div class="stat-icon-wrap si-green">⏳</div><div class="stat-label">Upcoming</div><div class="stat-value">${upcoming.length}</div></div>
+    <div class="stat-card sc-purple"><div class="stat-icon-wrap si-purple">✅</div><div class="stat-label">Completed</div><div class="stat-value">${completed.length}</div></div>
+    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">🚫</div><div class="stat-label">No-Shows</div><div class="stat-value">${noShows.length}</div></div>`;
+}
+function filterAppts(filter,btn){
+  apptFilter=filter;
+  document.querySelectorAll('#appt-filter-btns button').forEach(b=>b.classList.remove('active-filter'));
+  if(btn)btn.classList.add('active-filter');
+  renderAppointments();
+}
+function renderAppointments(){
+  const today=new Date().toISOString().split('T')[0];
+  let data=allAppointments;
+  if(apptFilter==='today')data=data.filter(a=>a.appointment_date===today);
+  else if(apptFilter==='upcoming')data=data.filter(a=>a.appointment_date>=today&&a.status!=='cancelled');
+  const tb=document.getElementById('appt-table');
+  if(!data.length){tb.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-icon">📅</div>No appointments</div></td></tr>';return;}
+  const statusClasses={scheduled:'b-pending',confirmed:'b-active',checked_in:'b-admitted',in_progress:'b-admitted',completed:'b-completed',cancelled:'b-discharged',no_show:'b-overdue'};
+  tb.innerHTML=data.map((a,i)=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:7px"><div class="pt-av ${AVS[i%4]}">${ini(a.patients?.full_name)}</div><div class="td-name">${a.patients?.full_name||'—'}</div></div></td>
+    <td><strong>${a.appointment_date||'—'}</strong></td>
+    <td>${a.appointment_time||'—'}</td>
+    <td><span class="badge b-active">${(a.appointment_type||'').replace('_',' ')}</span></td>
+    <td>${a.staff?.full_name||'—'}</td>
+    <td>${a.department||'—'}</td>
+    <td style="font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.reason||'—'}</td>
+    <td><span class="badge ${statusClasses[a.status]||'b-pending'}">${a.status||'scheduled'}</span></td>
+    <td style="display:flex;gap:4px;flex-wrap:wrap">
+      ${a.status==='scheduled'?`<button class="btn btn-green btn-sm" onclick="updateApptStatus('${a.id}','confirmed')">✓ Confirm</button>`:''}
+      ${a.status==='confirmed'||a.status==='scheduled'?`<button class="btn btn-navy btn-sm" onclick="updateApptStatus('${a.id}','completed')">✅ Done</button><button class="btn btn-danger btn-sm" onclick="updateApptStatus('${a.id}','no_show')">🚫 No-show</button>`:''}
+    </td>
+  </tr>`).join('');
+}
+async function saveAppointment(){
+  const pid=v('appt-patient'),date=v('appt-date'),time=v('appt-time');
+  if(!pid||!date||!time){showToast('Patient, date and time required','error');return;}
+  const{error}=await sb.from('appointments').insert({patient_id:pid,hospital_id:currentHospital,doctor_id:v('appt-doctor')||null,appointment_date:date,appointment_time:time,appointment_type:v('appt-type'),department:v('appt-dept'),reason:v('appt-reason'),notes:v('appt-notes'),duration_minutes:30,status:'scheduled'}).catch(e=>({error:e}));
+  if(error){showToast('Run schema migrations first: 002_new_tables.sql','warning');return;}
+  showToast('✅ Appointment scheduled!','success');closeModal('modal-appointment');logAudit('Appointment','Scheduled for '+date+' '+time);loadAppointments();
+}
+async function updateApptStatus(id,status){
+  await sb.from('appointments').update({status}).eq('id',id);
+  showToast('✅ Status updated!','success');loadAppointments();
+}
+
+// ── DIAGNOSES ──
+let diagSelectedICD=null;
+function searchDiagICD(q){
+  const res=document.getElementById('diag-icd-results');
+  if(!q||q.length<2){res.style.display='none';return;}
+  const m=ICD10.filter(d=>d.d.toLowerCase().includes(q.toLowerCase())||d.c.toLowerCase().includes(q.toLowerCase())).slice(0,12);
+  if(!m.length){res.style.display='none';return;}
+  res.innerHTML=m.map(d=>`<div class="auto-item" onmousedown="selectDiagICD(${JSON.stringify(d).replace(/"/g,'&quot;')})"><strong>${d.c}</strong><span>${d.d}</span></div>`).join('');
+  res.style.display='block';
+}
+function selectDiagICD(d){
+  diagSelectedICD=d;
+  document.getElementById('diag-icd-search').value=d.c+' — '+d.d;
+  document.getElementById('diag-icd-results').style.display='none';
+  const el=document.getElementById('diag-icd-selected');
+  el.style.display='block';
+  el.innerHTML=`<strong style="color:var(--teal)">${d.c}</strong> &nbsp;${d.d}`;
+  const dt=document.getElementById('diag-text');
+  if(dt&&!dt.value)dt.value=d.d;
+}
+function hideDiagICD(){document.getElementById('diag-icd-results').style.display='none';}
+async function loadDiagnoses(){
+  const{data}=await sb.from('diagnoses').select('*,patients(full_name,patient_number)').eq('hospital_id',currentHospital).order('created_at',{ascending:false}).limit(200).catch(()=>({data:null}));
+  if(!data){document.getElementById('diag-table').innerHTML='<tr><td colspan="9"><div class="alert-bar warning">Run 002_new_tables.sql to enable Diagnoses table</div></td></tr>';return;}
+  const tb=document.getElementById('diag-table');
+  if(!data.length){tb.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-icon">🩻</div>No diagnoses recorded</div></td></tr>';return;}
+  const typeClass={primary:'b-critical',secondary:'b-active',differential:'b-pending',provisional:'b-low',final:'b-completed'};
+  const sevClass={mild:'b-normal',moderate:'b-pending',severe:'b-high',critical:'b-overdue'};
+  tb.innerHTML=data.map((d,i)=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:7px"><div class="pt-av ${AVS[i%4]}">${ini(d.patients?.full_name)}</div><div class="td-name">${d.patients?.full_name||'—'}</div></div></td>
+    <td>${d.icd10_code?`<span class="badge b-active">${d.icd10_code}</span>`:'—'}</td>
+    <td><strong>${d.diagnosis_text}</strong></td>
+    <td><span class="badge ${typeClass[d.diagnosis_type]||'b-pending'}">${d.diagnosis_type}</span></td>
+    <td>${d.severity?`<span class="badge ${sevClass[d.severity]||'b-pending'}">${d.severity}</span>`:'—'}</td>
+    <td><span class="badge ${d.is_chronic?'b-overdue':'b-normal'}">${d.is_chronic?'Chronic':'Acute'}</span></td>
+    <td>${d.diagnosed_by||'—'}</td>
+    <td>${fmt(d.created_at)}</td>
+    <td><span class="badge ${d.resolved_at?'b-completed':'b-active'}">${d.resolved_at?'Resolved':'Active'}</span></td>
+  </tr>`).join('');
+}
+async function saveDiagnosis(){
+  const pid=v('diag-patient'),text=v('diag-text');
+  if(!pid||!text){showToast('Patient and diagnosis required','error');return;}
+  const{error}=await sb.from('diagnoses').insert({patient_id:pid,hospital_id:currentHospital,icd10_code:diagSelectedICD?.c||null,icd10_description:diagSelectedICD?.d||null,diagnosis_text:text,diagnosis_type:v('diag-type'),severity:v('diag-severity')||null,is_chronic:v('diag-chronic')==='true',notes:v('diag-notes'),diagnosed_by:CU?.name}).catch(e=>({error:e}));
+  if(error){showToast('Run 002_new_tables.sql first','warning');return;}
+  showToast('✅ Diagnosis recorded!','success');closeModal('modal-diagnosis');logAudit('Diagnosis','Added: '+text);loadDiagnoses();diagSelectedICD=null;
+}
+
+// ── ALLERGIES ──
+async function loadAllergies(){
+  const{data}=await sb.from('allergies').select('*,patients:patient_id(full_name,patient_number)').order('created_at',{ascending:false}).limit(200).catch(()=>({data:null}));
+  if(!data){document.getElementById('allergy-table').innerHTML='<tr><td colspan="8"><div class="alert-bar warning">Run 002_new_tables.sql to enable Allergies table</div></td></tr>';return;}
+  const lifeThreat=data.filter(a=>a.severity==='life_threatening'&&a.is_active);
+  const alertEl=document.getElementById('allergy-critical-alert');
+  if(alertEl)alertEl.innerHTML=lifeThreat.length?`<div class="alert-bar danger">🚨 <strong>${lifeThreat.length} life-threatening allergy record${lifeThreat.length>1?'s':''}</strong> on file — verify before prescribing!</div>`:'';
+  const tb=document.getElementById('allergy-table');
+  if(!data.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">⚠️</div>No allergies recorded</div></td></tr>';return;}
+  const sevClass={mild:'b-normal',moderate:'b-pending',severe:'b-high',life_threatening:'b-overdue'};
+  tb.innerHTML=data.map((a,i)=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:7px"><div class="pt-av ${AVS[i%4]}">${ini(a.patients?.full_name)}</div><div class="td-name">${a.patients?.full_name||'—'}</div></div></td>
+    <td><strong style="color:var(--red)">⚠ ${a.allergen}</strong></td>
+    <td><span class="badge b-outpatient">${a.allergy_type}</span></td>
+    <td>${a.reaction||'—'}</td>
+    <td><span class="badge ${sevClass[a.severity]||'b-pending'}">${(a.severity||'').replace('_',' ')}</span></td>
+    <td><span class="badge ${a.is_active?'b-completed':'b-discharged'}" style="cursor:pointer" onclick="toggleAllergy('${a.id}',${a.is_active})">${a.is_active?'Active':'Inactive'}</span></td>
+    <td>${fmt(a.created_at)}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="toggleAllergy('${a.id}',${a.is_active})">${a.is_active?'Deactivate':'Reactivate'}</button></td>
+  </tr>`).join('');
+}
+async function saveAllergy(){
+  const pid=v('alrg-patient'),allergen=v('alrg-allergen');
+  if(!pid||!allergen){showToast('Patient and allergen required','error');return;}
+  const{error}=await sb.from('allergies').insert({patient_id:pid,allergen,allergy_type:v('alrg-type'),reaction:v('alrg-reaction'),severity:v('alrg-severity'),notes:v('alrg-notes'),is_active:true,reported_by:CU?.name}).catch(e=>({error:e}));
+  if(error){showToast('Run 002_new_tables.sql first','warning');return;}
+  showToast('⚠️ Allergy recorded!','success');closeModal('modal-allergy');logAudit('Allergy','Recorded: '+allergen);loadAllergies();
+}
+async function toggleAllergy(id,current){
+  await sb.from('allergies').update({is_active:!current}).eq('id',id);
+  showToast('✅ Updated!','success');loadAllergies();
+}
+
+// ── REFERRALS ──
+async function loadReferrals(){
+  const{data}=await sb.from('referrals').select('*,patients(full_name,patient_number)').eq('hospital_id',currentHospital).order('created_at',{ascending:false}).limit(200).catch(()=>({data:null}));
+  if(!data){document.getElementById('referral-table').innerHTML='<tr><td colspan="8"><div class="alert-bar warning">Run 002_new_tables.sql to enable Referrals table</div></td></tr>';return;}
+  const tb=document.getElementById('referral-table');
+  if(!data.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">🔀</div>No referrals</div></td></tr>';return;}
+  const urgClass={routine:'b-normal',urgent:'b-pending',emergency:'b-overdue'};
+  const statClass={pending:'b-pending',accepted:'b-active',in_transit:'b-admitted',completed:'b-completed',cancelled:'b-discharged',declined:'b-overdue'};
+  tb.innerHTML=data.map((r,i)=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:7px"><div class="pt-av ${AVS[i%4]}">${ini(r.patients?.full_name)}</div><div class="td-name">${r.patients?.full_name||'—'}</div></div></td>
+    <td><strong>${r.referred_to_external||'Internal'}</strong></td>
+    <td>${r.department||'—'}</td>
+    <td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.reason}</td>
+    <td><span class="badge ${urgClass[r.urgency]||'b-pending'}">${r.urgency}</span></td>
+    <td><span class="badge ${statClass[r.status]||'b-pending'}">${r.status}</span></td>
+    <td>${fmt(r.created_at)}</td>
+    <td style="display:flex;gap:4px;flex-wrap:wrap">
+      ${r.status==='pending'?`<button class="btn btn-green btn-sm" onclick="updateReferralStatus('${r.id}','in_transit')">→ In transit</button>`:''}
+      ${r.status==='in_transit'?`<button class="btn btn-primary btn-sm" onclick="updateReferralStatus('${r.id}','completed')">✅ Complete</button>`:''}
+    </td>
+  </tr>`).join('');
+}
+async function saveReferral(){
+  const pid=v('ref-patient'),reason=v('ref-reason');
+  if(!pid||!reason){showToast('Patient and reason required','error');return;}
+  const{error}=await sb.from('referrals').insert({patient_id:pid,hospital_id:currentHospital,referred_from_hospital:currentHospital,referred_to_external:v('ref-external')||null,department:v('ref-dept'),reason,urgency:v('ref-urgency'),clinical_summary:v('ref-summary'),notes:v('ref-notes'),referred_by:CU?.name,status:'pending',referral_date:new Date().toISOString().split('T')[0]}).catch(e=>({error:e}));
+  if(error){showToast('Run 002_new_tables.sql first','warning');return;}
+  showToast('📤 Referral created!','success');closeModal('modal-referral');logAudit('Referral','To: '+v('ref-external')+' Reason: '+reason);loadReferrals();
+}
+async function updateReferralStatus(id,status){
+  const update={status};
+  if(status==='completed')update.completion_date=new Date().toISOString().split('T')[0];
+  await sb.from('referrals').update(update).eq('id',id);
+  showToast('✅ Referral updated!','success');loadReferrals();
+}
+
+// ── BED MAP ──
+async function loadBeds(){
+  const{data}=await sb.from('beds').select('*,patients:current_patient_id(full_name,patient_number)').eq('hospital_id',currentHospital).order('ward_name').order('bed_number').catch(()=>({data:null}));
+  if(!data){document.getElementById('bed-wards').innerHTML='<div class="alert-bar warning">Run 002_new_tables.sql to enable Beds table</div>';return;}
+  const total=data.length,occupied=data.filter(b=>b.status==='occupied').length;
+  const available=data.filter(b=>b.status==='available').length;
+  const maintenance=data.filter(b=>b.status==='maintenance').length;
+  document.getElementById('bed-stats').innerHTML=`
+    <div class="stat-card sc-blue"><div class="stat-icon-wrap si-blue">🛏️</div><div class="stat-label">Total Beds</div><div class="stat-value">${total}</div></div>
+    <div class="stat-card sc-green"><div class="stat-icon-wrap si-green">✅</div><div class="stat-label">Available</div><div class="stat-value">${available}</div></div>
+    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">🔴</div><div class="stat-label">Occupied</div><div class="stat-value">${occupied}</div></div>
+    <div class="stat-card sc-orange"><div class="stat-icon-wrap si-orange">🔧</div><div class="stat-label">Maintenance</div><div class="stat-value">${maintenance}</div></div>`;
+  // Group by ward
+  const wards={};
+  data.forEach(b=>{if(!wards[b.ward_name])wards[b.ward_name]=[];wards[b.ward_name].push(b);});
+  const statusColor={available:'#2DC653',occupied:'#E53E3E',maintenance:'#D69E2E',reserved:'#3A6BC2',cleaning:'#7C5CBF'};
+  const statusIcon={available:'✅',occupied:'🔴',maintenance:'🔧',reserved:'🔵',cleaning:'🧹'};
+  let html='';
+  Object.entries(wards).forEach(([ward,beds])=>{
+    const occCount=beds.filter(b=>b.status==='occupied').length;
+    html+=`<div class="card" style="margin-bottom:16px">
+      <div class="card-header" style="margin-bottom:14px">
+        <span class="card-title">🏥 ${ward}</span>
+        <span style="font-size:12px;font-weight:700;color:var(--text3)">${occCount}/${beds.length} occupied</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px">
+        ${beds.map(b=>`
+          <div onclick="${b.status==='occupied'?`bedAction('${b.id}','${b.ward_name}','${b.bed_number}',true)`:`bedAction('${b.id}','${b.ward_name}','${b.bed_number}',false)`}"
+            style="border:2px solid ${statusColor[b.status]||'var(--border)'};border-radius:var(--r2);padding:10px 12px;cursor:pointer;background:${b.status==='occupied'?'#FFF0F0':b.status==='available'?'#F0FFF5':b.status==='maintenance'?'#FFF9E8':'var(--bg)'};transition:all 0.2s;text-align:center"
+            onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+            <div style="font-size:18px;margin-bottom:4px">${statusIcon[b.status]||'🛏️'}</div>
+            <div style="font-size:13px;font-weight:900;color:var(--navy)">${b.bed_number}</div>
+            <div style="font-size:10px;font-weight:700;color:var(--text3);margin-top:2px">${b.bed_type||'general'}</div>
+            ${b.status==='occupied'&&b.patients?`<div style="font-size:10px;color:var(--red);font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.patients.full_name}</div>`:''}
+            <div style="font-size:10px;color:${statusColor[b.status]||'var(--text3)'};font-weight:700;margin-top:3px">${b.status}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  });
+  if(!data.length)html='<div class="empty"><div class="empty-icon">🛏️</div>No beds configured yet<span class="empty-sub">Click "Add Bed" to set up your wards</span></div>';
+  document.getElementById('bed-wards').innerHTML=html;
+}
+async function bedAction(id,ward,number,isOccupied){
+  if(isOccupied){
+    if(confirm(`Release bed ${number} (${ward})? This will mark it as available.`)){
+      await sb.from('beds').update({status:'available',current_patient_id:null,current_visit_id:null}).eq('id',id);
+      showToast('✅ Bed '+number+' released!','success');logAudit('Bed','Released: '+ward+' '+number);loadBeds();
+    }
+  } else {
+    const action=prompt(`Bed ${number} (${ward}) — mark as:
+1 = Maintenance
+2 = Reserved
+Enter 1 or 2, or cancel`);
+    if(action==='1'){await sb.from('beds').update({status:'maintenance'}).eq('id',id);showToast('🔧 Marked for maintenance','warning');loadBeds();}
+    else if(action==='2'){await sb.from('beds').update({status:'reserved'}).eq('id',id);showToast('🔵 Bed reserved','success');loadBeds();}
+  }
+}
+async function saveBed(){
+  const ward=v('bed-ward'),number=v('bed-number');
+  if(!ward||!number){showToast('Ward and bed number required','error');return;}
+  const{error}=await sb.from('beds').insert({hospital_id:currentHospital,ward_name:ward,bed_number:number,bed_type:v('bed-type'),status:'available',daily_rate:parseFloat(v('bed-rate')||0),floor:v('bed-floor')||null,notes:v('bed-notes')||null}).catch(e=>({error:e}));
+  if(error){if(error.code==='23505')showToast('Bed '+number+' already exists in '+ward,'error');else showToast(error.message,'error');return;}
+  showToast('✅ Bed added!','success');closeModal('modal-bed-add');logAudit('Bed','Added: '+ward+' '+number);loadBeds();
+}
+
+// ── DISCHARGE WORKFLOW ──
+let currentDischargeVisitId=null;
+function openDischarge(visitId,patientName){
+  currentDischargeVisitId=visitId;
+  document.getElementById('discharge-pt-name').textContent=patientName;
+  document.getElementById('discharge-notes').value='';
+  document.getElementById('discharge-followup').value='';
+  openModal('modal-discharge');
+}
+async function confirmDischarge(){
+  if(!currentDischargeVisitId)return;
+  const condition=v('discharge-condition');
+  const status=condition==='deceased'?'deceased':'discharged';
+  const{error}=await sb.from('visits').update({status,discharged_at:new Date().toISOString(),discharge_notes:v('discharge-notes')}).eq('id',currentDischargeVisitId);
+  if(error){showToast(error.message,'error');return;}
+  // Update bed if assigned
+  const{data:visit}=await sb.from('visits').select('bed_number').eq('id',currentDischargeVisitId).single().catch(()=>({data:null}));
+  if(visit?.bed_number){
+    await sb.from('beds').update({status:'cleaning',current_patient_id:null,current_visit_id:null}).eq('current_visit_id',currentDischargeVisitId).catch(()=>{});
+  }
+  showToast(`✅ Patient discharged (${condition})!`,'success');
+  closeModal('modal-discharge');logAudit('Discharge','Visit '+currentDischargeVisitId+' — '+condition);
+  loadVisits();loadBeds();
+}
+
+// ── PATCH VISITS TO USE DISCHARGE MODAL ──
+// Override old simple discharge buttons with proper discharge modal
+function dischargeVisit(visitId,patientName){openDischarge(visitId,patientName||'Patient');}
+
+
 function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type==='success'?'success':type==='error'?'error':'warning');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}
 </script>
 </body>

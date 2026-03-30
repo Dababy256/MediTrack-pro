@@ -1028,212 +1028,241 @@ tr:hover td{background:#F8FBFF}
   </div>
 </div></div>
 
-<!-- CONSULTATION — Full Clerkship Format -->
+<!-- CONSULTATION — Full Clerkship + Service Tabs (from webapp reference) -->
 <div class="modal-overlay" id="modal-consult" onclick="if(event.target===this)closeModal('modal-consult')">
-<div class="modal" style="max-width:820px">
-  <div class="modal-header" style="position:sticky;top:0;z-index:10;background:#fff">
-    <div class="modal-title">🧑‍⚕️ <span id="consult-pt-name">Patient</span></div>
-    <!-- Tab navigation -->
-    <div style="display:flex;gap:4px;margin-left:auto;margin-right:10px">
-      <button class="clerk-tab active" id="tab-history" onclick="switchTab('history')">📋 History</button>
-      <button class="clerk-tab" id="tab-exam" onclick="switchTab('exam')">🩺 Examination</button>
-      <button class="clerk-tab" id="tab-ix" onclick="switchTab('ix')">🔬 Investigations</button>
-      <button class="clerk-tab" id="tab-plan" onclick="switchTab('plan')">💊 Management</button>
-      <button class="clerk-tab" id="tab-soap" onclick="switchTab('soap')">📝 SOAP</button>
+<div class="modal" style="max-width:860px">
+  <div class="modal-header" style="position:sticky;top:0;z-index:10;background:#fff;flex-wrap:wrap;gap:6px">
+    <div class="modal-title">🧑‍⚕️ <span id="consult-pt-name">Patient</span>
+      <span id="consult-status-badge" style="margin-left:8px"></span>
+    </div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;margin-right:8px">
+      <button class="clerk-tab active" id="ctab-clerk" onclick="cTab('clerk',this)">📋 Clerkship</button>
+      <button class="clerk-tab" id="ctab-diagnoses" onclick="cTab('diagnoses',this)">🩺 Diagnoses</button>
+      <button class="clerk-tab" id="ctab-services" onclick="cTab('services',this)">⚕️ Services</button>
+      <button class="clerk-tab" id="ctab-meds" onclick="cTab('meds',this)">💊 Medications</button>
+      <button class="clerk-tab" id="ctab-lab" onclick="cTab('lab',this)">🔬 Lab</button>
+      <button class="clerk-tab" id="ctab-costs" onclick="cTab('costs',this)">💰 Costs</button>
+      <button class="clerk-tab" id="ctab-soap" onclick="cTab('soap',this)">📝 SOAP</button>
     </div>
     <button class="modal-close" onclick="closeModal('modal-consult')">×</button>
   </div>
 
-  <div class="modal-body" style="padding:16px 20px">
-    <!-- VITALS PANEL — always visible -->
+  <div class="modal-body" style="padding:14px 18px">
+    <!-- Vitals banner — always visible -->
     <div id="consult-vitals-panel" style="margin-bottom:10px"></div>
 
-    <!-- ── TAB 1: HISTORY ── -->
-    <div id="clerk-history" class="clerk-panel">
-      <div class="clerk-section-hdr">Presenting Complaint (PC)</div>
-      <textarea class="form-textarea clerk-area" id="hx-pc" placeholder="State the main complaint in the patient's own words. e.g. 'Fever and headache for 3 days'"></textarea>
-
-      <div class="clerk-section-hdr">History of Presenting Complaint (HPC)</div>
-      <textarea class="form-textarea clerk-area" id="hx-hpc" placeholder="Onset, duration, character, radiation, associated symptoms, aggravating/relieving factors, severity (1-10), progression, previous similar episodes..."></textarea>
-
-      <div class="form-grid">
-        <div>
-          <div class="clerk-section-hdr">Past Medical & Surgical History (PMH)</div>
-          <textarea class="form-textarea clerk-area" id="hx-pmh" placeholder="Known conditions (DM, HTN, HIV, TB, asthma, sickle cell...), previous surgeries, hospitalisations, childhood illnesses..."></textarea>
-        </div>
-        <div>
-          <div class="clerk-section-hdr">Drug History & Allergies</div>
-          <textarea class="form-textarea clerk-area" id="hx-drugs" placeholder="Current medications (name, dose, frequency)&#10;Allergies: drug name → reaction type&#10;OTC/herbal remedies..."></textarea>
+    <!-- ── TAB: CLERKSHIP HISTORY ── -->
+    <div id="cpanel-clerk" class="clerk-panel">
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap" id="pt-reg-tabs-inner">
+        <button class="clerk-tab active" style="font-size:10px;padding:4px 10px" onclick="ptTab('demographics',this)">👤 Demographics</button>
+        <button class="clerk-tab" style="font-size:10px;padding:4px 10px" onclick="ptTab('insurance',this)">🏦 Insurance</button>
+        <button class="clerk-tab" style="font-size:10px;padding:4px 10px" onclick="ptTab('contacts',this)">📞 Contacts</button>
+        <button class="clerk-tab" style="font-size:10px;padding:4px 10px" onclick="ptTab('visit',this)">🏥 Visit</button>
+      </div>
+      <div id="pt-tab-demographics" class="clerk-panel">
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="pt-name" placeholder="Full legal name"></div>
+          <div class="form-group"><label class="form-label">Date of Birth</label><input class="form-input" type="date" id="pt-dob" onchange="calcAge()"></div>
+          <div class="form-group"><label class="form-label">Age</label><input class="form-input" type="number" id="pt-age" placeholder="Years"></div>
+          <div class="form-group"><label class="form-label">Gender *</label><select class="form-select" id="pt-gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+          <div class="form-group"><label class="form-label">Blood Group</label><select class="form-select" id="pt-blood"><option value="">— Unknown —</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+          <div class="form-group"><label class="form-label">National ID</label><input class="form-input" id="pt-nid" placeholder="ID number"></div>
+          <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="pt-phone" placeholder="+256 / +211..."></div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="pt-email" placeholder="patient@email.com"></div>
+          <div class="form-group" style="grid-column:span 2"><label class="form-label">Address</label><input class="form-input" id="pt-address" placeholder="Town, District, Country"></div>
         </div>
       </div>
-
-      <div class="form-grid">
-        <div>
-          <div class="clerk-section-hdr">Family History (FH)</div>
-          <textarea class="form-textarea" id="hx-fh" style="min-height:60px" placeholder="Parents, siblings — DM, HTN, malignancy, genetic conditions, similar illness..."></textarea>
-        </div>
-        <div>
-          <div class="clerk-section-hdr">Social History (SH)</div>
-          <textarea class="form-textarea" id="hx-sh" style="min-height:60px" placeholder="Occupation, marital status, alcohol, tobacco, substance use, housing, travel, sexual history (if relevant)..."></textarea>
+      <div id="pt-tab-insurance" class="clerk-panel" style="display:none">
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Insurance Type</label><select class="form-select" id="pt-insurance"><option value="none">None / Cash</option><option value="nhif">NHIF</option><option value="uhi">UHI</option><option value="ngo">NGO / UN</option><option value="private">Private</option><option value="aig">AIG</option><option value="jubilee">Jubilee</option><option value="free">Free/Waived</option></select></div>
+          <div class="form-group"><label class="form-label">Policy / Membership No.</label><input class="form-input" id="pt-policy" placeholder="e.g. NHIF-123456"></div>
+          <div class="form-group"><label class="form-label">Vote Number</label><input class="form-input" id="pt-vote-no" placeholder="e.g. 1729407-121-32440"></div>
+          <div class="form-group"><label class="form-label">Code Number</label><input class="form-input" id="pt-code-no" placeholder="e.g. 407-121-32440"></div>
+          <div class="form-group"><label class="form-label">Insurance Company</label><input class="form-input" id="pt-ins-company" placeholder="Company name"></div>
+          <div class="form-group"><label class="form-label">Card Expiry Date</label><input class="form-input" type="date" id="pt-ins-expiry"></div>
         </div>
       </div>
-
-      <div class="clerk-section-hdr">Review of Systems (ROS)</div>
-      <div class="ros-grid">
-        <div class="ros-box"><div class="ros-sys">CVS</div><textarea class="ros-area" id="ros-cvs" placeholder="Chest pain, palpitations, SOB, orthopnoea, ankle swelling, syncope..."></textarea></div>
-        <div class="ros-box"><div class="ros-sys">Respiratory</div><textarea class="ros-area" id="ros-resp" placeholder="Cough (productive?), haemoptysis, wheeze, pleuritic pain, night sweats..."></textarea></div>
-        <div class="ros-box"><div class="ros-sys">GIT</div><textarea class="ros-area" id="ros-git" placeholder="Nausea, vomiting, dysphagia, heartburn, abdominal pain, bowel habits, rectal bleeding, jaundice..."></textarea></div>
-        <div class="ros-box"><div class="ros-sys">GUS</div><textarea class="ros-area" id="ros-gus" placeholder="Dysuria, frequency, haematuria, discharge, LMP (females), obstetric history..."></textarea></div>
-        <div class="ros-box"><div class="ros-sys">CNS</div><textarea class="ros-area" id="ros-cns" placeholder="Headache, dizziness, fits, weakness, sensory changes, vision, hearing, speech..."></textarea></div>
-        <div class="ros-box"><div class="ros-sys">MSK</div><textarea class="ros-area" id="ros-msk" placeholder="Joint pain/swelling, stiffness, muscle weakness, rash, trauma..."></textarea></div>
+      <div id="pt-tab-contacts" class="clerk-panel" style="display:none">
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Next of Kin (Name)</label><input class="form-input" id="pt-nok" placeholder="Full name"></div>
+          <div class="form-group"><label class="form-label">Next of Kin (Phone)</label><input class="form-input" id="pt-nok-phone" placeholder="+256..."></div>
+          <div class="form-group"><label class="form-label">Emergency Contact (Name)</label><input class="form-input" id="pt-ec-name" placeholder="Full name"></div>
+          <div class="form-group"><label class="form-label">Emergency Contact (Phone)</label><input class="form-input" id="pt-ec-phone" placeholder="+256..."></div>
+          <div class="form-group" style="grid-column:span 2"><label class="form-label">Patient Notes</label><textarea class="form-textarea" id="pt-notes" style="min-height:52px" placeholder="Special requirements, disability..."></textarea></div>
+        </div>
       </div>
-    </div>
-
-    <!-- ── TAB 2: EXAMINATION ── -->
-    <div id="clerk-exam" class="clerk-panel" style="display:none">
-      <div class="clerk-section-hdr">General Examination</div>
-      <div class="form-grid" style="margin-bottom:10px">
-        <div class="form-group"><label class="form-label">Appearance</label><input class="form-input" id="ex-appearance" placeholder="Alert/drowsy, well/ill-looking, in distress, hydration status..."></div>
-        <div class="form-group"><label class="form-label">Nutritional Status</label><input class="form-input" id="ex-nutrition" placeholder="Well-nourished / malnourished (MUAC if child)"></div>
-        <div class="form-group"><label class="form-label">Pallor</label><select class="form-select" id="ex-pallor"><option value="">— Select —</option><option>None</option><option>Mild</option><option>Moderate</option><option>Severe</option></select></div>
-        <div class="form-group"><label class="form-label">Jaundice</label><select class="form-select" id="ex-jaundice"><option value="">— Select —</option><option>None</option><option>Mild</option><option>Moderate</option><option>Severe</option></select></div>
-        <div class="form-group"><label class="form-label">Cyanosis</label><select class="form-select" id="ex-cyanosis"><option value="">— Select —</option><option>None</option><option>Peripheral</option><option>Central</option></select></div>
-        <div class="form-group"><label class="form-label">Oedema</label><select class="form-select" id="ex-oedema"><option value="">— Select —</option><option>None</option><option>+1 (ankle)</option><option>+2 (to knee)</option><option>+3 (to thigh)</option><option>+4 (anasarca)</option></select></div>
-        <div class="form-group"><label class="form-label">Lymphadenopathy</label><input class="form-input" id="ex-lymph" placeholder="Site, size, tender, consistency..."></div>
-        <div class="form-group"><label class="form-label">Fingernails / Clubbing</label><input class="form-input" id="ex-nails" placeholder="Clubbing grade, koilonychia, leuconychia..."></div>
-      </div>
-
-      <div class="clerk-section-hdr">Systemic Examination</div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div class="sys-exam-block">
-          <div class="sys-exam-lbl">CVS</div>
-          <textarea class="form-textarea sys-area" id="ex-cvs" placeholder="Pulse: rate, rhythm, volume, character | JVP | Apex beat | Heart sounds | Murmurs | Peripheral perfusion..."></textarea>
+      <div id="pt-tab-visit" class="clerk-panel" style="display:none">
+        <div class="clerk-section-hdr" style="padding-top:0;border-top:none">Presenting Complaint (PC)</div>
+        <textarea class="form-textarea clerk-area" id="hx-pc" placeholder="Chief complaint in patient's own words. e.g. 'Fever and headache for 3 days'"></textarea>
+        <div class="clerk-section-hdr">History of Presenting Complaint (HPC)</div>
+        <textarea class="form-textarea clerk-area" id="hx-hpc" placeholder="Onset, duration, character, severity, associated symptoms, aggravating/relieving factors, progression..."></textarea>
+        <div class="form-grid">
+          <div><div class="clerk-section-hdr">PMH / Surgical Hx</div><textarea class="form-textarea clerk-area" id="hx-pmh" placeholder="Known conditions, previous surgeries, hospitalisations..."></textarea></div>
+          <div><div class="clerk-section-hdr">Drug Hx & Allergies</div><textarea class="form-textarea clerk-area" id="hx-drugs" placeholder="Current medications, doses, allergies and reactions..."></textarea></div>
+          <div><div class="clerk-section-hdr">Family Hx</div><textarea class="form-textarea" id="hx-fh" style="min-height:60px" placeholder="DM, HTN, malignancy, genetic conditions..."></textarea></div>
+          <div><div class="clerk-section-hdr">Social Hx</div><textarea class="form-textarea" id="hx-sh" style="min-height:60px" placeholder="Occupation, alcohol, tobacco, housing, travel..."></textarea></div>
         </div>
-        <div class="sys-exam-block">
-          <div class="sys-exam-lbl">Respiratory</div>
-          <textarea class="form-textarea sys-area" id="ex-resp" placeholder="Trachea | Chest expansion | Percussion note | Breath sounds | Added sounds (wheeze, crackles, rub) | Vocal resonance..."></textarea>
+        <div class="clerk-section-hdr">Review of Systems (ROS)</div>
+        <div class="ros-grid">
+          <div class="ros-box"><div class="ros-sys">CVS</div><textarea class="ros-area" id="ros-cvs" placeholder="Chest pain, SOB, palpitations, ankle swelling..."></textarea></div>
+          <div class="ros-box"><div class="ros-sys">Respiratory</div><textarea class="ros-area" id="ros-resp" placeholder="Cough, wheeze, haemoptysis, night sweats..."></textarea></div>
+          <div class="ros-box"><div class="ros-sys">GIT</div><textarea class="ros-area" id="ros-git" placeholder="Nausea, vomiting, dysphagia, bowel habits..."></textarea></div>
+          <div class="ros-box"><div class="ros-sys">GUS</div><textarea class="ros-area" id="ros-gus" placeholder="Dysuria, frequency, LMP, obstetric hx..."></textarea></div>
+          <div class="ros-box"><div class="ros-sys">CNS</div><textarea class="ros-area" id="ros-cns" placeholder="Headache, fits, weakness, vision, speech..."></textarea></div>
+          <div class="ros-box"><div class="ros-sys">MSK</div><textarea class="ros-area" id="ros-msk" placeholder="Joint pain, swelling, muscle weakness..."></textarea></div>
         </div>
-        <div class="sys-exam-block">
-          <div class="sys-exam-lbl">Abdomen</div>
-          <textarea class="form-textarea sys-area" id="ex-abdo" placeholder="Inspection | Bowel sounds | Tenderness | Guarding/rigidity | Organomegaly (liver, spleen, kidneys) | Masses | Hernial orifices | PR if indicated..."></textarea>
-        </div>
-        <div class="sys-exam-block">
-          <div class="sys-exam-lbl">CNS</div>
-          <textarea class="form-textarea sys-area" id="ex-cns" placeholder="GCS/consciousness | Cranial nerves | Motor (tone, power, reflexes) | Sensory | Cerebellar | Meningeal signs | Fundi if indicated..."></textarea>
-        </div>
-        <div class="sys-exam-block">
-          <div class="sys-exam-lbl">Other findings</div>
-          <textarea class="form-textarea sys-area" id="ex-other" placeholder="Skin, MSK, genitourinary, rectal, pelvic, ear/nose/throat, eye — as clinically indicated..."></textarea>
+        <div class="clerk-section-hdr">Examination</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="sys-exam-block"><div class="sys-exam-lbl">General</div><textarea class="form-textarea sys-area" id="ex-appearance" placeholder="Appearance, pallor, jaundice, cyanosis, oedema, lymph nodes, nutritional status..."></textarea></div>
+          <div class="sys-exam-block"><div class="sys-exam-lbl">CVS</div><textarea class="form-textarea sys-area" id="ex-cvs" placeholder="Pulse, JVP, apex beat, heart sounds, murmurs..."></textarea></div>
+          <div class="sys-exam-block"><div class="sys-exam-lbl">Respiratory</div><textarea class="form-textarea sys-area" id="ex-resp" placeholder="Trachea, chest expansion, percussion, breath sounds, added sounds..."></textarea></div>
+          <div class="sys-exam-block"><div class="sys-exam-lbl">Abdomen</div><textarea class="form-textarea sys-area" id="ex-abdo" placeholder="Inspection, bowel sounds, tenderness, organomegaly, masses..."></textarea></div>
+          <div class="sys-exam-block"><div class="sys-exam-lbl">CNS</div><textarea class="form-textarea sys-area" id="ex-cns" placeholder="GCS, cranial nerves, motor, sensory, cerebellar, meningeal signs..."></textarea></div>
+          <div class="sys-exam-block"><div class="sys-exam-lbl">Other</div><textarea class="form-textarea sys-area" id="ex-other" placeholder="Skin, MSK, genitourinary, ENT, eyes — as indicated..."></textarea></div>
         </div>
       </div>
     </div>
 
-    <!-- ── TAB 3: INVESTIGATIONS ── -->
-    <div id="clerk-ix" class="clerk-panel" style="display:none">
-      <div class="alert-bar info" style="margin-bottom:12px">
-        💡 Click <strong>Order Lab Test</strong> to send a test directly linked to this visit — no need to re-select the patient.
+    <!-- ── TAB: DIAGNOSES (webapp timeline style) ── -->
+    <div id="cpanel-diagnoses" class="clerk-panel" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:800;color:var(--navy)">Diagnosis Timeline</div>
+        <button class="btn btn-primary btn-sm" onclick="addConsultDiagnosis()">➕ Add Diagnosis</button>
       </div>
+      <div id="ddi-alert-panel"></div>
+      <!-- ICD-10 quick add -->
+      <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:12px;margin-bottom:12px">
+        <div class="form-label" style="margin-bottom:6px">Quick add — ICD-10 search</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
+          <div class="auto-wrap" style="flex:1;min-width:200px">
+            <input class="form-input" id="icd-search" placeholder="Type diagnosis e.g. Malaria, Pneumonia..." oninput="searchICD(this.value)" onblur="setTimeout(()=>hideICD(),200)" autocomplete="off">
+            <div class="auto-results" id="icd-results"></div>
+          </div>
+          <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:4px">
+            <select class="form-select" id="diag-type-quick" style="font-size:11px;padding:7px 8px"><option value="primary">Primary</option><option value="secondary">Secondary</option><option value="differential">Differential</option><option value="provisional">Provisional</option><option value="final">Final</option></select>
+            <button class="btn btn-navy btn-sm" onclick="saveConsultDiagICD()">✓ Add</button>
+          </div>
+        </div>
+        <div id="icd-selected" style="display:none;background:#fff;border:1.5px solid var(--teal);border-radius:var(--r2);padding:8px 12px;font-size:12px;margin-top:6px"></div>
+        <div class="form-group" style="margin-top:8px"><label class="form-label">Differential Diagnoses</label><input class="form-input" id="plan-ddx" placeholder="e.g. Typhoid, Brucellosis — in order of likelihood"></div>
+      </div>
+      <div id="consult-diagnoses-timeline" style="min-height:60px"><div class="empty" style="padding:20px"><div class="empty-icon" style="font-size:30px">🩺</div><span style="font-size:12px">No diagnoses added yet</span></div></div>
+    </div>
 
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-        <div class="clerk-section-hdr" style="padding:0;border:none;margin:0">Laboratory</div>
+    <!-- ── TAB: SERVICES (webapp: categorised medical services → auto-bill) ── -->
+    <div id="cpanel-services" class="clerk-panel" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:800;color:var(--navy)">Medical Services Provided</div>
+        <button class="btn btn-primary btn-sm" onclick="addConsultService()">➕ Add Service</button>
+      </div>
+      <div class="alert-bar info" style="margin-bottom:10px">Adding a service records it to the patient's invoice automatically.</div>
+      <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:12px;margin-bottom:12px">
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Service Category</label>
+            <select class="form-select" id="svc-category" onchange="loadServicesByCategory()">
+              <option value="">— Select category —</option>
+              <option value="consultation">Consultation</option>
+              <option value="procedure">Procedure</option>
+              <option value="imaging">Imaging / Radiology</option>
+              <option value="lab">Laboratory</option>
+              <option value="anaesthesia">Anaesthesia</option>
+              <option value="theatre">Theatre / Surgery</option>
+              <option value="physiotherapy">Physiotherapy</option>
+              <option value="dental">Dental</option>
+              <option value="optical">Optical / Eye</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Service Name</label><input class="form-input" id="svc-name" placeholder="e.g. Consultation fee, Malaria RDT, ECG..."></div>
+          <div class="form-group"><label class="form-label">Department</label><select class="form-select" id="svc-dept"><option>General OPD</option><option>Internal Medicine</option><option>Surgery</option><option>Paediatrics</option><option>Maternity</option><option>Lab</option><option>Radiology</option><option>Dental</option><option>Eye Clinic</option><option>Pharmacy</option></select></div>
+          <div class="form-group"><label class="form-label">Amount ($)</label><input class="form-input" type="number" id="svc-amount" placeholder="0.00"></div>
+        </div>
+        <button class="btn btn-green btn-sm" style="margin-top:8px" onclick="saveConsultService()">➕ Record Service</button>
+      </div>
+      <div id="consult-services-list"><div class="empty" style="padding:20px"><div class="empty-icon" style="font-size:30px">⚕️</div><span style="font-size:12px">No services recorded yet</span></div></div>
+    </div>
+
+    <!-- ── TAB: MEDICATIONS (webapp: select from NDA db → quantity → auto-deduct) ── -->
+    <div id="cpanel-meds" class="clerk-panel" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:800;color:var(--navy)">Medications Prescribed</div>
+        <button class="btn btn-primary btn-sm" onclick="prescribeFromConsult()">💊 Prescribe Drug</button>
+      </div>
+      <div id="rx-ddi-warning" style="display:none"></div>
+      <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:12px;margin-bottom:12px">
+        <div class="form-label" style="margin-bottom:6px">Quick prescribe — Uganda NDA 2024 database</div>
+        <div class="auto-wrap" style="margin-bottom:8px">
+          <input class="form-input" id="rx-drug" placeholder="Type drug name e.g. Amoxicillin, Paracetamol..." oninput="searchDrugs(this.value)" onblur="setTimeout(()=>hideDrugs(),200)">
+          <div class="auto-results" id="drug-results"></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Strength</label><input class="form-input" id="rx-strength" readonly style="background:var(--bg)"></div>
+          <div class="form-group"><label class="form-label">Form</label><input class="form-input" id="rx-form" readonly style="background:var(--bg)"></div>
+          <div class="form-group"><label class="form-label">Dosage Instructions</label><input class="form-input" id="rx-dosage" placeholder="e.g. 1 tab × 3 daily × 7 days"></div>
+          <div class="form-group"><label class="form-label">Quantity</label><input class="form-input" type="number" id="rx-qty" value="1" min="1"></div>
+          <div class="form-group"><label class="form-label">Duration</label><input class="form-input" id="rx-duration" placeholder="e.g. 7 days, 2 weeks"></div>
+          <div class="form-group"><label class="form-label">Unit Price ($)</label><input class="form-input" type="number" id="rx-price" placeholder="0.00"></div>
+        </div>
+        <button class="btn btn-warning btn-sm" style="margin-top:8px" onclick="saveRxFromConsult()">💊 Add Prescription</button>
+      </div>
+      <div id="plan-rxs-written"><div class="empty" style="padding:20px"><div class="empty-icon" style="font-size:30px">💊</div><span style="font-size:12px">No medications prescribed yet</span></div></div>
+    </div>
+
+    <!-- ── TAB: LAB (webapp: order tests + file upload for results) ── -->
+    <div id="cpanel-lab" class="clerk-panel" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:800;color:var(--navy)">Laboratory Investigations</div>
         <button class="btn btn-primary btn-sm" onclick="orderLabFromConsult()">🔬 Order Lab Test</button>
       </div>
-      <div id="ix-labs-ordered" style="margin-bottom:14px"></div>
-      <textarea class="form-textarea" id="ix-lab-notes" style="min-height:60px" placeholder="Rationale for tests ordered, pending results, interpretation notes..."></textarea>
-
-      <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 10px;flex-wrap:wrap;gap:8px">
-        <div class="clerk-section-hdr" style="padding:0;border:none;margin:0">Imaging & Other</div>
-      </div>
-      <textarea class="form-textarea" id="ix-imaging" style="min-height:72px" placeholder="X-ray, ultrasound, CT, MRI, ECG, spirometry — findings or requests..."></textarea>
+      <div id="ix-labs-ordered"><div class="empty" style="padding:20px"><div class="empty-icon" style="font-size:30px">🔬</div><span style="font-size:12px">No lab tests ordered yet</span></div></div>
+      <div class="form-group" style="margin-top:10px"><label class="form-label">Imaging / Radiology Notes</label><textarea class="form-textarea" id="ix-imaging" style="min-height:60px" placeholder="X-ray, Ultrasound, CT, MRI requests and findings..."></textarea></div>
+      <div class="form-group" style="margin-top:8px"><label class="form-label">Lab Interpretation Notes</label><textarea class="form-textarea" id="ix-lab-notes" style="min-height:52px" placeholder="Rationale for tests, pending results, interpretation..."></textarea></div>
     </div>
 
-    <!-- ── TAB 4: MANAGEMENT ── -->
-    <div id="clerk-plan" class="clerk-panel" style="display:none">
-      <div class="alert-bar info" style="margin-bottom:12px">
-        💡 Click <strong>Prescribe Drug</strong> to write a prescription linked to this visit — patient is pre-filled, DDI check runs automatically.
+    <!-- ── TAB: COSTS (webapp: transaction table with reversal) ── -->
+    <div id="cpanel-costs" class="clerk-panel" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:800;color:var(--navy)">Charges & Costs for this Visit</div>
+        <div id="consult-total-badge" style="background:var(--navy);color:#fff;padding:5px 14px;border-radius:16px;font-size:13px;font-weight:900"></div>
       </div>
-
-      <!-- ICD-10 Diagnosis -->
-      <div class="clerk-section-hdr">Primary Diagnosis (ICD-10)</div>
-      <div class="auto-wrap" style="margin-bottom:6px">
-        <input class="form-input" id="icd-search" placeholder="Type diagnosis — e.g. Malaria, Pneumonia, Hypertension..." oninput="searchICD(this.value)" onblur="setTimeout(()=>hideICD(),200)" autocomplete="off">
-        <div class="auto-results" id="icd-results"></div>
-      </div>
-      <div id="icd-selected" style="display:none;background:var(--bg);border:1.5px solid var(--teal);border-radius:var(--r2);padding:9px 12px;font-size:12px;margin-bottom:10px"></div>
-
-      <div class="form-group" style="margin-bottom:12px">
-        <label class="form-label">Differential Diagnoses</label>
-        <input class="form-input" id="plan-ddx" placeholder="e.g. Typhoid, Brucellosis, Dengue — in order of likelihood">
-      </div>
-
-      <!-- Prescriptions inline -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-        <div class="clerk-section-hdr" style="padding:0;border:none;margin:0">Prescriptions</div>
-        <button class="btn btn-warning btn-sm" onclick="prescribeFromConsult()">💊 Prescribe Drug</button>
-      </div>
-      <div id="plan-rxs-written" style="margin-bottom:12px"></div>
-
-      <!-- Non-pharmacological -->
-      <div class="clerk-section-hdr">Non-pharmacological Management</div>
-      <textarea class="form-textarea" id="plan-nonpharm" style="min-height:60px" placeholder="Fluid management, diet, rest, physiotherapy, wound care, oxygen, blood transfusion, surgical referral..."></textarea>
-
-      <!-- Disposition -->
-      <div class="form-grid" style="margin-top:12px">
-        <div class="form-group">
-          <label class="form-label">Disposition</label>
-          <select class="form-select" id="consult-disposition">
-            <option value="continue">Continue treatment — review as needed</option>
-            <option value="discharge">Discharge home</option>
-            <option value="admit">Admit / continue inpatient</option>
-            <option value="refer_hosp">Refer to hospital</option>
-            <option value="refer_specialist">Refer to specialist</option>
-            <option value="theatre">For theatre / procedure</option>
-          </select>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Service / Medicine</th><th>Category</th><th>Qty</th><th>Unit $</th><th>Total $</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody id="consult-costs-table"><tr><td colspan="8"><div class="loading"><div class="spinner"></div>Loading...</div></td></tr></tbody>
+      </table></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div class="form-group" style="display:inline-flex;align-items:center;gap:8px">
+            <label class="form-label">Disposition:</label>
+            <select class="form-select" id="consult-disposition" style="width:auto;font-size:12px">
+              <option value="continue">Continue treatment</option>
+              <option value="discharge">Discharge home</option>
+              <option value="admit">Admit / continue IPD</option>
+              <option value="refer_hosp">Refer to hospital</option>
+              <option value="refer_specialist">Refer to specialist</option>
+              <option value="theatre">For theatre</option>
+            </select>
+          </div>
+          <input class="form-input" type="date" id="consult-followup" style="display:inline;width:auto;font-size:12px;margin-left:8px">
         </div>
-        <div class="form-group">
-          <label class="form-label">Follow-up Date</label>
-          <input class="form-input" type="date" id="consult-followup">
-        </div>
-      </div>
-      <div class="form-group" style="margin-top:10px">
-        <label class="form-label">Referral / Discharge Instructions</label>
-        <textarea class="form-textarea" id="plan-referral" style="min-height:56px" placeholder="Reason for referral, facility to refer to, discharge medications, red-flag symptoms to watch for, return precautions..."></textarea>
+        <button class="btn btn-danger btn-sm" onclick="closeConsultation()" id="consult-close-btn" style="display:none">🔒 Close Consultation</button>
       </div>
     </div>
 
-    <!-- ── TAB 5: SOAP SUMMARY (auto-generated) ── -->
-    <div id="clerk-soap" class="clerk-panel" style="display:none">
-      <div class="alert-bar info" style="margin-bottom:12px">
-        📝 Auto-generated from your clerkship entries. Edit here to refine the final note before saving.
-      </div>
+    <!-- ── TAB: SOAP SUMMARY (auto-generated) ── -->
+    <div id="cpanel-soap" class="clerk-panel" style="display:none">
+      <div class="alert-bar info" style="margin-bottom:10px">📝 Auto-generated from all tabs above. Edit to refine before saving.</div>
       <div class="soap-grid">
-        <div class="soap-section">
-          <div class="soap-letter">S</div>
-          <div class="soap-name">Subjective — History</div>
-          <textarea class="soap-textarea" id="soap-s" style="min-height:110px" placeholder="Auto-filled from history tab..."></textarea>
-        </div>
-        <div class="soap-section">
-          <div class="soap-letter">O</div>
-          <div class="soap-name">Objective — Examination</div>
-          <textarea class="soap-textarea" id="soap-o" style="min-height:110px" placeholder="Auto-filled from examination tab..."></textarea>
-        </div>
-        <div class="soap-section">
-          <div class="soap-letter">A</div>
-          <div class="soap-name">Assessment — Diagnosis</div>
-          <textarea class="soap-textarea" id="soap-a" style="min-height:110px" placeholder="Auto-filled from diagnosis..."></textarea>
-        </div>
-        <div class="soap-section">
-          <div class="soap-letter">P</div>
-          <div class="soap-name">Plan — Management</div>
-          <textarea class="soap-textarea" id="soap-p" style="min-height:110px" placeholder="Auto-filled from management tab..."></textarea>
-        </div>
+        <div class="soap-section"><div class="soap-letter">S</div><div class="soap-name">Subjective</div><textarea class="soap-textarea" id="soap-s" style="min-height:100px"></textarea></div>
+        <div class="soap-section"><div class="soap-letter">O</div><div class="soap-name">Objective</div><textarea class="soap-textarea" id="soap-o" style="min-height:100px"></textarea></div>
+        <div class="soap-section"><div class="soap-letter">A</div><div class="soap-name">Assessment</div><textarea class="soap-textarea" id="soap-a" style="min-height:100px"></textarea></div>
+        <div class="soap-section"><div class="soap-letter">P</div><div class="soap-name">Plan</div><textarea class="soap-textarea" id="soap-p" style="min-height:100px"></textarea></div>
       </div>
+      <div class="form-group" style="margin-top:10px"><label class="form-label">Doctor's Additional Notes / Instructions</label><textarea class="form-textarea" id="consult-notes" style="min-height:56px" placeholder="Referral details, special instructions, discharge plan..."></textarea></div>
     </div>
-
-  </div><!-- end modal-body -->
+  </div>
 
   <div class="modal-footer" style="position:sticky;bottom:0;background:#FAFCFF">
-    <div style="font-size:11px;color:var(--text3);font-weight:700;margin-right:auto" id="consult-save-status">All changes saved on Submit</div>
+    <div style="font-size:11px;color:var(--text3);font-weight:700;margin-right:auto" id="consult-save-status">Changes saved on Submit</div>
     <button class="btn btn-secondary" onclick="closeModal('modal-consult')">Cancel</button>
     <button class="btn btn-primary" onclick="saveConsultation()">💾 Submit Consultation</button>
   </div>
@@ -3214,6 +3243,280 @@ async function confirmDischarge(){
 // ── PATCH VISITS TO USE DISCHARGE MODAL ──
 // Override old simple discharge buttons with proper discharge modal
 function dischargeVisit(visitId,patientName){openDischarge(visitId,patientName||'Patient');}
+
+
+// ── BATCH 6: WEBAPP-INSPIRED CONSULTATION ENGINE ──
+
+// Consultation tab switcher
+function cTab(tab, btn){
+  ['clerk','diagnoses','services','meds','lab','costs','soap'].forEach(t=>{
+    const el=document.getElementById('cpanel-'+t);
+    if(el)el.style.display=t===tab?'block':'none';
+    const b=document.getElementById('ctab-'+t);
+    if(b)b.classList.toggle('active',t===tab);
+  });
+  // Load data for relevant tabs
+  if(tab==='diagnoses')loadConsultDiagnoses();
+  if(tab==='services')loadConsultServices();
+  if(tab==='meds')loadConsultMeds();
+  if(tab==='lab')loadConsultLabs();
+  if(tab==='costs')loadConsultCosts();
+  if(tab==='soap')buildSOAP();
+}
+
+// Override openConsult to use new system
+function openConsult(visitId, patientName, patientId){
+  currentConsultVisitId=visitId;
+  currentConsultPatientId=patientId||visitId;
+  consultRxList=[];consultLabList=[];
+  document.getElementById('consult-pt-name').textContent=patientName||'Patient';
+  // Reset all fields
+  ['hx-pc','hx-hpc','hx-pmh','hx-drugs','hx-fh','hx-sh','ros-cvs','ros-resp','ros-git','ros-gus','ros-cns','ros-msk','ex-appearance','ex-cvs','ex-resp','ex-abdo','ex-cns','ex-other','ix-lab-notes','ix-imaging','plan-ddx','consult-notes','soap-s','soap-o','soap-a','soap-p','icd-search','rx-drug','rx-dosage','rx-duration','svc-name','svc-amount'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['icd-selected','rx-ddi-warning'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.display='none';el.innerHTML='';}});
+  ['plan-rxs-written','ix-labs-ordered','consult-diagnoses-timeline','consult-services-list'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<div class="empty" style="padding:16px"><div class="empty-icon" style="font-size:26px">⌛</div><span style="font-size:11px">Loading...</span></div>';});
+  selectedICD=null;
+  // Reset to clerkship tab  
+  cTab('clerk',document.getElementById('ctab-clerk'));
+  // Reset patient reg sub-tabs
+  ptTab('visit', document.querySelector('#pt-reg-tabs-inner button:last-child'));
+  // Load vitals
+  loadVitalsForConsult(patientId||visitId);
+  // Check if consultation is still active (show close button)
+  checkConsultStatus(visitId);
+  openModal('modal-consult');
+}
+
+async function checkConsultStatus(visitId){
+  const{data}=await sb.from('visits').select('status,patients(full_name,blood_group,age,gender,insurance)').eq('id',visitId).single().catch(()=>({data:null}));
+  if(!data)return;
+  const badge=document.getElementById('consult-status-badge');
+  const closeBtn=document.getElementById('consult-close-btn');
+  if(data.status==='discharged'||data.status==='cancelled'){
+    if(badge)badge.innerHTML='<span class="badge b-discharged">Closed</span>';
+    if(closeBtn)closeBtn.style.display='none';
+  } else {
+    if(badge)badge.innerHTML='<span class="badge b-active">Active</span>';
+    if(closeBtn)closeBtn.style.display='';
+  }
+  // Pre-fill patient fields if data available
+  const pt=data.patients;
+  if(pt){
+    if(document.getElementById('pt-blood')&&pt.blood_group)document.getElementById('pt-blood').value=pt.blood_group;
+    if(document.getElementById('pt-age')&&pt.age)document.getElementById('pt-age').value=pt.age;
+    if(document.getElementById('pt-gender')&&pt.gender)document.getElementById('pt-gender').value=pt.gender;
+    if(document.getElementById('pt-insurance')&&pt.insurance)document.getElementById('pt-insurance').value=pt.insurance;
+  }
+}
+
+// Close consultation (webapp: marks service as inactive)
+async function closeConsultation(){
+  if(!currentConsultVisitId)return;
+  if(!confirm('Close this consultation? This prevents new diagnoses, services, and charges from being added.'))return;
+  await sb.from('visits').update({status:'discharged',discharged_at:new Date().toISOString()}).eq('id',currentConsultVisitId);
+  showToast('🔒 Consultation closed!','success');
+  logAudit('Consultation','Closed visit '+currentConsultVisitId);
+  closeModal('modal-consult');loadVisits();
+}
+
+// ── DIAGNOSES TAB (webapp: date-stamped timeline) ──
+let consultDiagList=[];
+async function loadConsultDiagnoses(){
+  if(!currentConsultPatientId&&!currentConsultVisitId)return;
+  const{data}=await sb.from('diagnoses').select('*').or(`visit_id.eq.${currentConsultVisitId},patient_id.eq.${currentConsultPatientId}`).order('created_at',{ascending:false}).limit(20).catch(()=>({data:[]}));
+  consultDiagList=data||[];
+  renderConsultDiagnoses();
+}
+function renderConsultDiagnoses(){
+  const el=document.getElementById('consult-diagnoses-timeline');
+  if(!consultDiagList.length){el.innerHTML='<div class="empty" style="padding:16px"><div class="empty-icon" style="font-size:26px">🩺</div><span style="font-size:11px">No diagnoses added yet</span></div>';return;}
+  const typeColor={primary:'var(--red)',secondary:'var(--teal)',differential:'var(--yellow)',provisional:'var(--purple)',final:'var(--green2)'};
+  el.innerHTML='<div class="timeline">'+consultDiagList.map(d=>`
+    <div class="timeline-item">
+      <div class="timeline-dot tl-visit" style="background:${typeColor[d.diagnosis_type]||'var(--teal)'}"></div>
+      <div class="timeline-card">
+        <div class="timeline-date">${fmtTime(d.created_at)} · <span style="color:${typeColor[d.diagnosis_type]||'var(--teal)'};font-weight:800">${d.diagnosis_type}</span>${d.icd10_code?` · <span class="badge b-active">${d.icd10_code}</span>`:''}</div>
+        <div class="timeline-title">${d.diagnosis_text}</div>
+        ${d.notes?`<div class="timeline-detail">${d.notes}</div>`:''}
+      </div>
+    </div>`).join('')+'</div>';
+}
+async function addConsultDiagnosis(){
+  const text=prompt('Enter diagnosis (or use ICD-10 search above):');if(!text)return;
+  await saveDiagnosisInline(text,null,null,'primary');
+}
+async function saveConsultDiagICD(){
+  if(!selectedICD){showToast('Select a diagnosis from the search first','error');return;}
+  const dtype=v('diag-type-quick')||'primary';
+  await saveDiagnosisInline(selectedICD.d,selectedICD.c,selectedICD.d,dtype);
+  selectedICD=null;
+  document.getElementById('icd-search').value='';
+  document.getElementById('icd-selected').style.display='none';
+}
+async function saveDiagnosisInline(text,icdCode,icdDesc,dtype){
+  if(!currentConsultPatientId&&!currentConsultVisitId){showToast('No patient selected','error');return;}
+  const{error}=await sb.from('diagnoses').insert({
+    patient_id:currentConsultPatientId,visit_id:currentConsultVisitId,
+    hospital_id:currentHospital,icd10_code:icdCode||null,icd10_description:icdDesc||null,
+    diagnosis_text:text,diagnosis_type:dtype||'primary',diagnosed_by:CU?.name,is_chronic:false
+  }).catch(e=>({error:e}));
+  if(error){showToast('Run 002_new_tables.sql to enable diagnoses table','warning');return;}
+  showToast('✅ Diagnosis added!','success');
+  logAudit('Diagnosis','Added: '+text);
+  loadConsultDiagnoses();
+}
+
+// ── SERVICES TAB (webapp: medical service → auto-bill) ──
+let consultServiceList=[];
+async function loadConsultServices(){
+  if(!currentConsultVisitId)return;
+  const{data}=await sb.from('invoice_items').select('*,invoices!inner(visit_id)').eq('invoices.visit_id',currentConsultVisitId).order('id',{ascending:false}).catch(()=>({data:[]}));
+  consultServiceList=data||[];
+  renderConsultServices();
+}
+function renderConsultServices(){
+  const el=document.getElementById('consult-services-list');
+  if(!consultServiceList.length){el.innerHTML='<div class="empty" style="padding:16px"><div class="empty-icon" style="font-size:26px">⚕️</div><span style="font-size:11px">No services recorded</span></div>';return;}
+  el.innerHTML=consultServiceList.map((s,i)=>`<div class="consult-rx-card" style="border-left-color:var(--teal)">
+    <span class="drug-name">⚕️ ${s.service_name}</span>
+    <span class="consult-card-meta">${s.category||'—'} · Qty: ${s.quantity} · $${(s.total_price||0).toFixed(2)}</span>
+    <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="reverseConsultService('${s.id}')">↩ Reverse</button>
+  </div>`).join('');
+}
+async function saveConsultService(){
+  const name=v('svc-name'),amount=parseFloat(v('svc-amount')||0);
+  if(!name){showToast('Service name required','error');return;}
+  // Get or create invoice for this visit
+  const{data:inv}=await sb.from('invoices').select('id').eq('visit_id',currentConsultVisitId).single().catch(()=>({data:null}));
+  if(!inv){showToast('No invoice found — register patient first','warning');return;}
+  await sb.from('invoice_items').insert({invoice_id:inv.id,service_name:name,category:v('svc-category')||'consultation',description:v('svc-dept'),unit_price:amount,quantity:1});
+  // Update invoice total
+  const{data:items}=await sb.from('invoice_items').select('total_price').eq('invoice_id',inv.id);
+  const total=items?.reduce((a,x)=>a+(x.total_price||0),0)||0;
+  await sb.from('invoices').update({total_amount:total}).eq('id',inv.id);
+  showToast('✅ Service recorded + billed!','success');
+  document.getElementById('svc-name').value='';document.getElementById('svc-amount').value='';
+  logAudit('Service','Added: '+name+' $'+amount);
+  loadConsultServices();loadBilling();
+}
+async function reverseConsultService(itemId){
+  if(!confirm('Reverse/remove this service charge?'))return;
+  await sb.from('invoice_items').delete().eq('id',itemId);
+  showToast('↩ Service reversed!','success');
+  logAudit('Service','Reversed item '+itemId);
+  loadConsultServices();loadBilling();
+}
+function addConsultService(){document.getElementById('svc-name').focus();}
+
+// ── MEDICATIONS TAB (webapp: select med → qty → deduct inventory) ──
+async function loadConsultMeds(){
+  if(!currentConsultPatientId)return;
+  const{data}=await sb.from('prescriptions').select('*').eq('visit_id',currentConsultVisitId).order('created_at',{ascending:false}).catch(()=>({data:[]}));
+  const el=document.getElementById('plan-rxs-written');
+  if(!(data||[]).length){el.innerHTML='<div class="empty" style="padding:16px"><div class="empty-icon" style="font-size:26px">💊</div><span style="font-size:11px">No medications prescribed</span></div>';return;}
+  el.innerHTML=(data||[]).map(r=>`<div class="consult-rx-card">
+    <span class="drug-name">💊 ${r.drug_name}</span>
+    <span class="consult-card-meta">${r.strength||'—'} · ${r.dosage||'—'}${r.duration?' · '+r.duration:''} · Qty: ${r.quantity}</span>
+    <span class="badge ${r.dispensed?'b-completed':'b-pending'}" style="margin-left:auto">${r.dispensed?'Dispensed':'Pending'}</span>
+  </div>`).join('');
+}
+async function saveRxFromConsult(){
+  const pid=currentConsultPatientId;if(!pid){showToast('No patient selected','error');return;}
+  const drug=v('rx-drug');if(!drug){showToast('Select a drug','error');return;}
+  const dosage=v('rx-dosage'),qty=parseInt(v('rx-qty')||1),price=parseFloat(v('rx-price')||0),duration=v('rx-duration');
+  const{error}=await sb.from('prescriptions').insert({
+    patient_id:pid,visit_id:currentConsultVisitId,hospital_id:currentHospital,
+    drug_name:drug,strength:v('rx-strength'),dosage_form:v('rx-form'),
+    dosage,frequency:dosage,duration,quantity:qty,unit_price:price,dispensed:false,prescribed_by:CU?.name
+  });
+  if(error){showToast(error.message,'error');return;}
+  // Also add to invoice
+  const{data:inv}=await sb.from('invoices').select('id').eq('visit_id',currentConsultVisitId).single().catch(()=>({data:null}));
+  if(inv&&price>0){
+    await sb.from('invoice_items').insert({invoice_id:inv.id,service_name:drug,category:'pharmacy',unit_price:price,quantity:qty});
+    const{data:items}=await sb.from('invoice_items').select('total_price').eq('invoice_id',inv.id);
+    const total=items?.reduce((a,x)=>a+(x.total_price||0),0)||0;
+    await sb.from('invoices').update({total_amount:total}).eq('id',inv.id);
+  }
+  showToast('✅ '+drug+' prescribed!','success');
+  document.getElementById('rx-drug').value='';document.getElementById('rx-strength').value='';document.getElementById('rx-form').value='';document.getElementById('rx-dosage').value='';document.getElementById('rx-duration').value='';document.getElementById('rx-price').value='';
+  consultRxList.push({drug,dosage,qty,price});
+  logAudit('Prescription','Prescribed: '+drug+' visit '+currentConsultVisitId);
+  loadConsultMeds();loadPharmacy();checkDDIForNewDrug(drug);
+}
+
+// ── LAB TAB ──
+async function loadConsultLabs(){
+  if(!currentConsultVisitId)return;
+  const{data}=await sb.from('lab_tests').select('*').eq('visit_id',currentConsultVisitId).order('created_at',{ascending:false}).catch(()=>({data:[]}));
+  const el=document.getElementById('ix-labs-ordered');
+  if(!(data||[]).length){el.innerHTML='<div class="empty" style="padding:16px"><div class="empty-icon" style="font-size:26px">🔬</div><span style="font-size:11px">No lab tests ordered</span></div>';return;}
+  el.innerHTML=(data||[]).map(l=>`<div class="consult-lab-card">
+    <span class="test-name">🔬 ${l.test_name}</span>
+    <span class="consult-card-meta">${l.result?'Result: '+l.result:'Pending...'}</span>
+    <span class="badge ${l.status==='completed'?'b-completed':'b-pending'}" style="margin-left:auto">${l.status}</span>
+    ${l.status==='completed'?`<button class="btn btn-navy btn-sm" style="margin-left:4px" onclick="printLabSlip('${l.id}')">🖨️</button>`:''}
+  </div>`).join('');
+}
+
+// ── COSTS TAB (webapp: transaction table with reversal) ──
+async function loadConsultCosts(){
+  if(!currentConsultVisitId)return;
+  const{data:inv}=await sb.from('invoices').select('*').eq('visit_id',currentConsultVisitId).single().catch(()=>({data:null}));
+  if(!inv){document.getElementById('consult-costs-table').innerHTML='<tr><td colspan="8"><div class="empty" style="padding:12px">No invoice found for this visit</div></td></tr>';return;}
+  const{data:items}=await sb.from('invoice_items').select('*').eq('invoice_id',inv.id).order('id');
+  const rows=items||[];
+  const total=rows.reduce((a,x)=>a+(x.total_price||0),0);
+  const badge=document.getElementById('consult-total-badge');
+  if(badge)badge.textContent='Total: $'+total.toFixed(2)+' · '+inv.payment_status;
+  const tb=document.getElementById('consult-costs-table');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="8"><div class="empty" style="padding:12px">No charges yet</div></td></tr>';return;}
+  tb.innerHTML=rows.map((r,i)=>`<tr>
+    <td>${i+1}</td>
+    <td><strong>${r.service_name}</strong></td>
+    <td><span class="badge b-${r.category==='pharmacy'?'pharmacy':r.category==='lab'?'lab':'active'}">${r.category}</span></td>
+    <td>${r.quantity}</td>
+    <td>$${(r.unit_price||0).toFixed(2)}</td>
+    <td><strong>$${(r.total_price||0).toFixed(2)}</strong></td>
+    <td>${fmt(r.created_at||new Date())}</td>
+    <td><button class="btn btn-secondary btn-sm" title="Reverse charge" onclick="reverseConsultService('${r.id}')">↩</button></td>
+  </tr>`).join('');
+}
+
+// ── SAVE CONSULTATION — now saves clerkship note to consultations table ──
+async function saveConsultation(){
+  if(!currentConsultVisitId){showToast('No visit selected','error');return;}
+  buildSOAP();
+  const diag=selectedICD?selectedICD.c+' — '+selectedICD.d:v('icd-search');
+  const note={
+    history:{pc:v('hx-pc'),hpc:v('hx-hpc'),pmh:v('hx-pmh'),drugs:v('hx-drugs'),fh:v('hx-fh'),sh:v('hx-sh'),ros:{cvs:v('ros-cvs'),resp:v('ros-resp'),git:v('ros-git'),gus:v('ros-gus'),cns:v('ros-cns'),msk:v('ros-msk')}},
+    examination:{general:v('ex-appearance'),cvs:v('ex-cvs'),resp:v('ex-resp'),abdomen:v('ex-abdo'),cns:v('ex-cns'),other:v('ex-other')},
+    investigations:{lab_notes:v('ix-lab-notes'),imaging:v('ix-imaging'),ddx:v('plan-ddx')},
+    soap:{s:v('soap-s'),o:v('soap-o'),a:v('soap-a'),p:v('soap-p')},
+    doctor_notes:v('consult-notes'),disposition:v('consult-disposition'),followup:v('consult-followup'),
+  };
+  await sb.from('consultations').upsert({
+    visit_id:currentConsultVisitId,hospital_id:currentHospital,
+    soap_subjective:v('soap-s'),soap_objective:v('soap-o'),soap_assessment:v('soap-a'),soap_plan:v('soap-p'),
+    diagnosis:diag,icd10_code:selectedICD?.c||null,
+    follow_up_date:v('consult-followup')||null,
+    doctor_notes:JSON.stringify(note),doctor_name:CU?.name,
+  },{onConflict:'visit_id'}).catch(async()=>{
+    await sb.from('visits').update({diagnosis:diag}).eq('id',currentConsultVisitId);
+  });
+  if(diag)await sb.from('visits').update({diagnosis:diag}).eq('id',currentConsultVisitId);
+  showToast('✅ Consultation saved!','success');
+  closeModal('modal-consult');
+  logAudit('Consultation','Clerkship note saved — '+diag);
+  loadVisits();
+}
+
+// Prescription from modal (opens prescription modal with patient pre-filled)
+function prescribeFromConsult(){
+  const sel=document.getElementById('rx-patient');
+  if(sel&&currentConsultPatientId){sel.value=currentConsultPatientId;checkDDIOnPatient(currentConsultPatientId);}
+  window._consultRxCallback=true;
+  openModal('modal-prescription');
+}
 
 
 // ── BATCH 5 ADDITIONS ──

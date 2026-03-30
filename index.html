@@ -474,6 +474,8 @@ tr:hover td{background:#F8FBFF}
     <div class="nav-item" onclick="showPage('allergies',this)" data-page="allergies" data-roles="admin,doctor,nurse,pharmacist"><span class="nav-icon">⚠️</span>Allergies</div>
     <div class="nav-item" onclick="showPage('referrals',this)" data-page="referrals" data-roles="admin,doctor"><span class="nav-icon">🔀</span>Referrals</div>
     <div class="nav-item" onclick="showPage('beds',this)" data-page="beds" data-roles="admin,nurse"><span class="nav-icon">🛏️</span>Bed Map</div>
+    <div class="nav-item" onclick="showPage('radiology',this)" data-page="radiology" data-roles="admin,doctor,nurse,lab"><span class="nav-icon">🩻</span>Radiology</div>
+    <div class="nav-item" onclick="showPage('ipdbilling',this)" data-page="ipdbilling" data-roles="admin,billing,nurse"><span class="nav-icon">🏦</span>IPD Billing</div>
   </div>
   <div class="nav-section">
     <div class="nav-label">Admin</div>
@@ -743,8 +745,18 @@ tr:hover td{background:#F8FBFF}
     <!-- REPORTS & HMIS -->
     <div class="page" id="page-reports">
       <div class="page-header">
-        <div><div class="page-title">📊 Reports & HMIS</div><div class="page-sub">Financial · Uganda HMIS · South Sudan MoH</div></div>
-        <button class="btn btn-secondary" onclick="exportHMIS()">📥 Export HMIS Report</button>
+        <div><div class="page-title">📊 Reports & HMIS</div><div class="page-sub">Filter by date range · Department · Doctor</div></div>
+        <div class="page-actions">
+          <button class="btn btn-secondary" onclick="exportHMIS()">📥 Export CSV</button>
+        </div>
+      </div>
+      <div class="card" style="padding:14px 16px;margin-bottom:16px">
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">From Date</label><input class="form-input" type="date" id="report-date-from"></div>
+          <div class="form-group"><label class="form-label">To Date</label><input class="form-input" type="date" id="report-date-to"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="loadReports()">🔍 Apply Filter</button>
+        <button class="btn btn-secondary btn-sm" style="margin-top:10px;margin-left:6px" onclick="document.getElementById('report-date-from').value='';document.getElementById('report-date-to').value='';loadReports()">✕ Clear</button>
       </div>
       <div class="stats-grid" id="report-stats"></div>
       <div class="grid-2">
@@ -862,6 +874,48 @@ tr:hover td{background:#F8FBFF}
       </div>
     </div>
 
+    <!-- RADIOLOGY -->
+    <div class="page" id="page-radiology">
+      <div class="page-header">
+        <div><div class="page-title">🩻 Radiology</div><div class="page-sub">X-Ray, Ultrasound, CT, MRI — requests and reports</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-radiology')">➕ New Request</button>
+      </div>
+      <div class="stats-grid" id="radio-stats"></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Patient</th><th>Exam Type</th><th>Region</th><th>Urgency</th><th>Ordered By</th><th>Report</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="radio-table"><tr><td colspan="9"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- IPD BILLING -->
+    <div class="page" id="page-ipd-billing">
+      <div class="page-header">
+        <div><div class="page-title">🛏️ Inpatient Billing</div><div class="page-sub">Daily bed charges, deposits, and inpatient invoices</div></div>
+        <button class="btn btn-primary" onclick="openModal('modal-deposit')">💵 Record Deposit</button>
+      </div>
+      <div class="stats-grid" id="ipd-billing-stats"></div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Calculate Bed Charges</span></div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Select Admitted Patient</label><select class="form-select" id="ibd-patient" onchange="loadPatientBill(this.value)"><option value="">— Select —</option></select></div>
+          <div class="form-group"><label class="form-label">Days Admitted</label><input class="form-input" type="number" id="ibd-days" value="1" min="0" oninput="calcBedCharge()"></div>
+          <div class="form-group"><label class="form-label">Bed Daily Rate ($)</label><input class="form-input" type="number" id="ibd-rate" value="0" oninput="calcBedCharge()"></div>
+          <div class="form-group"><label class="form-label">Bed Charge Total</label><input class="form-input" id="ibd-total" readonly style="background:var(--bg);font-size:18px;font-weight:900;color:var(--navy)"></div>
+        </div>
+        <div id="ibd-balance-display" style="margin-top:10px"></div>
+        <button class="btn btn-primary" style="margin-top:10px" onclick="addBedChargeToInvoice()">➕ Add Bed Charge to Invoice</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="card-header" style="padding:14px 16px"><span class="card-title">Cash Deposits Received</span></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Patient</th><th>Amount</th><th>Method</th><th>Reference</th><th>Received By</th><th>Date</th></tr></thead>
+          <tbody id="deposit-table"><tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
     <!-- BED MAP -->
     <div class="page" id="page-beds">
       <div class="page-header">
@@ -885,33 +939,66 @@ tr:hover td{background:#F8FBFF}
      MODALS
 ════════════════════════════════════ -->
 
-<!-- PATIENT REGISTRATION -->
+<!-- PATIENT REGISTRATION — Complete -->
 <div class="modal-overlay" id="modal-patient" onclick="if(event.target===this)closeModal('modal-patient')">
-<div class="modal">
+<div class="modal" style="max-width:700px">
   <div class="modal-header"><div class="modal-title">🧑‍⚕️ Register New Patient</div><button class="modal-close" onclick="closeModal('modal-patient')">×</button></div>
   <div class="modal-body">
-    <div class="form-grid">
-      <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="pt-name" placeholder="Full name"></div>
-      <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="pt-phone" placeholder="+256 / +211..."></div>
-      <div class="form-group"><label class="form-label">Age</label><input class="form-input" type="number" id="pt-age" placeholder="Years"></div>
-      <div class="form-group"><label class="form-label">Gender</label><select class="form-select" id="pt-gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
-      <div class="form-group"><label class="form-label">Insurance Type</label><select class="form-select" id="pt-insurance"><option value="none">None / Cash</option><option value="nhif">NHIF (Uganda)</option><option value="uhi">UHI (Uganda)</option><option value="ngo">NGO / Project</option><option value="un">UN / Diplomatic</option><option value="private">Private Insurer</option><option value="free">Free / Waived</option></select></div>
-      <div class="form-group"><label class="form-label">Insurance / Policy No.</label><input class="form-input" id="pt-policy" placeholder="e.g. NHIF-123456"></div>
-      <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="pt-address" placeholder="Town / Area"></div>
-      <div class="form-group"><label class="form-label">Next of Kin Phone</label><input class="form-input" id="pt-nok" placeholder="+256..."></div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="pt-reg-tabs">
+      <button class="clerk-tab active" onclick="ptTab('demographics',this)">👤 Demographics</button>
+      <button class="clerk-tab" onclick="ptTab('insurance',this)">🏦 Insurance</button>
+      <button class="clerk-tab" onclick="ptTab('contacts',this)">📞 Contacts</button>
+      <button class="clerk-tab" onclick="ptTab('visit',this)">🏥 Visit Details</button>
     </div>
-    <div class="form-section-title">Visit Details</div>
-    <div class="form-grid">
-      <div class="form-group"><label class="form-label">Visit Type *</label><select class="form-select" id="pt-vtype"><option value="outpatient">Outpatient</option><option value="inpatient">Inpatient</option><option value="emergency">Emergency</option><option value="lab">Lab Only</option><option value="pharmacy">Pharmacy Only</option></select></div>
-      <div class="form-group"><label class="form-label">Department</label><select class="form-select" id="pt-dept"><option>General OPD</option><option>Maternity & ANC</option><option>Paediatrics</option><option>Surgery</option><option>Internal Medicine</option><option>Orthopaedics</option><option>Dental</option><option>Eye Clinic</option><option>Emergency</option></select></div>
-      <div class="form-group"><label class="form-label">Bed No. (inpatient)</label><input class="form-input" id="pt-bed" placeholder="Ward 2 Bed 5"></div>
-      <div class="form-group"><label class="form-label">Attending Doctor</label><select class="form-select" id="pt-doctor"><option value="">— Select —</option></select></div>
+
+    <div id="pt-tab-demographics" class="clerk-panel">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="pt-name" placeholder="Full legal name"></div>
+        <div class="form-group"><label class="form-label">Date of Birth</label><input class="form-input" type="date" id="pt-dob" onchange="calcAge()"></div>
+        <div class="form-group"><label class="form-label">Age (auto-calc)</label><input class="form-input" type="number" id="pt-age" placeholder="Years"></div>
+        <div class="form-group"><label class="form-label">Gender *</label><select class="form-select" id="pt-gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+        <div class="form-group"><label class="form-label">Blood Group</label><select class="form-select" id="pt-blood"><option value="">— Unknown —</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+        <div class="form-group"><label class="form-label">National ID / Passport</label><input class="form-input" id="pt-nid" placeholder="ID number"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="pt-phone" placeholder="+256 / +211..."></div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="pt-email" placeholder="patient@email.com"></div>
+        <div class="form-group" style="grid-column:span 2"><label class="form-label">Address / Residence</label><input class="form-input" id="pt-address" placeholder="Town, District, Country"></div>
+      </div>
     </div>
-    <div class="form-group"><label class="form-label">Chief Complaint</label><textarea class="form-textarea" id="pt-complaint" placeholder="Presenting complaint..."></textarea></div>
+
+    <div id="pt-tab-insurance" class="clerk-panel" style="display:none">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Insurance Type</label><select class="form-select" id="pt-insurance"><option value="none">None / Cash</option><option value="nhif">NHIF (Uganda)</option><option value="uhi">UHI</option><option value="ngo">NGO / Project</option><option value="un">UN / Diplomatic</option><option value="private">Private Insurer</option><option value="aig">AIG</option><option value="jubilee">Jubilee Insurance</option><option value="free">Free / Waived</option></select></div>
+        <div class="form-group"><label class="form-label">Policy / Membership No.</label><input class="form-input" id="pt-policy" placeholder="e.g. NHIF-123456"></div>
+        <div class="form-group"><label class="form-label">Insurance Company</label><input class="form-input" id="pt-ins-company" placeholder="Company name if private"></div>
+        <div class="form-group"><label class="form-label">Card Expiry Date</label><input class="form-input" type="date" id="pt-ins-expiry"></div>
+      </div>
+      <div class="alert-bar info" style="margin-top:10px">💡 Insurance details will pre-fill when creating insurance claims for this patient.</div>
+    </div>
+
+    <div id="pt-tab-contacts" class="clerk-panel" style="display:none">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Next of Kin (Name)</label><input class="form-input" id="pt-nok" placeholder="Full name"></div>
+        <div class="form-group"><label class="form-label">Next of Kin (Phone)</label><input class="form-input" id="pt-nok-phone" placeholder="+256..."></div>
+        <div class="form-group"><label class="form-label">Emergency Contact (Name)</label><input class="form-input" id="pt-ec-name" placeholder="Full name"></div>
+        <div class="form-group"><label class="form-label">Emergency Contact (Phone)</label><input class="form-input" id="pt-ec-phone" placeholder="+256..."></div>
+        <div class="form-group" style="grid-column:span 2"><label class="form-label">Patient Notes / Special Requirements</label><textarea class="form-textarea" id="pt-notes" placeholder="Disability, language needs, VIP, special care requirements..."></textarea></div>
+      </div>
+    </div>
+
+    <div id="pt-tab-visit" class="clerk-panel" style="display:none">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Visit Type *</label><select class="form-select" id="pt-vtype"><option value="outpatient">Outpatient (OPD)</option><option value="inpatient">Inpatient (Admitted)</option><option value="emergency">Emergency</option><option value="lab">Lab Only</option><option value="pharmacy">Pharmacy Only</option></select></div>
+        <div class="form-group"><label class="form-label">Department</label><select class="form-select" id="pt-dept"><option>General OPD</option><option>Maternity & ANC</option><option>Paediatrics</option><option>Surgery</option><option>Internal Medicine</option><option>Orthopaedics</option><option>Dental</option><option>Eye Clinic</option><option>Emergency</option><option>ENT</option><option>Cardiology</option><option>Psychiatry</option></select></div>
+        <div class="form-group"><label class="form-label">Bed / Ward (if admitted)</label><input class="form-input" id="pt-bed" placeholder="e.g. Ward 2 Bed 5"></div>
+        <div class="form-group"><label class="form-label">Attending Doctor</label><select class="form-select" id="pt-doctor"><option value="">— Select —</option></select></div>
+      </div>
+      <div class="form-group" style="margin-top:8px"><label class="form-label">Chief Complaint / Presenting Problem</label><textarea class="form-textarea" id="pt-complaint" placeholder="Presenting complaint in patient's own words..."></textarea></div>
+      <div class="alert-bar info" style="margin-top:10px">💡 An invoice will be created automatically. Add service items from the Billing page.</div>
+    </div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-secondary" onclick="closeModal('modal-patient')">Cancel</button>
-    <button class="btn btn-primary" onclick="savePatient()">💾 Register & Invoice</button>
+    <button class="btn btn-primary" onclick="savePatient()">💾 Register Patient</button>
   </div>
 </div></div>
 
@@ -1195,9 +1282,12 @@ tr:hover td{background:#F8FBFF}
     <div id="inv-items-wrap"></div>
     <button class="btn btn-secondary btn-sm" onclick="addInvItem()" style="margin-top:8px">+ Add Service</button>
     <div class="form-grid" style="margin-top:12px">
+      <div class="form-group"><label class="form-label">Discount ($)</label><input class="form-input" type="number" id="inv-discount" value="0" oninput="calcInvoiceTotal()"></div>
+      <div class="form-group"><label class="form-label">Tax (%)</label><input class="form-input" type="number" id="inv-tax" value="0" oninput="calcInvoiceTotal()"></div>
       <div class="form-group"><label class="form-label">Amount Paid Now ($)</label><input class="form-input" type="number" id="inv-paid" value="0"></div>
-      <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="inv-notes" placeholder="Optional..."></div>
+      <div class="form-group"><label class="form-label">Total Due ($)</label><input class="form-input" id="inv-total-display" readonly style="background:var(--bg);font-size:15px;font-weight:900;color:var(--navy)" value="0.00"></div>
     </div>
+    <div class="form-group" style="margin-top:4px"><label class="form-label">Notes / Memo</label><input class="form-input" id="inv-notes" placeholder="Optional..."></div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-secondary" onclick="closeModal('modal-invoice')">Cancel</button>
@@ -1255,7 +1345,9 @@ tr:hover td{background:#F8FBFF}
       <div class="form-group"><label class="form-label">Quantity</label><input class="form-input" type="number" id="inv2-qty" value="0"></div>
       <div class="form-group"><label class="form-label">Unit</label><input class="form-input" id="inv2-unit" value="units"></div>
       <div class="form-group"><label class="form-label">Unit Cost ($)</label><input class="form-input" type="number" id="inv2-cost" placeholder="0.00"></div>
+      <div class="form-group"><label class="form-label">Selling Price ($)</label><input class="form-input" type="number" id="inv2-sell" placeholder="0.00"></div>
       <div class="form-group"><label class="form-label">Reorder Level</label><input class="form-input" type="number" id="inv2-reorder" value="10"></div>
+      <div class="form-group"><label class="form-label">Supplier</label><input class="form-input" id="inv2-supplier" placeholder="Supplier / vendor name"></div>
       <div class="form-group"><label class="form-label">Batch Number</label><input class="form-input" id="inv2-batch" placeholder="BT-2024-001"></div>
       <div class="form-group"><label class="form-label">Expiry Date</label><input class="form-input" type="date" id="inv2-expiry"></div>
     </div>
@@ -1462,6 +1554,67 @@ tr:hover td{background:#F8FBFF}
     <button class="btn btn-green" onclick="confirmDischarge()">✅ Confirm Discharge</button>
   </div>
 </div></div>
+
+<!-- RADIOLOGY MODAL -->
+<div class="modal-overlay" id="modal-radiology" onclick="if(event.target===this)closeModal('modal-radiology')">
+<div class="modal">
+  <div class="modal-header"><div class="modal-title">🩻 Radiology Request</div><button class="modal-close" onclick="closeModal('modal-radiology')">×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Patient *</label><select class="form-select" id="rad-patient"><option value="">— Select —</option></select></div>
+      <div class="form-group"><label class="form-label">Exam Type *</label><select class="form-select" id="rad-type">
+        <option>X-Ray</option><option>Ultrasound (USS)</option><option>CT Scan</option><option>MRI</option>
+        <option>Fluoroscopy</option><option>Mammography</option><option>DEXA Scan (Bone density)</option>
+        <option>Echocardiogram</option><option>Doppler USS</option><option>Obstetric USS</option>
+        <option>Abdominal USS</option><option>Chest X-Ray</option><option>Pelvic USS</option>
+      </select></div>
+      <div class="form-group"><label class="form-label">Region / Body Part</label><input class="form-input" id="rad-region" placeholder="e.g. Chest, Abdomen, Right knee"></div>
+      <div class="form-group"><label class="form-label">Urgency</label><select class="form-select" id="rad-urgency"><option value="routine">Routine</option><option value="urgent">Urgent</option><option value="emergency">Emergency / STAT</option></select></div>
+      <div class="form-group"><label class="form-label">Price ($)</label><input class="form-input" type="number" id="rad-price" placeholder="0.00"></div>
+    </div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Clinical Indication / Reason</label><textarea class="form-textarea" id="rad-indication" style="min-height:60px" placeholder="Why is this exam being requested? Relevant clinical findings..."></textarea></div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Report / Findings (leave blank if pending)</label><textarea class="form-textarea" id="rad-report" style="min-height:72px" placeholder="Radiologist findings, impression, recommendations..."></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-radiology')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveRadiology()">💾 Submit Request</button>
+  </div>
+</div></div>
+
+<!-- CASH DEPOSIT MODAL -->
+<div class="modal-overlay" id="modal-deposit" onclick="if(event.target===this)closeModal('modal-deposit')">
+<div class="modal" style="max-width:480px">
+  <div class="modal-header"><div class="modal-title">💵 Record Cash Deposit</div><button class="modal-close" onclick="closeModal('modal-deposit')">×</button></div>
+  <div class="modal-body">
+    <div class="alert-bar info" style="margin-bottom:10px">Cash deposits are advance payments from inpatients against their expected bill.</div>
+    <div class="form-group"><label class="form-label">Patient *</label><select class="form-select" id="dep-patient"><option value="">— Select Admitted Patient —</option></select></div>
+    <div class="form-grid" style="margin-top:8px">
+      <div class="form-group"><label class="form-label">Amount ($) *</label><input class="form-input" type="number" id="dep-amount" placeholder="0.00"></div>
+      <div class="form-group"><label class="form-label">Payment Method</label><select class="form-select" id="dep-method"><option value="cash">Cash</option><option value="mobile_money">Mobile Money</option><option value="bank_transfer">Bank Transfer</option><option value="card">Card</option></select></div>
+      <div class="form-group"><label class="form-label">Reference No.</label><input class="form-input" id="dep-ref" placeholder="Receipt / transaction #"></div>
+      <div class="form-group"><label class="form-label">Received By</label><input class="form-input" id="dep-by" placeholder="Cashier name"></div>
+    </div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Notes</label><input class="form-input" id="dep-notes" placeholder="Optional..."></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-deposit')">Cancel</button>
+    <button class="btn btn-green" onclick="saveDeposit()">💵 Record Deposit</button>
+  </div>
+</div></div>
+
+<!-- LAB RESULT SLIP MODAL (print) -->
+<div class="modal-overlay" id="modal-lab-slip" onclick="if(event.target===this)closeModal('modal-lab-slip')">
+<div class="modal" style="max-width:560px">
+  <div class="modal-header"><div class="modal-title">🖨️ Lab Result Slip</div><button class="modal-close" onclick="closeModal('modal-lab-slip')">×</button></div>
+  <div class="modal-body"><div id="lab-slip-content" style="background:#fff;padding:18px;border:1px solid var(--border);border-radius:var(--r2)"></div></div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('modal-lab-slip')">Close</button>
+    <button class="btn btn-navy" onclick="window.print()">🖨️ Print</button>
+  </div>
+</div></div>
+
+<!-- INVENTORY UPGRADE MODAL (with selling price + supplier) -->
+<!-- already exists as modal-inventory — will patch via JS -->
 
 <div class="toast" id="toast"></div>
 <div id="sidebar-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150" onclick="toggleSidebar()"></div>
@@ -1739,7 +1892,7 @@ function initApp(){
 }
 
 // ── ROLES ──
-const PAGE_ROLES={dashboard:'all',queue:'admin,doctor,nurse,receptionist',outpatient:'admin,doctor,nurse,receptionist',inpatient:'admin,doctor,nurse',patients:'all',nursestation:'admin,nurse,doctor',consultation:'admin,doctor',patient360:'admin,doctor,nurse',lab:'admin,lab,doctor',pharmacy:'admin,pharmacist,doctor',inventory:'admin,pharmacist',billing:'admin,billing,receptionist',insurance:'admin,billing',reports:'admin',audit:'admin',staff:'admin',hospitals:'admin',appointments:'admin,doctor,nurse,receptionist',diagnoses:'admin,doctor',allergies:'admin,doctor,nurse,pharmacist',referrals:'admin,doctor',beds:'admin,nurse'};
+const PAGE_ROLES={dashboard:'all',queue:'admin,doctor,nurse,receptionist',outpatient:'admin,doctor,nurse,receptionist',inpatient:'admin,doctor,nurse',patients:'all',nursestation:'admin,nurse,doctor',consultation:'admin,doctor',patient360:'admin,doctor,nurse',lab:'admin,lab,doctor',pharmacy:'admin,pharmacist,doctor',inventory:'admin,pharmacist',billing:'admin,billing,receptionist',insurance:'admin,billing',reports:'admin',audit:'admin',staff:'admin',hospitals:'admin',appointments:'admin,doctor,nurse,receptionist',diagnoses:'admin,doctor',allergies:'admin,doctor,nurse,pharmacist',referrals:'admin,doctor',beds:'admin,nurse',radiology:'admin,doctor,nurse,lab',ipdbilling:'admin,billing,nurse'};
 function hasAccess(roles){if(!CU)return false;if(!roles||roles==='all')return true;return roles.split(',').includes(CU.role);}
 function applyRoles(){document.querySelectorAll('.nav-item[data-roles]').forEach(el=>{const r=el.getAttribute('data-roles');el.style.display=hasAccess(r)?'flex':'none';});}
 
@@ -1783,7 +1936,7 @@ async function loadAllPatients(){
 }
 function populateSelects(){
   const opts='<option value="">— Select Patient —</option>'+allPatients.map(p=>`<option value="${p.id}">${p.full_name} (${p.patient_number||'—'})</option>`).join('');
-  ['inv-patient','lab-patient','rx-patient','vitals-patient','claim-patient'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+  ['inv-patient','lab-patient','rx-patient','vitals-patient','claim-patient','rad-patient','dep-patient','ibd-patient'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }
 function renderPatientTable(pts,total){
   const tb=document.getElementById('pt-table');
@@ -2333,7 +2486,7 @@ async function loadLab(){
       <td>$${(t.price||0).toFixed(2)}</td>
       <td><span class="badge b-${t.status==='completed'?'completed':t.status==='processing'?'active':'pending'}">${t.status}</span></td>
       <td>${fmt(t.created_at)}</td>
-      <td>${t.status!=='completed'?`<button class="btn btn-green btn-sm" onclick="completeLab('${t.id}')">✓ Result</button>`:'<span style="color:var(--green2);font-weight:800">✓</span>'}</td>
+      <td style="display:flex;gap:4px">${t.status!=='completed'?`<button class="btn btn-green btn-sm" onclick="completeLab('${t.id}')">✓ Result</button>`:''} ${t.result?`<button class="btn btn-navy btn-sm" onclick="printLabSlip('${t.id}')">🖨️</button>`:''}</td>
     </tr>`;}).join('');
 }
 async function saveLab(){
@@ -2561,7 +2714,7 @@ async function loadInventory(){
 }
 async function saveInventory(){
   const name=v('inv2-name');if(!name){showToast('Name required','error');return;}
-  const{error}=await sb.from('inventory').insert({hospital_id:currentHospital,item_name:name,category:v('inv2-cat'),quantity:parseInt(v('inv2-qty')||0),unit:v('inv2-unit')||'units',unit_cost:parseFloat(v('inv2-cost')||0),reorder_level:parseInt(v('inv2-reorder')||10),batch_number:v('inv2-batch')||null,expiry_date:v('inv2-expiry')||null});
+  const{error}=await sb.from('inventory').insert({hospital_id:currentHospital,item_name:name,category:v('inv2-cat'),quantity:parseInt(v('inv2-qty')||0),unit:v('inv2-unit')||'units',unit_cost:parseFloat(v('inv2-cost')||0),selling_price:parseFloat(v('inv2-sell')||0),reorder_level:parseInt(v('inv2-reorder')||10),batch_number:v('inv2-batch')||null,expiry_date:v('inv2-expiry')||null,supplier:v('inv2-supplier')||null});
   if(error){showToast(error.message,'error');return;}
   showToast('✅ Added!','success');closeModal('modal-inventory');logAudit('Inventory','Added: '+name);loadInventory();
 }
@@ -2765,8 +2918,8 @@ async function saveStaff(){
 }
 
 // ── NAVIGATION ──
-const PTITLES={dashboard:'Dashboard',queue:'OPD Queue',outpatient:'Outpatient',inpatient:'Inpatient',patients:'All Patients',nursestation:'Nurse Station',consultation:'Consultation Desk',patient360:'Patient 360°',lab:'Laboratory',pharmacy:'Pharmacy',inventory:'Inventory',billing:'Billing',insurance:'Insurance Claims',reports:'Reports & HMIS',audit:'Audit Trail',staff:'Staff',hospitals:'Hospitals',appointments:'Appointments',diagnoses:'Diagnoses',allergies:'Allergies',referrals:'Referrals',beds:'Bed Map'};
-const PLOADERS={queue:loadQueue,outpatient:loadVisits,inpatient:loadVisits,patients:()=>{},nursestation:loadNurseStation,consultation:loadVisits,patient360:()=>{},lab:loadLab,pharmacy:loadPharmacy,inventory:loadInventory,billing:loadBilling,insurance:loadInsurance,reports:loadReports,audit:loadAudit,staff:loadStaff,hospitals:()=>{},appointments:loadAppointments,diagnoses:loadDiagnoses,allergies:loadAllergies,referrals:loadReferrals,beds:loadBeds};
+const PTITLES={dashboard:'Dashboard',queue:'OPD Queue',outpatient:'Outpatient',inpatient:'Inpatient',patients:'All Patients',nursestation:'Nurse Station',consultation:'Consultation Desk',patient360:'Patient 360°',lab:'Laboratory',pharmacy:'Pharmacy',inventory:'Inventory',billing:'Billing',insurance:'Insurance Claims',reports:'Reports & HMIS',audit:'Audit Trail',staff:'Staff',hospitals:'Hospitals',appointments:'Appointments',diagnoses:'Diagnoses',allergies:'Allergies',referrals:'Referrals',beds:'Bed Map',radiology:'Radiology',ipdbilling:'Inpatient Billing'};
+const PLOADERS={queue:loadQueue,outpatient:loadVisits,inpatient:loadVisits,patients:()=>{},nursestation:loadNurseStation,consultation:loadVisits,patient360:()=>{},lab:loadLab,pharmacy:loadPharmacy,inventory:loadInventory,billing:loadBilling,insurance:loadInsurance,reports:loadReports,audit:loadAudit,staff:loadStaff,hospitals:()=>{},appointments:loadAppointments,diagnoses:loadDiagnoses,allergies:loadAllergies,referrals:loadReferrals,beds:loadBeds,radiology:loadRadiology,ipdbilling:loadIPDBilling};
 function showPage(name,navEl){
   if(!hasAccess(PAGE_ROLES[name]||'all')){showToast('⛔ Access denied for your role','error');return;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -3061,6 +3214,495 @@ async function confirmDischarge(){
 // ── PATCH VISITS TO USE DISCHARGE MODAL ──
 // Override old simple discharge buttons with proper discharge modal
 function dischargeVisit(visitId,patientName){openDischarge(visitId,patientName||'Patient');}
+
+
+// ── BATCH 5 ADDITIONS ──
+
+// Patient registration tabs
+function ptTab(tab, btn){
+  ['demographics','insurance','contacts','visit'].forEach(t=>{
+    const el=document.getElementById('pt-tab-'+t);
+    if(el)el.style.display=t===tab?'block':'none';
+  });
+  document.querySelectorAll('#pt-reg-tabs button').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+}
+
+// Auto-calculate age from DOB
+function calcAge(){
+  const dob=document.getElementById('pt-dob')?.value;
+  if(!dob)return;
+  const age=Math.floor((Date.now()-new Date(dob).getTime())/31557600000);
+  const ageEl=document.getElementById('pt-age');
+  if(ageEl&&age>=0&&age<150)ageEl.value=age;
+}
+
+// ── ENHANCED savePatient with all new fields ──
+// Override the existing savePatient function
+async function savePatient(){
+  const name=v('pt-name');if(!name){showToast('Name required','error');return;}
+  const pnum='PT-'+Date.now().toString().slice(-6);
+  const dob=v('pt-dob')||null;
+  const{data:pt,error}=await sb.from('patients').insert({
+    hospital_id:currentHospital,
+    full_name:name,
+    date_of_birth:dob,
+    age:parseInt(v('pt-age'))||null,
+    gender:v('pt-gender'),
+    blood_group:v('pt-blood')||null,
+    national_id:v('pt-nid')||null,
+    phone:v('pt-phone'),
+    email:v('pt-email')||null,
+    address:v('pt-address'),
+    insurance:v('pt-insurance'),
+    policy_number:v('pt-policy')||null,
+    next_of_kin:v('pt-nok')||null,
+    next_of_kin_phone:v('pt-nok-phone')||null,
+    emergency_contact_name:v('pt-ec-name')||null,
+    emergency_contact_phone:v('pt-ec-phone')||null,
+    notes:v('pt-notes')||null,
+    patient_number:pnum,
+    is_active:true
+  }).select().single();
+  if(error){showToast(error.message,'error');return;}
+  const vtype=v('pt-vtype');
+  const{data:visit}=await sb.from('visits').insert({
+    patient_id:pt.id,hospital_id:currentHospital,
+    visit_type:vtype,department:v('pt-dept'),
+    complaint:v('pt-complaint'),doctor_id:v('pt-doctor')||null,
+    bed_number:v('pt-bed')||null,
+    status:vtype==='inpatient'?'admitted':'active',
+    admitted_at:vtype==='inpatient'?new Date().toISOString():null
+  }).select().single();
+  const invNum='INV-'+Date.now().toString().slice(-6);
+  await sb.from('invoices').insert({invoice_number:invNum,patient_id:pt.id,visit_id:visit?.id,hospital_id:currentHospital,payment_method:v('pt-insurance')==='none'?'cash':'insurance',payment_status:'pending',total_amount:0,paid_amount:0,discount_amount:0,tax_amount:0});
+  showToast(`✅ ${name} registered! (${pnum}) Invoice ${invNum} created.`,'success');
+  closeModal('modal-patient');
+  // Reset tabs back to demographics
+  ptTab('demographics',document.querySelector('#pt-reg-tabs button'));
+  logAudit('Patient','Registered: '+name+' ('+pnum+')');
+  ptPage=0;await loadAllPatients();loadDashboard();loadVisits();loadBilling();loadQueue();
+}
+
+// ── INVOICE total calculator ──
+function calcInvoiceTotal(){
+  let subtotal=0;
+  for(let i=1;i<=invItemCount;i++){
+    const price=parseFloat(document.getElementById('ii-price-'+i)?.value||0);
+    if(price>0)subtotal+=price;
+  }
+  const discount=parseFloat(v('inv-discount')||0);
+  const taxPct=parseFloat(v('inv-tax')||0);
+  const taxAmt=(subtotal-discount)*taxPct/100;
+  const total=subtotal-discount+taxAmt;
+  const el=document.getElementById('inv-total-display');
+  if(el)el.value='$'+Math.max(0,total).toFixed(2);
+  return{subtotal,discount,taxAmt,total:Math.max(0,total)};
+}
+
+// Override addInvItem to also recalc on price input
+const _origAddInvItem=addInvItem;
+function addInvItem(){
+  _origAddInvItem();
+  // hook recalc into new price inputs after a tick
+  setTimeout(()=>{
+    document.querySelectorAll('[id^="ii-price-"]').forEach(el=>{
+      el.oninput=calcInvoiceTotal;
+    });
+    calcInvoiceTotal();
+  },50);
+}
+
+// Override saveInvoice to use new fields
+async function saveInvoice(){
+  const pid=v('inv-patient');if(!pid){showToast('Select patient','error');return;}
+  const items=[];
+  for(let i=1;i<=invItemCount;i++){
+    const name=document.getElementById('ii-name-'+i)?.value;
+    const price=parseFloat(document.getElementById('ii-price-'+i)?.value||0);
+    const cat=document.getElementById('ii-cat-'+i)?.value||'consultation';
+    if(name&&price>0)items.push({service_name:name,category:cat,unit_price:price,quantity:1});
+  }
+  const {subtotal,discount,taxAmt,total}=calcInvoiceTotal();
+  const paid=parseFloat(v('inv-paid')||0);
+  const status=paid>=total&&total>0?'paid':paid>0?'partial':'pending';
+  const invNum='INV-'+Date.now().toString().slice(-6);
+  const{data:inv,error}=await sb.from('invoices').insert({
+    invoice_number:invNum,patient_id:pid,hospital_id:currentHospital,
+    total_amount:total,paid_amount:paid,
+    discount_amount:discount,tax_amount:taxAmt,
+    payment_method:v('inv-method'),payment_status:status,notes:v('inv-notes')
+  }).select().single();
+  if(error){showToast(error.message,'error');return;}
+  if(items.length)await sb.from('invoice_items').insert(items.map(x=>({...x,invoice_id:inv.id})));
+  showToast(`✅ Invoice ${invNum} — $${total.toFixed(2)}!`,'success');
+  closeModal('modal-invoice');invItemCount=0;document.getElementById('inv-items-wrap').innerHTML='';
+  logAudit('Invoice','Created: '+invNum+' $'+total.toFixed(2)+' (discount:$'+discount.toFixed(2)+')');
+  loadBilling();loadDashboard();
+}
+
+// ── RADIOLOGY ──
+async function loadRadiology(){
+  const{data}=await sb.from('radiology_requests').select('*,patients(full_name,patient_number)').eq('hospital_id',currentHospital).order('created_at',{ascending:false}).limit(200).catch(()=>({data:null}));
+  if(!data){document.getElementById('radio-table').innerHTML='<tr><td colspan="9"><div class="alert-bar warning">Run schema_005_radiology.sql to enable Radiology table</div></td></tr>';return;}
+  const pending=data.filter(r=>r.status==='pending').length;
+  const completed=data.filter(r=>r.status==='completed').length;
+  document.getElementById('radio-stats').innerHTML=`
+    <div class="stat-card sc-blue"><div class="stat-icon-wrap si-blue">🩻</div><div class="stat-label">Total Requests</div><div class="stat-value">${data.length}</div></div>
+    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">⏳</div><div class="stat-label">Pending</div><div class="stat-value">${pending}</div></div>
+    <div class="stat-card sc-green"><div class="stat-icon-wrap si-green">✅</div><div class="stat-label">Reported</div><div class="stat-value">${completed}</div></div>
+    <div class="stat-card sc-orange"><div class="stat-icon-wrap si-orange">🚨</div><div class="stat-label">STAT</div><div class="stat-value">${data.filter(r=>r.urgency==='emergency').length}</div></div>`;
+  const tb=document.getElementById('radio-table');
+  if(!data.length){tb.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-icon">🩻</div>No radiology requests</div></td></tr>';return;}
+  const urgClass={routine:'b-normal',urgent:'b-pending',emergency:'b-overdue'};
+  tb.innerHTML=data.map((r,i)=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:7px"><div class="pt-av ${AVS[i%4]}">${ini(r.patients?.full_name)}</div><div class="td-name">${r.patients?.full_name||'—'}</div></div></td>
+    <td><strong>${r.exam_type}</strong></td>
+    <td>${r.body_region||'—'}</td>
+    <td><span class="badge ${urgClass[r.urgency]||'b-pending'}">${r.urgency}</span></td>
+    <td>${r.ordered_by||'—'}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">${r.report||'<em style="color:var(--text3)">Pending...</em>'}</td>
+    <td><span class="badge b-${r.status==='completed'?'completed':r.status==='processing'?'active':'pending'}">${r.status}</span></td>
+    <td>${fmt(r.created_at)}</td>
+    <td style="display:flex;gap:4px">
+      ${r.status!=='completed'?`<button class="btn btn-green btn-sm" onclick="enterRadiologyReport('${r.id}')">📋 Report</button>`:''}
+      ${r.report?`<button class="btn btn-navy btn-sm" onclick="printRadiologyReport(${JSON.stringify(r).replace(/"/g,'&quot;')})">🖨️</button>`:''}
+    </td>
+  </tr>`).join('');
+}
+async function saveRadiology(){
+  const pid=v('rad-patient'),exam=v('rad-type');
+  if(!pid||!exam){showToast('Patient and exam type required','error');return;}
+  const report=v('rad-report');
+  const{error}=await sb.from('radiology_requests').insert({
+    patient_id:pid,hospital_id:currentHospital,exam_type:exam,body_region:v('rad-region'),
+    urgency:v('rad-urgency'),clinical_indication:v('rad-indication'),
+    report:report||null,price:parseFloat(v('rad-price')||0),
+    ordered_by:CU?.name,status:report?'completed':'pending'
+  }).catch(e=>({error:e}));
+  if(error){showToast('Run schema_005_radiology.sql first','warning');return;}
+  showToast('✅ Radiology request created!','success');closeModal('modal-radiology');
+  logAudit('Radiology','Requested: '+exam);loadRadiology();
+}
+async function enterRadiologyReport(id){
+  const report=prompt('Enter radiologist report / findings:');if(!report)return;
+  await sb.from('radiology_requests').update({report,status:'completed',reported_at:new Date().toISOString()}).eq('id',id);
+  showToast('✅ Report saved!','success');logAudit('Radiology','Report entered for '+id);loadRadiology();
+}
+function printRadiologyReport(r){
+  const hospital=allHospitals.find(h=>h.id===r.hospital_id)||{name:'MediTrack Pro',branch:'Main Branch'};
+  document.getElementById('invoice-print-content').innerHTML=`
+    <div style="max-width:480px;margin:0 auto;font-family:'Nunito Sans',sans-serif">
+      <div style="text-align:center;border-bottom:2px solid #1B2A4A;padding-bottom:10px;margin-bottom:12px">
+        <div style="font-size:18px;font-weight:900;color:#1B2A4A">🏥 ${hospital.name}</div>
+        <div style="font-size:11px;color:#666">${hospital.branch}</div>
+        <div style="font-size:13px;font-weight:800;color:#00B4D8;margin-top:3px">RADIOLOGY REPORT</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;margin-bottom:12px">
+        <div><span style="color:#888">Date:</span> <strong>${fmt(r.created_at)}</strong></div>
+        <div><span style="color:#888">Urgency:</span> <strong style="color:${r.urgency==='emergency'?'#CC0000':'inherit'}">${r.urgency?.toUpperCase()}</strong></div>
+        <div><span style="color:#888">Exam:</span> <strong>${r.exam_type}</strong></div>
+        <div><span style="color:#888">Region:</span> ${r.body_region||'—'}</div>
+        <div><span style="color:#888">Ordered by:</span> ${r.ordered_by||'—'}</div>
+      </div>
+      <div style="margin-bottom:10px;font-size:11px"><span style="color:#888">Clinical indication:</span><br><em>${r.clinical_indication||'—'}</em></div>
+      <div style="background:#F8FBFF;border:1px solid #D1DCE8;border-radius:8px;padding:12px;font-size:12px;line-height:1.6">
+        <div style="font-size:11px;font-weight:800;color:#8896A7;text-transform:uppercase;margin-bottom:6px">Findings / Report</div>
+        ${r.report||'<em>No report entered</em>'}
+      </div>
+      <div style="text-align:center;margin-top:14px;font-size:10px;color:#aaa;border-top:1px dashed #ddd;padding-top:8px">
+        Reporting radiologist signature: ____________________<br>Powered by MediTrack Pro
+      </div>
+    </div>`;
+  openModal('modal-print-invoice');
+}
+
+// ── IPD BILLING ──
+let ipdAdmittedPatients=[];
+async function loadIPDBilling(){
+  const{data:visits}=await sb.from('visits').select('*,patients(*),beds(daily_rate,ward_name,bed_number)').eq('hospital_id',currentHospital).eq('status','admitted').order('admitted_at');
+  ipdAdmittedPatients=visits||[];
+  const sel=document.getElementById('ibd-patient');
+  if(sel){
+    sel.innerHTML='<option value="">— Select Admitted Patient —</option>'+(ipdAdmittedPatients.map(vt=>`<option value="${vt.id}">${vt.patients?.full_name||'—'} (${vt.bed_number||'no bed'})</option>`).join(''));
+  }
+  // Also populate deposit patient select
+  const depSel=document.getElementById('dep-patient');
+  if(depSel)depSel.innerHTML=sel?.innerHTML||'';
+  // Load deposits
+  const{data:deps}=await sb.from('payments').select('*').order('created_at',{ascending:false}).limit(100).catch(()=>({data:[]}));
+  const depTb=document.getElementById('deposit-table');
+  if(depTb){
+    if(!(deps||[]).length){depTb.innerHTML='<tr><td colspan="6"><div class="empty"><div class="empty-icon">💵</div>No deposits recorded</div></td></tr>';}
+    else{depTb.innerHTML=(deps||[]).map(d=>`<tr><td>${d.notes||'—'}</td><td><strong>$${(d.amount||0).toFixed(2)}</strong></td><td>${d.payment_method}</td><td>${d.reference_number||'—'}</td><td>${d.notes||CU?.name||'—'}</td><td>${fmt(d.created_at)}</td></tr>`).join('');}
+  }
+  // Stats
+  const totalAdmitted=ipdAdmittedPatients.length;
+  const{data:allDeps}=await sb.from('payments').select('amount').catch(()=>({data:[]}));
+  const totalDeposits=(allDeps||[]).reduce((a,d)=>a+(d.amount||0),0);
+  const el=document.getElementById('ipd-billing-stats');
+  if(el)el.innerHTML=`
+    <div class="stat-card sc-blue"><div class="stat-icon-wrap si-blue">🛏️</div><div class="stat-label">Currently Admitted</div><div class="stat-value">${totalAdmitted}</div></div>
+    <div class="stat-card sc-green"><div class="stat-icon-wrap si-green">💵</div><div class="stat-label">Total Deposits Received</div><div class="stat-value">$${totalDeposits.toFixed(0)}</div></div>`;
+}
+function loadPatientBill(visitId){
+  const vt=ipdAdmittedPatients.find(v=>v.id===visitId);
+  if(!vt)return;
+  const rate=vt.beds?.daily_rate||0;
+  document.getElementById('ibd-rate').value=rate;
+  const admittedAt=vt.admitted_at?new Date(vt.admitted_at):new Date();
+  const days=Math.max(1,Math.ceil((Date.now()-admittedAt.getTime())/86400000));
+  document.getElementById('ibd-days').value=days;
+  calcBedCharge();
+}
+function calcBedCharge(){
+  const days=parseFloat(v('ibd-days')||0);
+  const rate=parseFloat(v('ibd-rate')||0);
+  const total=(days*rate).toFixed(2);
+  document.getElementById('ibd-total').value='$'+total;
+  return parseFloat(total);
+}
+async function addBedChargeToInvoice(){
+  const visitId=v('ibd-patient');
+  if(!visitId){showToast('Select a patient first','error');return;}
+  const vt=ipdAdmittedPatients.find(v=>v.id===visitId);
+  if(!vt){showToast('Patient not found','error');return;}
+  const total=calcBedCharge();
+  if(total<=0){showToast('Invalid amount — check days and rate','error');return;}
+  // Get or create invoice for this visit
+  const{data:inv}=await sb.from('invoices').select('*').eq('visit_id',visitId).single().catch(()=>({data:null}));
+  if(!inv){showToast('No invoice found for this visit — register patient via OPD/IPD first','warning');return;}
+  const days=parseFloat(v('ibd-days')||1);
+  await sb.from('invoice_items').insert({invoice_id:inv.id,service_name:`Bed charge (${days} day${days>1?'s':''})`,category:'bed',unit_price:total,quantity:1});
+  const{data:items}=await sb.from('invoice_items').select('total_price').eq('invoice_id',inv.id);
+  const newTotal=items?.reduce((a,x)=>a+(x.total_price||0),0)||0;
+  await sb.from('invoices').update({total_amount:newTotal}).eq('id',inv.id);
+  showToast(`✅ Bed charge $${total} added to invoice!`,'success');
+  logAudit('IPD Billing','Bed charge $'+total+' added for '+vt.patients?.full_name);
+  loadBilling();
+}
+async function saveDeposit(){
+  const pid=v('dep-patient'),amt=parseFloat(v('dep-amount')||0);
+  if(!pid||!amt){showToast('Patient and amount required','error');return;}
+  // Find invoice for this visit
+  const{data:inv}=await sb.from('invoices').select('id').eq('visit_id',pid).single().catch(()=>({data:null}));
+  if(!inv){showToast('No invoice found for this visit','warning');return;}
+  const{error}=await sb.from('payments').insert({invoice_id:inv.id,amount:amt,payment_method:v('dep-method'),reference_number:v('dep-ref')||null,notes:v('dep-notes')||'Cash deposit — '+v('dep-by')}).catch(e=>({error:e}));
+  if(error){showToast('Run 002_new_tables.sql to enable payments table','warning');return;}
+  // Update invoice paid amount
+  const{data:allPays}=await sb.from('payments').select('amount').eq('invoice_id',inv.id);
+  const totalPaid=(allPays||[]).reduce((a,p)=>a+(p.amount||0),0);
+  const{data:invData}=await sb.from('invoices').select('total_amount').eq('id',inv.id).single().catch(()=>({data:null}));
+  const status=totalPaid>=(invData?.total_amount||0)&&(invData?.total_amount||0)>0?'paid':totalPaid>0?'partial':'pending';
+  await sb.from('invoices').update({paid_amount:totalPaid,payment_status:status}).eq('id',inv.id);
+  showToast(`✅ Deposit $${amt.toFixed(2)} recorded!`,'success');closeModal('modal-deposit');
+  logAudit('Deposit','$'+amt.toFixed(2)+' received');loadIPDBilling();loadBilling();
+}
+
+// ── LAB RESULT SLIP PRINT ──
+async function printLabSlip(labId){
+  const{data:t}=await sb.from('lab_tests').select('*,patients(*)').eq('id',labId).single().catch(()=>({data:null}));
+  if(!t)return;
+  const hospital=allHospitals.find(h=>h.id===t.hospital_id)||{name:'MediTrack Pro',branch:'Main Branch'};
+  const flagColor={normal:'#1A7A3A',high:'#CC2200',low:'#8A6000',critical:'#AA0000',abnormal:'#CC2200'};
+  document.getElementById('lab-slip-content').innerHTML=`
+    <div style="max-width:450px;margin:0 auto;font-family:'Nunito Sans',sans-serif">
+      <div style="text-align:center;border-bottom:2px solid #1B2A4A;padding-bottom:10px;margin-bottom:12px">
+        <div style="font-size:17px;font-weight:900;color:#1B2A4A">🏥 ${hospital.name}</div>
+        <div style="font-size:11px;color:#666">${hospital.branch}</div>
+        <div style="font-size:12px;font-weight:800;color:#00B4D8;margin-top:3px">LABORATORY REPORT</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;margin-bottom:12px">
+        <div><span style="color:#888">Patient:</span> <strong>${t.patients?.full_name||'—'}</strong></div>
+        <div><span style="color:#888">No.:</span> ${t.patients?.patient_number||'—'}</div>
+        <div><span style="color:#888">Date:</span> ${fmt(t.created_at)}</div>
+        <div><span style="color:#888">Category:</span> ${t.test_category||'—'}</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px">
+        <thead><tr style="background:#F0F4F8"><th style="padding:6px 8px;text-align:left">Test</th><th style="padding:6px 8px;text-align:left">Result</th><th style="padding:6px 8px;text-align:left">Normal Range</th><th style="padding:6px 8px;text-align:left">Flag</th></tr></thead>
+        <tbody><tr style="border-bottom:1px solid #eee">
+          <td style="padding:7px 8px"><strong>${t.test_name}</strong></td>
+          <td style="padding:7px 8px;font-weight:800;color:${flagColor[t.flag]||'#1B2A4A'}">${t.result||'Pending'}</td>
+          <td style="padding:7px 8px;font-size:11px;color:#666">${t.normal_range||'—'}</td>
+          <td style="padding:7px 8px"><span style="background:${t.flag?'#FFF0F0':'#F0FFF5'};color:${flagColor[t.flag]||'#1A7A3A'};padding:2px 7px;border-radius:8px;font-size:10px;font-weight:800">${t.flag?.toUpperCase()||'NORMAL'}</span></td>
+        </tr></tbody>
+      </table>
+      ${t.notes?`<div style="font-size:11px;margin-bottom:10px"><span style="color:#888">Notes:</span> ${t.notes}</div>`:''}
+      <div style="margin-top:16px;font-size:10px;color:#aaa;border-top:1px dashed #ddd;padding-top:8px;display:flex;justify-content:space-between">
+        <span>Lab Technician: _____________</span>
+        <span>Powered by MediTrack Pro</span>
+      </div>
+    </div>`;
+  openModal('modal-lab-slip');
+}
+
+// ── ENHANCED REPORTS with date range + by dept/doctor ──
+async function loadReports(){
+  const dateFrom=v('report-date-from')||null;
+  const dateTo=v('report-date-to')||null;
+  let invQuery=sb.from('invoices').select('*');
+  let visitQuery=sb.from('visits').select('visit_type,department,created_at,status,doctor_id,staff(full_name)');
+  let labQuery=sb.from('lab_tests').select('test_name,created_at,price');
+  if(dateFrom){invQuery=invQuery.gte('created_at',dateFrom);visitQuery=visitQuery.gte('created_at',dateFrom);labQuery=labQuery.gte('created_at',dateFrom);}
+  if(dateTo){const endDate=dateTo+'T23:59:59';invQuery=invQuery.lte('created_at',endDate);visitQuery=visitQuery.lte('created_at',endDate);labQuery=labQuery.lte('created_at',endDate);}
+  const[invR,visitR,ptR,labR]=await Promise.all([
+    invQuery,visitQuery,
+    sb.from('patients').select('*',{count:'exact',head:true}).eq('hospital_id',currentHospital),
+    labQuery
+  ]);
+  const invs=invR.data||[];const visits=visitR.data||[];
+  const totalRev=invs.reduce((a,i)=>a+(i.paid_amount||0),0);
+  const totalInv=invs.reduce((a,i)=>a+(i.total_amount||0),0);
+  const outstanding=totalInv-totalRev;
+  const collRate=totalInv>0?Math.round(totalRev/totalInv*100):0;
+  document.getElementById('report-stats').innerHTML=`
+    <div class="stat-card sc-green"><div class="stat-icon-wrap si-green">💰</div><div class="stat-label">Revenue${dateFrom?' (filtered)':''}</div><div class="stat-value" style="color:#1A7A3A">$${totalRev.toFixed(0)}</div><div class="stat-change up">Billed: $${totalInv.toFixed(0)}</div></div>
+    <div class="stat-card sc-blue"><div class="stat-icon-wrap si-blue">👥</div><div class="stat-label">Total Patients</div><div class="stat-value">${ptR.count||0}</div></div>
+    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">⚠️</div><div class="stat-label">Outstanding</div><div class="stat-value" style="color:var(--red)">$${outstanding.toFixed(0)}</div></div>
+    <div class="stat-card sc-purple"><div class="stat-icon-wrap si-purple">📈</div><div class="stat-label">Collection Rate</div><div class="stat-value">${collRate}%</div><div class="stat-change ${collRate>80?'up':'down'}">${collRate>80?'Excellent':'Needs attention'}</div></div>`;
+  // By hospital
+  let hospHtml='<div class="card-header"><span class="card-title">🏥 Revenue by Hospital</span></div>';
+  for(const h of allHospitals){const hInvs=invs.filter(i=>i.hospital_id===h.id);const hRev=hInvs.reduce((a,i)=>a+(i.paid_amount||0),0);const pct=totalRev>0?Math.round(hRev/totalRev*100):0;hospHtml+=`<div class="bkd-item"><div class="bkd-dot" style="background:#3A6BC2"></div><span class="bkd-name">${h.name}</span><div class="bkd-bar-bg"><div class="bkd-bar-fg" style="width:${pct}%;background:#3A6BC2"></div></div><span class="bkd-amt">$${hRev.toFixed(0)}</span><span class="bkd-pct">${hInvs.length} inv</span></div>`;}
+  document.getElementById('report-by-hospital').innerHTML=hospHtml;
+  // HMIS + by dept
+  const dateRange=dateFrom?`${dateFrom} to ${dateTo||'today'}`:'This month';
+  const opd=visits.filter(v=>v.visit_type==='outpatient').length;
+  const ipd=visits.filter(v=>v.visit_type==='inpatient').length;
+  const emg=visits.filter(v=>v.visit_type==='emergency').length;
+  const labs=(labR.data||[]).length;
+  const labRev=(labR.data||[]).reduce((a,l)=>a+(l.price||0),0);
+  // By department
+  const deptMap={};
+  visits.forEach(v=>{const d=v.department||'Unknown';deptMap[d]=(deptMap[d]||0)+1;});
+  const deptRows=Object.entries(deptMap).sort((a,b)=>b[1]-a[1]).map(([dept,count])=>`<div class="bkd-item"><div class="bkd-dot" style="background:#7C5CBF"></div><span class="bkd-name">${dept}</span><span class="bkd-amt">${count} visits</span></div>`).join('');
+  document.getElementById('report-hmis').innerHTML=`
+    <div class="card-header"><span class="card-title">📋 HMIS Summary — ${dateRange}</span></div>
+    <div class="bkd-item"><div class="bkd-dot" style="background:#3A6BC2"></div><span class="bkd-name">OPD Attendance</span><span class="bkd-amt">${opd}</span></div>
+    <div class="bkd-item"><div class="bkd-dot" style="background:#7C5CBF"></div><span class="bkd-name">Inpatient Admissions</span><span class="bkd-amt">${ipd}</span></div>
+    <div class="bkd-item"><div class="bkd-dot" style="background:#E53E3E"></div><span class="bkd-name">Emergency Cases</span><span class="bkd-amt">${emg}</span></div>
+    <div class="bkd-item"><div class="bkd-dot" style="background:#2DC653"></div><span class="bkd-name">Lab Tests</span><span class="bkd-amt">${labs} ($${labRev.toFixed(0)})</span></div>
+    <div style="margin-top:10px;font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">By Department</div>
+    ${deptRows||'<div style="color:var(--text3);font-size:12px">No department data</div>'}`;
+  // Monthly chart
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now=new Date();
+  const monthData=Array.from({length:6},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-5+i,1);const key=d.toISOString().slice(0,7);return{label:months[d.getMonth()]+' '+d.getFullYear().toString().slice(2),val:invs.filter(x=>x.created_at?.startsWith(key)).reduce((a,x)=>a+(x.paid_amount||0),0)};});
+  const maxM=Math.max(...monthData.map(m=>m.val),1);
+  let mHtml='<div class="card-header"><span class="card-title">📈 Monthly Revenue</span></div><div class="chart-bars" style="height:110px">';
+  monthData.forEach((m,i)=>{mHtml+=`<div class="cbar-wrap"><div class="cbar ${i===5?'active':'inactive'}" style="height:${Math.round(m.val/maxM*90)+5}%" title="$${m.val.toFixed(0)}"></div><div class="cbar-lbl">${m.label}</div></div>`;});
+  document.getElementById('report-monthly').innerHTML=mHtml+'</div>';
+}
+
+// ── ENHANCED exportHMIS ──
+function exportHMIS(){
+  const dateFrom=v('report-date-from')||'All time';
+  const dateTo=v('report-date-to')||new Date().toISOString().split('T')[0];
+  showToast('📥 Generating HMIS export...','success');
+  setTimeout(async()=>{
+    const[invR,visitR,labR]=await Promise.all([
+      sb.from('invoices').select('*'),
+      sb.from('visits').select('visit_type,department,created_at'),
+      sb.from('lab_tests').select('test_name,price,status'),
+    ]);
+    const invs=invR.data||[];const visits=visitR.data||[];const labs=labR.data||[];
+    const rows=[
+      ['MediTrack Pro — HMIS Export'],['Date Range:',dateFrom,'to',dateTo],['Generated:',new Date().toLocaleString()],[],
+      ['FINANCIAL SUMMARY'],
+      ['Total Invoiced','$'+invs.reduce((a,i)=>a+(i.total_amount||0),0).toFixed(2)],
+      ['Total Collected','$'+invs.reduce((a,i)=>a+(i.paid_amount||0),0).toFixed(2)],
+      ['Outstanding','$'+(invs.reduce((a,i)=>a+(i.total_amount||0),0)-invs.reduce((a,i)=>a+(i.paid_amount||0),0)).toFixed(2)],
+      [],['CLINICAL SUMMARY'],
+      ['OPD Visits',visits.filter(v=>v.visit_type==='outpatient').length],
+      ['Inpatient Admissions',visits.filter(v=>v.visit_type==='inpatient').length],
+      ['Emergency Cases',visits.filter(v=>v.visit_type==='emergency').length],
+      ['Lab Tests Ordered',labs.length],
+      ['Lab Tests Completed',labs.filter(l=>l.status==='completed').length],
+      [],['VISITS BY DEPARTMENT'],
+    ];
+    const deptMap={};
+    visits.forEach(v=>{const d=v.department||'Unknown';deptMap[d]=(deptMap[d]||0)+1;});
+    Object.entries(deptMap).sort((a,b)=>b[1]-a[1]).forEach(([d,c])=>rows.push([d,c]));
+    const csv=rows.map(r=>r.join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=`HMIS_Report_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+    showToast('✅ HMIS CSV downloaded!','success');
+    logAudit('Reports','HMIS export downloaded');
+  },100);
+}
+
+// ── INSURANCE CLAIM PDF ──
+async function generateClaimPDF(claimId){
+  const{data:claim}=await sb.from('insurance_claims').select('*,patients(*)').eq('id',claimId).single().catch(()=>({data:null}));
+  if(!claim){showToast('Claim not found','error');return;}
+  const hospital=allHospitals.find(h=>h.id===claim.hospital_id)||{name:'MediTrack Pro',branch:'Main Branch'};
+  document.getElementById('invoice-print-content').innerHTML=`
+    <div style="max-width:480px;margin:0 auto;font-family:'Nunito Sans',sans-serif">
+      <div style="text-align:center;border-bottom:2px solid #1B2A4A;padding-bottom:10px;margin-bottom:12px">
+        <div style="font-size:18px;font-weight:900;color:#1B2A4A">🏥 ${hospital.name}</div>
+        <div style="font-size:11px;color:#666">${hospital.branch}</div>
+        <div style="font-size:13px;font-weight:800;color:#7C5CBF;margin-top:3px">INSURANCE CLAIM FORM</div>
+      </div>
+      <div style="background:#F5F0FF;border:1.5px solid #C8A8FF;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px">
+          <div><span style="color:#888">Claim #:</span> <strong>${claim.claim_number||'—'}</strong></div>
+          <div><span style="color:#888">Date:</span> ${fmt(claim.created_at)}</div>
+          <div><span style="color:#888">Insurer:</span> <strong>${(claim.insurer||claim.insurance_provider||'—').toUpperCase()}</strong></div>
+          <div><span style="color:#888">Policy #:</span> ${claim.policy_number||'—'}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:800;color:#8896A7;text-transform:uppercase;margin-bottom:6px">Member / Patient Details</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px">
+          <div><span style="color:#888">Name:</span> <strong>${claim.patients?.full_name||'—'}</strong></div>
+          <div><span style="color:#888">Patient #:</span> ${claim.patients?.patient_number||'—'}</div>
+          <div><span style="color:#888">Diagnosis:</span> ${claim.diagnosis||'—'}</div>
+          <div><span style="color:#888">Invoice #:</span> ${claim.invoice_number||'—'}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:800;color:#8896A7;text-transform:uppercase;margin-bottom:6px">Services Provided</div>
+        <div style="background:#F8FBFF;border:1px solid #D1DCE8;border-radius:6px;padding:10px;font-size:11px">${claim.services||'See attached invoice'}</div>
+      </div>
+      <div style="border-top:2px solid #1B2A4A;padding-top:10px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span>Claim Amount:</span>
+          <strong style="color:#7C5CBF;font-size:16px">$${(claim.amount||claim.claim_amount||0).toFixed(2)}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span>Status:</span>
+          <strong style="color:${claim.status==='approved'?'#1A7A3A':claim.status==='rejected'?'#CC2200':'#D69E2E'}">${(claim.status||'submitted').toUpperCase()}</strong>
+        </div>
+      </div>
+      <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:11px">
+        <div style="border-top:1px solid #ccc;padding-top:6px;text-align:center">Authorised Signatory<br><em style="color:#888">${hospital.name}</em></div>
+        <div style="border-top:1px solid #ccc;padding-top:6px;text-align:center">Insurance Officer<br><em style="color:#888">${(claim.insurer||claim.insurance_provider||'Insurer').toUpperCase()}</em></div>
+      </div>
+      <div style="text-align:center;margin-top:12px;font-size:10px;color:#aaa;border-top:1px dashed #ddd;padding-top:8px">Powered by MediTrack Pro · ${new Date().toLocaleDateString('en-GB')}</div>
+    </div>`;
+  openModal('modal-print-invoice');
+}
+
+// ── SESSION INACTIVITY LOCK ──
+let sessionTimer=null;
+const SESSION_TIMEOUT=15*60*1000; // 15 minutes
+function resetSessionTimer(){
+  clearTimeout(sessionTimer);
+  sessionTimer=setTimeout(lockSession,SESSION_TIMEOUT);
+}
+function lockSession(){
+  if(!CU)return;
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-error').textContent='Session locked after 15 minutes of inactivity. Please sign in again.';
+  document.getElementById('login-error').style.display='block';
+  showToast('🔒 Session locked due to inactivity','warning');
+  logAudit('Security','Session auto-locked after 15min inactivity');
+}
+// Hook session timer reset on any user interaction
+['click','keydown','mousemove','touchstart'].forEach(evt=>{
+  document.addEventListener(evt,resetSessionTimer,{passive:true});
+});
 
 
 function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type==='success'?'success':type==='error'?'error':'warning');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}

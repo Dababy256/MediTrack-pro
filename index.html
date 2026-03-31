@@ -1991,19 +1991,7 @@ function renderPagination(total){
   if(ptPage<pages-1)html+=`<button class="btn btn-secondary btn-sm" onclick="ptPage++;loadAllPatients()">Next →</button>`;
   el.innerHTML=html;
 }
-async function savePatient(){
-  const name=v('pt-name');if(!name){showToast('Name required','error');return;}
-  const pnum='PT-'+Date.now().toString().slice(-6);
-  const{data:pt,error}=await sb.from('patients').insert({hospital_id:currentHospital,full_name:name,age:parseInt(v('pt-age'))||null,gender:v('pt-gender'),phone:v('pt-phone'),address:v('pt-address'),insurance:v('pt-insurance'),policy_number:v('pt-policy'),next_of_kin_phone:v('pt-nok'),patient_number:pnum}).select().single();
-  if(error){showToast(error.message,'error');return;}
-  const vtype=v('pt-vtype');
-  const{data:visit}=await sb.from('visits').insert({patient_id:pt.id,hospital_id:currentHospital,visit_type:vtype,department:v('pt-dept'),complaint:v('pt-complaint'),doctor_id:v('pt-doctor')||null,bed_number:v('pt-bed')||null,status:vtype==='inpatient'?'admitted':'active',admitted_at:vtype==='inpatient'?new Date().toISOString():null}).select().single();
-  const invNum='INV-'+Date.now().toString().slice(-6);
-  await sb.from('invoices').insert({invoice_number:invNum,patient_id:pt.id,visit_id:visit?.id,hospital_id:currentHospital,payment_method:v('pt-insurance')==='none'?'cash':'insurance',payment_status:'pending',total_amount:0,paid_amount:0});
-  showToast(`✅ ${name} registered! Invoice ${invNum} created.`,'success');
-  closeModal('modal-patient');logAudit('Patient','Registered: '+name+' ('+pnum+')');
-  ptPage=0;await loadAllPatients();loadDashboard();loadVisits();loadBilling();loadQueue();
-}
+// savePatient — defined below in Batch 5
 
 // ── DOCTORS ──
 async function loadDoctors(){const{data}=await sb.from('staff').select('*').eq('role','doctor');const sel=document.getElementById('pt-doctor');if(sel)sel.innerHTML='<option value="">— Select Doctor —</option>'+((data||[]).map(s=>`<option value="${s.id}">${s.full_name}</option>`).join(''));}
@@ -3552,18 +3540,12 @@ async function savePatient(){
     date_of_birth:dob,
     age:parseInt(v('pt-age'))||null,
     gender:v('pt-gender'),
-    blood_group:v('pt-blood')||null,
-    national_id:v('pt-nid')||null,
     phone:v('pt-phone'),
-    email:v('pt-email')||null,
     address:v('pt-address'),
     insurance:v('pt-insurance'),
     policy_number:v('pt-policy')||null,
     next_of_kin:v('pt-nok')||null,
     next_of_kin_phone:v('pt-nok-phone')||null,
-    emergency_contact_name:v('pt-ec-name')||null,
-    emergency_contact_phone:v('pt-ec-phone')||null,
-    notes:v('pt-notes')||null,
     patient_number:pnum,
     is_active:true
   }).select().single();

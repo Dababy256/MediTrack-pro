@@ -430,6 +430,60 @@ tr:hover td{background:#F8FBFF}
   .b-ins{background:#FFF8E8!important;color:#92600A!important;border:1.5px solid #F8D88C!important}
   /* Print */
   @media print{body>*{display:none!important}.modal{display:block!important;box-shadow:none!important;position:static!important;max-width:100%!important}.modal-overlay{background:none!important;position:static!important}.modal-header,.modal-footer{display:none!important}}
+
+  /* ═══ PATIENT FLOW TRACKER ═══ */
+  .flow-stages-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:var(--bg2);border-radius:var(--r2);border:1.5px solid var(--border)}
+  .flow-stage-pill{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);background:var(--bg);color:var(--text3);transition:all 0.15s;white-space:nowrap}
+  .flow-stage-pill:hover{border-color:var(--navy);color:var(--navy)}
+  .flow-stage-pill.active{background:var(--navy)!important;color:#fff!important;border-color:var(--navy)!important}
+  .flow-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .flow-card{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r2);padding:12px 14px;position:relative;transition:box-shadow 0.2s}
+  .flow-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.08)}
+  .flow-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .flow-card-name{font-size:13px;font-weight:900;color:var(--navy)}
+  .flow-card-num{font-size:11px;font-weight:800;color:var(--teal)}
+  .flow-stage-badge{font-size:10px;font-weight:800;padding:3px 9px;border-radius:12px}
+  .flow-card-meta{font-size:11px;color:var(--text3);margin-bottom:6px}
+  .flow-journey{display:flex;align-items:center;gap:2px;margin:8px 0;flex-wrap:wrap}
+  .fj-step{display:flex;align-items:center;gap:2px}
+  .fj-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;border:2px solid transparent}
+  .fj-dot.done{background:#E8F8E8;border-color:#2DC653;color:#1A7A3A}
+  .fj-dot.active{background:var(--navy);border-color:var(--navy);color:#fff;animation:pulse-dot 1.5s infinite}
+  .fj-dot.pending{background:var(--bg2);border-color:var(--border);color:var(--text3)}
+  .fj-arrow{color:var(--border);font-size:10px;font-weight:900}
+  @keyframes pulse-dot{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+  .flow-card-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+  .flow-wait-time{font-size:11px;font-weight:800;color:var(--text3)}
+  .flow-wait-time.urgent{color:var(--red)}
+
+  /* ═══ PHARMACY QUEUE CARDS ═══ */
+  .pq-card{background:var(--bg);border:1.5px solid var(--border);border-left:4px solid var(--teal);border-radius:var(--r2);padding:12px 14px;margin-bottom:10px}
+  .pq-card.urgent-rx{border-left-color:var(--red)}
+  .pq-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+  .pq-drugs{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+  .pq-drug-row{display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:6px;padding:6px 10px;font-size:12px}
+  .pq-drug-name{font-weight:800;flex:1;color:var(--navy)}
+  .pq-drug-stock{font-size:10px;font-weight:700}
+  .stock-ok{color:#1A7A3A}
+  .stock-low{color:var(--red)}
+
+  /* ═══ PATIENT JOURNEY INDICATOR in queue ═══ */
+  .journey-mini{display:inline-flex;gap:3px;align-items:center;margin-top:3px}
+  .jm-step{width:16px;height:4px;border-radius:2px}
+  .jm-done{background:var(--green2)}
+  .jm-active{background:var(--navy)}
+  .jm-pending{background:var(--border)}
+
+  /* ═══ VITALS SPARKLINE ═══ */
+  .vitals-trend{display:flex;gap:2px;align-items:flex-end;height:24px;margin-top:4px}
+  .vt-bar{width:6px;border-radius:2px 2px 0 0;background:var(--teal);min-height:3px}
+
+  /* ═══ DUPLICATE WARNING ═══ */
+  .duplicate-warning{background:#FFF8E8;border:1.5px solid var(--yellow);border-radius:var(--r2);padding:10px 14px;margin-bottom:10px;display:none}
+
+  /* ═══ PATIENT CARD PRINT ═══ */
+  .patient-card-print{max-width:320px;margin:0 auto;font-family:'Nunito Sans',sans-serif;border:2px solid var(--navy);border-radius:8px;overflow:hidden}
+
 </style>
 </head>
 <body>
@@ -527,6 +581,13 @@ tr:hover td{background:#F8FBFF}
     <div class="nav-label">Analytics</div>
     <div class="nav-item" onclick="showPage('drugconsumption',this)" data-page="drugconsumption" data-roles="admin,pharmacist"><span class="nav-icon">💊</span>Drug Consumption</div>
     <div class="nav-item" onclick="showPage('morbidity',this)" data-page="morbidity" data-roles="admin,doctor"><span class="nav-icon">🦠</span>Morbidity Report</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Workstations</div>
+    <div class="nav-item" onclick="showPage('flow',this)" data-page="flow" data-roles="admin,doctor,nurse,receptionist"><span class="nav-icon">🔄</span>Patient Flow</div>
+    <div class="nav-item" onclick="showPage('pharmacy-queue',this)" data-page="pharmacy-queue" data-roles="admin,pharmacist,doctor"><span class="nav-icon">💊</span>Pharmacy Queue</div>
+    <div class="nav-item" onclick="showPage('lab-queue',this)" data-page="lab-queue" data-roles="admin,lab,doctor"><span class="nav-icon">🔬</span>Lab Queue</div>
+    <div class="nav-item" onclick="showPage('cashier',this)" data-page="cashier" data-roles="admin,billing,receptionist"><span class="nav-icon">🏦</span>Cashier</div>
     <div class="nav-item" onclick="showPage('staff',this)" data-page="staff" data-roles="admin"><span class="nav-icon">👨‍⚕️</span>Staff</div>
     <div class="nav-item" onclick="showPage('hospitals',this)" data-page="hospitals" data-roles="admin"><span class="nav-icon">🏗️</span>Hospitals</div>
   </div>
@@ -1046,6 +1107,87 @@ tr:hover td{background:#F8FBFF}
       </div>
     </div>
 
+
+    <!-- ═══════════════════════════════════════════════
+         PATIENT FLOW TRACKER — The missing heart of HMS
+         Shows every patient's real-time journey status
+    ═══════════════════════════════════════════════ -->
+    <div class="page" id="page-flow">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🔄 Patient Flow</div>
+          <div class="page-sub">Real-time view — every patient's journey from arrival to discharge</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="btn btn-secondary btn-sm" onclick="loadPatientFlow()">🔄 Refresh</button>
+          <div id="flow-last-updated" style="font-size:11px;color:var(--text3)"></div>
+        </div>
+      </div>
+
+      <!-- Flow stage stats bar -->
+      <div class="flow-stages-bar" id="flow-stages-bar">
+        <div class="flow-stage-pill" onclick="filterFlow('all',this)" data-filter="all" style="background:var(--navy);color:#fff">All</div>
+        <div class="flow-stage-pill" onclick="filterFlow('registered',this)" data-filter="registered">📋 Registered</div>
+        <div class="flow-stage-pill" onclick="filterFlow('triage',this)" data-filter="triage">🌡️ Triage</div>
+        <div class="flow-stage-pill" onclick="filterFlow('waiting_doctor',this)" data-filter="waiting_doctor">⏳ Waiting Dr</div>
+        <div class="flow-stage-pill" onclick="filterFlow('with_doctor',this)" data-filter="with_doctor">👨‍⚕️ With Dr</div>
+        <div class="flow-stage-pill" onclick="filterFlow('lab',this)" data-filter="lab">🔬 Lab</div>
+        <div class="flow-stage-pill" onclick="filterFlow('pharmacy',this)" data-filter="pharmacy">💊 Pharmacy</div>
+        <div class="flow-stage-pill" onclick="filterFlow('billing',this)" data-filter="billing">💰 Billing</div>
+        <div class="flow-stage-pill" onclick="filterFlow('discharged',this)" data-filter="discharged">✅ Done</div>
+      </div>
+
+      <!-- Kanban-style flow board -->
+      <div class="flow-board" id="flow-board">
+        <div class="loading"><div class="spinner"></div>Loading patient flow...</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         PHARMACY QUEUE — Pending prescriptions for pharmacist
+    ═══════════════════════════════════════════════ -->
+    <div class="page" id="page-pharmacy-queue">
+      <div class="page-header">
+        <div>
+          <div class="page-title">💊 Pharmacy Queue</div>
+          <div class="page-sub">Pending prescriptions to dispense — sorted by wait time</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="loadPharmacyQueue()">🔄 Refresh</button>
+      </div>
+      <div class="stats-grid" id="pq-stats"></div>
+      <div id="pq-list"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         LAB QUEUE — Pending tests for lab technician
+    ═══════════════════════════════════════════════ -->
+    <div class="page" id="page-lab-queue">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🔬 Lab Queue</div>
+          <div class="page-sub">Pending investigations — collect samples and enter results</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="loadLabQueue()">🔄 Refresh</button>
+      </div>
+      <div class="stats-grid" id="lq-stats"></div>
+      <div id="lq-list"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         CASHIER STATION — Invoices pending payment
+    ═══════════════════════════════════════════════ -->
+    <div class="page" id="page-cashier">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🏦 Cashier Station</div>
+          <div class="page-sub">Collect payments — cash, mobile money, insurance</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="loadCashier()">🔄 Refresh</button>
+      </div>
+      <div class="stats-grid" id="cashier-stats"></div>
+      <div id="cashier-list"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+
   </div><!-- end page-content -->
 </div><!-- end main -->
 </div><!-- end app -->
@@ -1060,6 +1202,7 @@ tr:hover td{background:#F8FBFF}
 <div class="modal" style="max-width:700px">
   <div class="modal-header"><div class="modal-title">🧑‍⚕️ Register New Patient</div><button class="modal-close" onclick="closeModal('modal-patient')">×</button></div>
   <div class="modal-body">
+    <div class="duplicate-warning" id="pt-duplicate-warning"></div>
     <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="pt-reg-tabs">
       <button class="clerk-tab active" onclick="ptTab('demographics',this)">👤 Demographics</button>
       <button class="clerk-tab" onclick="ptTab('insurance',this)">🏦 Insurance</button>
@@ -1069,7 +1212,7 @@ tr:hover td{background:#F8FBFF}
 
     <div id="pt-tab-demographics" class="clerk-panel">
       <div class="form-grid">
-        <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="pt-name" placeholder="Full legal name"></div>
+        <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="pt-name" placeholder="Full legal name" oninput="checkDuplicatePatient(this.value,document.getElementById('pt-phone')?.value)"></div>
         <div class="form-group"><label class="form-label">Date of Birth</label><input class="form-input" type="date" id="pt-dob" onchange="calcAge()"></div>
         <div class="form-group"><label class="form-label">Age (auto-calc)</label><input class="form-input" type="number" id="pt-age" placeholder="Years"></div>
         <div class="form-group"><label class="form-label">Gender *</label><select class="form-select" id="pt-gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
@@ -2217,7 +2360,7 @@ function renderPatientTable(pts,total){
     <td>${p.phone||'—'}</td>
     <td><span class="badge ${p.insurance==='none'||!p.insurance?'b-discharged':'b-paid'}">${p.insurance||'cash'}</span></td>
     <td>${fmt(p.created_at)}</td>
-    <td style="display:flex;gap:4px"><button class="btn btn-primary btn-sm" onclick="open360('${p.id}','${p.full_name}')">360°</button><button class="btn btn-secondary btn-sm" onclick="openModal('modal-invoice')">🧾</button></td>
+    <td style="display:flex;gap:4px"><button class="btn btn-primary btn-sm" onclick="open360('${p.id}','${p.full_name}')">360°</button><button class="btn btn-secondary btn-sm" onclick="printPatientCard('${p.id}')">🪪</button><button class="btn btn-navy btn-sm" onclick="addPatientToQueueDirect('${p.id}','${p.full_name}')">➕ Queue</button></td>
   </tr>`).join('');
   renderPagination(total);
 }
@@ -2335,7 +2478,7 @@ async function loadQueue(){
         <div class="queue-meta" style="font-weight:800;color:var(--teal)">${vt.patients?.patient_number||'No#'}</div>
         <div class="queue-meta">${vt.patients?.age||'?'}yrs · ${vt.patients?.gender||'?'} · ${vt.department||'OPD'} · <em>${vt.complaint||'No complaint'}</em></div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0" onclick="event.stopPropagation()">
         <div class="queue-wait ${wait>30?'urgent':''}">${wait}m${wait>30?' ⚠️':''}</div>
         ${!vt.nurse_ready?`<button class="btn btn-sm" style="background:#FFFBE8;border:1.5px solid #D69E2E;color:#92600A;font-size:9px;padding:2px 6px;border-radius:4px" onclick="markReadyForDoctor('${vt.id}',event)">✓ Mark Ready</button>`:''}
       </div>
@@ -3517,11 +3660,35 @@ function openConsult(visitId, patientName, patientId){
   cTab('clerk',document.getElementById('ctab-clerk'));
   // Reset patient reg sub-tabs
   ptTab('visit', document.querySelector('#pt-reg-tabs-inner button:last-child'));
-  // Load vitals
+  // Load vitals + previous visit summary
   loadVitalsForConsult(patientId||visitId);
+  loadPreviousVisitSummary(patientId||visitId);
   // Check if consultation is still active (show close button)
   checkConsultStatus(visitId);
   openModal('modal-consult');
+}
+
+async function loadPreviousVisitSummary(patientId) {
+  // Load last 3 visits for this patient (excluding current)
+  const{data}=await sb.from('visits').select('*,consultations(*),vitals(*),diagnoses(*)').eq('patient_id',patientId).eq('status','discharged').order('created_at',{ascending:false}).limit(3).catch(()=>({data:[]}));
+  const el=document.getElementById('consult-vitals-panel');
+  if(!el)return;
+  if(!(data||[]).length){
+    el.innerHTML='<div class="alert-bar info" style="margin-bottom:8px;font-size:11px">ℹ️ New patient — no previous visits</div>';
+    return;
+  }
+  const last=data[0];
+  const lastConsult=last.consultations?.[0];
+  const lastVitals=last.vitals?.[0];
+  const lastDiags=last.diagnoses||[];
+  el.innerHTML=`<div class="alert-bar info" style="margin-bottom:8px;padding:10px 14px">
+    <div style="font-size:11px;font-weight:900;color:var(--navy);margin-bottom:6px">📁 LAST VISIT — ${fmt(last.created_at)}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;font-size:11px">
+      ${lastDiags.length?`<div><strong>Diagnosis:</strong> ${lastDiags.map(d=>d.diagnosis_text).join(', ')}</div>`:''}
+      ${lastConsult?.soap_plan?`<div style="grid-column:span 2"><strong>Last Plan:</strong> ${lastConsult.soap_plan.slice(0,120)}...</div>`:''}
+      ${lastVitals?`<div><strong>BP:</strong> ${lastVitals.bp_systolic||'?'}/${lastVitals.bp_diastolic||'?'}</div><div><strong>Temp:</strong> ${lastVitals.temperature||'?'}°C</div><div><strong>Wt:</strong> ${lastVitals.weight||'?'}kg</div>`:''}
+    </div>
+  </div>`;
 }
 
 async function checkConsultStatus(visitId){
@@ -4293,6 +4460,486 @@ Object.assign(PLOADERS,_extraLoaders);
 document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(checkLowStock,3000);
 });
+
+
+// ════════════════════════════════════════════════════
+// BATCH 8 — PATIENT FLOW DIRECTION + WORKSTATION QUEUES
+// Borrowed from SmartHealth+, MyHealth IHMIS, Streamline
+// ════════════════════════════════════════════════════
+
+// ── PATIENT JOURNEY STAGES (SmartHealth+ flow model) ──
+const JOURNEY_STAGES = [
+  {id:'registered', icon:'📋', label:'Registered', color:'#3A6BC2'},
+  {id:'triage',     icon:'🌡️', label:'Triage',    color:'#D69E2E'},
+  {id:'waiting_doctor', icon:'⏳', label:'Waiting', color:'#7C5CBF'},
+  {id:'with_doctor',icon:'👨‍⚕️', label:'Doctor',  color:'#0F6E56'},
+  {id:'lab',        icon:'🔬', label:'Lab',       color:'#00B4D8'},
+  {id:'pharmacy',   icon:'💊', label:'Pharmacy',  color:'#E07B39'},
+  {id:'billing',    icon:'💰', label:'Billing',   color:'#CC2200'},
+  {id:'discharged', icon:'✅', label:'Done',      color:'#1A7A3A'},
+];
+
+// Determine patient's current journey stage from visit data
+function getJourneyStage(visit, vitals, rxs, labs, invoices) {
+  const status = visit.status;
+  if (status === 'discharged' || status === 'deceased') return 'discharged';
+  if (status === 'admitted') return 'with_doctor';
+  // Has active consultation? → with doctor
+  if (visit.consultation_count > 0) {
+    // Check if they have pending lab → lab stage
+    if (labs && labs.some(l => l.status === 'pending')) return 'lab';
+    // Check if they have undispensed rx → pharmacy
+    if (rxs && rxs.some(r => !r.dispensed)) return 'pharmacy';
+    // Check if invoice unpaid → billing
+    if (invoices && invoices.some(i => i.payment_status === 'pending' || i.payment_status === 'partial')) return 'billing';
+    return 'with_doctor';
+  }
+  // Nurse marked ready → waiting for doctor
+  if (visit.nurse_ready) return 'waiting_doctor';
+  // Has vitals → triage done
+  if (vitals && vitals.length > 0) return 'waiting_doctor';
+  return 'registered';
+}
+
+function renderJourneyDots(currentStage) {
+  const idx = JOURNEY_STAGES.findIndex(s => s.id === currentStage);
+  return JOURNEY_STAGES.map((s, i) => {
+    const cls = i < idx ? 'done' : i === idx ? 'active' : 'pending';
+    const arrow = i < JOURNEY_STAGES.length - 1 ? '<span class="fj-arrow">›</span>' : '';
+    return `<div class="fj-step"><div class="fj-dot ${cls}" title="${s.label}">${s.icon}</div>${arrow}</div>`;
+  }).join('');
+}
+
+function renderMiniJourney(currentStage) {
+  const idx = JOURNEY_STAGES.findIndex(s => s.id === currentStage);
+  return '<div class="journey-mini">' +
+    JOURNEY_STAGES.map((s, i) => `<div class="jm-step ${i < idx ? 'jm-done' : i === idx ? 'jm-active' : 'jm-pending'}" title="${s.label}"></div>`).join('') +
+    '</div>';
+}
+
+// ── PATIENT FLOW PAGE ──
+let allFlowData = [], currentFlowFilter = 'all';
+async function loadPatientFlow() {
+  const today = new Date().toISOString().split('T')[0];
+  const [visitsR, vitalsR, rxsR, labsR, invR] = await Promise.all([
+    sb.from('visits').select('*,patients(full_name,patient_number,age,gender,blood_group,insurance)')
+      .eq('hospital_id', currentHospital).gte('created_at', today).order('created_at'),
+    sb.from('vitals').select('patient_id,created_at').gte('created_at', today),
+    sb.from('prescriptions').select('visit_id,dispensed').gte('created_at', today),
+    sb.from('lab_tests').select('visit_id,status').gte('created_at', today),
+    sb.from('invoices').select('visit_id,payment_status').gte('created_at', today),
+  ]);
+  const vitalsMap = {};
+  (vitalsR.data||[]).forEach(v => { if(!vitalsMap[v.patient_id]) vitalsMap[v.patient_id] = []; vitalsMap[v.patient_id].push(v); });
+  const rxMap = {};
+  (rxsR.data||[]).forEach(r => { if(!rxMap[r.visit_id]) rxMap[r.visit_id] = []; rxMap[r.visit_id].push(r); });
+  const labMap = {};
+  (labsR.data||[]).forEach(l => { if(!labMap[l.visit_id]) labMap[l.visit_id] = []; labMap[l.visit_id].push(l); });
+  const invMap = {};
+  (invR.data||[]).forEach(i => { if(!invMap[i.visit_id]) invMap[i.visit_id] = []; invMap[i.visit_id].push(i); });
+
+  allFlowData = (visitsR.data||[]).map(v => {
+    const stage = getJourneyStage(v, vitalsMap[v.patient_id], rxMap[v.id], labMap[v.id], invMap[v.id]);
+    return { ...v, stage };
+  });
+
+  // Update stage pill counts
+  JOURNEY_STAGES.forEach(s => {
+    const pill = document.querySelector(`[data-filter="${s.id}"]`);
+    const count = allFlowData.filter(v => v.stage === s.id).length;
+    if(pill) pill.textContent = `${s.icon} ${s.label} (${count})`;
+  });
+  const allPill = document.querySelector('[data-filter="all"]');
+  if(allPill) allPill.textContent = `All (${allFlowData.length})`;
+
+  document.getElementById('flow-last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+  renderFlowBoard();
+}
+
+function filterFlow(filter, btn) {
+  currentFlowFilter = filter;
+  document.querySelectorAll('.flow-stage-pill').forEach(p => p.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderFlowBoard();
+}
+
+function renderFlowBoard() {
+  const board = document.getElementById('flow-board');
+  const data = currentFlowFilter === 'all'
+    ? allFlowData
+    : allFlowData.filter(v => v.stage === currentFlowFilter);
+
+  if (!data.length) {
+    board.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon" style="font-size:40px">🔄</div>No patients in this stage today</div>';
+    return;
+  }
+
+  const stageColors = {};
+  JOURNEY_STAGES.forEach(s => stageColors[s.id] = s.color);
+  const stageLabels = {};
+  JOURNEY_STAGES.forEach(s => stageLabels[s.id] = s.icon + ' ' + s.label);
+  const now = Date.now();
+
+  board.innerHTML = data.map(v => {
+    const wait = Math.floor((now - new Date(v.created_at).getTime()) / 60000);
+    const waitClass = wait > 60 ? 'urgent' : '';
+    const pt = v.patients || {};
+    const stageCol = stageColors[v.stage] || '#888';
+    const allergies = ''; // loaded separately if needed
+    return `<div class="flow-card" style="border-left:4px solid ${stageCol}">
+      <div class="flow-card-top">
+        <div>
+          <div class="flow-card-name">${pt.full_name || '—'}</div>
+          <div class="flow-card-num">${pt.patient_number || '—'} · ${pt.age || '?'}yrs ${pt.gender || ''}</div>
+        </div>
+        <span class="flow-stage-badge" style="background:${stageCol}20;color:${stageCol};border:1px solid ${stageCol}40">
+          ${stageLabels[v.stage] || v.stage}
+        </span>
+      </div>
+      <div class="flow-card-meta">${v.department || 'OPD'} · ${v.visit_type || ''} · ${v.complaint ? v.complaint.slice(0,40)+'...' : 'No complaint'}</div>
+      <div class="flow-journey">${renderJourneyDots(v.stage)}</div>
+      <div class="flow-card-meta" style="display:flex;justify-content:space-between;margin-top:4px">
+        <span class="flow-wait-time ${waitClass}">⏱ ${wait < 60 ? wait+'m' : Math.floor(wait/60)+'h '+wait%60+'m'}${wait > 60 ? ' — LONG WAIT' : ''}</span>
+        ${v.payer_type === 'free' ? '<span style="font-size:10px;font-weight:800;color:#1A7A3A">FREE</span>' : ''}
+        ${v.payer_type === 'insurance' ? '<span style="font-size:10px;font-weight:800;color:#7C5CBF">INS</span>' : ''}
+      </div>
+      <div class="flow-card-actions">
+        ${v.stage === 'registered' || v.stage === 'triage' ? `<button class="btn btn-warning btn-sm" onclick="markReadyForDoctor('${v.id}',event)">✓ Nurse Ready</button>` : ''}
+        <button class="btn btn-primary btn-sm" onclick="openConsult('${v.id}','${pt.full_name || ''}','${v.patient_id}')">📋 Open</button>
+        ${v.status !== 'discharged' ? `<button class="btn btn-green btn-sm" onclick="openDischarge('${v.id}','${pt.full_name || ''}')">✅ DC</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="updateFlowStage('${v.id}')">📍 Update Stage</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function updateFlowStage(visitId) {
+  const stageNames = JOURNEY_STAGES.map((s,i) => `${i+1}. ${s.icon} ${s.label}`).join('\n');
+  const choice = prompt('Move patient to stage:\n' + stageNames + '\n\nEnter number:');
+  const idx = parseInt(choice) - 1;
+  if (idx >= 0 && idx < JOURNEY_STAGES.length) {
+    const stage = JOURNEY_STAGES[idx].id;
+    const updates = {status: 'active'};
+    if (stage === 'discharged') updates.status = 'discharged';
+    if (stage === 'triage' || stage === 'waiting_doctor') updates.nurse_ready = stage === 'waiting_doctor';
+    await sb.from('visits').update(updates).eq('id', visitId);
+    showToast(`✅ Patient moved to ${JOURNEY_STAGES[idx].label}`, 'success');
+    loadPatientFlow();
+  }
+}
+
+// ── PHARMACY QUEUE (role: pharmacist) ──
+async function loadPharmacyQueue() {
+  const today = new Date().toISOString().split('T')[0];
+  const { data: rxs } = await sb.from('prescriptions')
+    .select('*,patients(full_name,patient_number,age)')
+    .eq('hospital_id', currentHospital).eq('dispensed', false)
+    .gte('created_at', today).order('created_at');
+
+  const { data: invItems } = await sb.from('inventory')
+    .select('item_name,quantity,reorder_level').eq('hospital_id', currentHospital);
+  const stockMap = {};
+  (invItems||[]).forEach(i => stockMap[i.item_name?.toLowerCase()] = i.quantity);
+
+  // Group by patient
+  const grouped = {};
+  (rxs||[]).forEach(r => {
+    const key = r.patient_id;
+    if (!grouped[key]) grouped[key] = {patient: r.patients, rxs: [], visit_id: r.visit_id};
+    grouped[key].rxs.push(r);
+  });
+
+  const pending = Object.values(grouped).length;
+  const totalRx = (rxs||[]).length;
+  document.getElementById('pq-stats').innerHTML = `
+    <div class="stat-card sc-orange"><div class="stat-icon-wrap si-orange">👥</div><div class="stat-label">Patients Waiting</div><div class="stat-value">${pending}</div></div>
+    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">💊</div><div class="stat-label">Prescriptions Pending</div><div class="stat-value">${totalRx}</div></div>`;
+
+  const list = document.getElementById('pq-list');
+  if (!pending) { list.innerHTML = '<div class="empty"><div class="empty-icon">💊</div>No pending prescriptions</div>'; return; }
+
+  const now = Date.now();
+  list.innerHTML = Object.values(grouped).map(g => {
+    const wait = Math.floor((now - new Date(g.rxs[0].created_at).getTime()) / 60000);
+    const hasOutOfStock = g.rxs.some(r => (stockMap[r.drug_name?.toLowerCase()] || 0) < r.quantity);
+    return `<div class="pq-card ${hasOutOfStock ? 'urgent-rx' : ''}">
+      <div class="pq-header">
+        <div>
+          <div style="font-size:13px;font-weight:900;color:var(--navy)">${g.patient?.full_name || '—'}</div>
+          <div style="font-size:11px;color:var(--teal);font-weight:800">${g.patient?.patient_number || '—'} · ${g.patient?.age || '?'}yrs</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;font-weight:800;color:${wait>30?'var(--red)':'var(--text3)'}">⏱ ${wait}m wait</div>
+          ${hasOutOfStock ? '<div style="font-size:10px;color:var(--red);font-weight:800">⚠️ Stock issue</div>' : ''}
+        </div>
+      </div>
+      <div class="pq-drugs">
+        ${g.rxs.map(r => {
+          const stock = stockMap[r.drug_name?.toLowerCase()] || 0;
+          const stockOk = stock >= r.quantity;
+          return `<div class="pq-drug-row">
+            <span class="pq-drug-name">💊 ${r.drug_name}</span>
+            <span style="color:var(--text3);font-size:11px">${r.dosage || r.frequency || '—'} · Qty: ${r.quantity}</span>
+            <span class="pq-drug-stock ${stockOk ? 'stock-ok' : 'stock-low'}">${stockOk ? '✓ '+stock+' in stock' : '⚠️ Only '+stock}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn btn-green btn-sm" onclick="dispenseAll('${g.rxs.map(r=>r.id).join(',')}','${g.patient?.full_name}')">✅ Dispense All</button>
+        <button class="btn btn-secondary btn-sm" onclick="printPrescriptionLabel({drug_name:'${g.rxs.map(r=>r.drug_name).join(', ')}',patient_name:'${g.patient?.full_name}',quantity:${g.rxs.reduce((a,r)=>a+r.quantity,0)},prescribed_by:'${g.rxs[0]?.prescribed_by||''}',dosage:'${g.rxs[0]?.dosage||''}'})">🏷️ Label</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function dispenseAll(idsCsv, patientName) {
+  const ids = idsCsv.split(',');
+  await sb.from('prescriptions').update({dispensed:true, dispensed_at:new Date().toISOString(), dispensed_by:CU?.name}).in('id', ids);
+  // Deduct stock for each
+  const { data: rxs } = await sb.from('prescriptions').select('drug_name,quantity').in('id', ids);
+  for (const rx of (rxs||[])) {
+    const { data: inv } = await sb.from('inventory').select('id,quantity,item_name').eq('hospital_id', currentHospital).ilike('item_name', '%'+rx.drug_name+'%').limit(1);
+    if (inv && inv[0]) {
+      const newQty = Math.max(0, inv[0].quantity - rx.quantity);
+      await sb.from('inventory').update({quantity: newQty}).eq('id', inv[0].id);
+    }
+  }
+  showToast('✅ Dispensed to ' + patientName + '!', 'success');
+  logAudit('Pharmacy', 'Dispensed to ' + patientName);
+  loadPharmacyQueue();
+  checkLowStock();
+}
+
+// ── LAB QUEUE ──
+async function loadLabQueue() {
+  const today = new Date().toISOString().split('T')[0];
+  const { data: labs } = await sb.from('lab_tests')
+    .select('*,patients(full_name,patient_number,age,gender)')
+    .eq('hospital_id', currentHospital).eq('status', 'pending')
+    .gte('created_at', today).order('created_at');
+
+  const pending = (labs||[]).length;
+  document.getElementById('lq-stats').innerHTML = `
+    <div class="stat-card sc-blue"><div class="stat-icon-wrap si-blue">🔬</div><div class="stat-label">Pending Tests</div><div class="stat-value">${pending}</div></div>
+    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">⚡</div><div class="stat-label">Urgent</div><div class="stat-value">${(labs||[]).filter(l=>l.test_name?.toLowerCase().includes('urgent')||l.notes?.toLowerCase().includes('urgent')).length}</div></div>`;
+
+  const list = document.getElementById('lq-list');
+  if (!pending) { list.innerHTML = '<div class="empty"><div class="empty-icon">🔬</div>No pending lab tests</div>'; return; }
+
+  const now = Date.now();
+  list.innerHTML = (labs||[]).map(l => {
+    const wait = Math.floor((now - new Date(l.created_at).getTime()) / 60000);
+    return `<div class="pq-card" style="border-left-color:var(--teal)">
+      <div class="pq-header">
+        <div>
+          <div style="font-size:13px;font-weight:900;color:var(--navy)">${l.patients?.full_name || '—'}</div>
+          <div style="font-size:11px;color:var(--teal);font-weight:800">${l.patients?.patient_number || '—'} · ${l.patients?.age || '?'}yrs ${l.patients?.gender || ''}</div>
+        </div>
+        <div style="font-size:11px;font-weight:800;color:${wait>30?'var(--red)':'var(--text3)'}">⏱ ${wait}m</div>
+      </div>
+      <div class="pq-drug-row" style="margin:6px 0">
+        <span class="pq-drug-name">🔬 ${l.test_name}</span>
+        <span style="color:var(--text3);font-size:11px">${l.test_category || '—'} · ${l.normal_range || ''}</span>
+      </div>
+      ${l.notes ? `<div style="font-size:11px;color:var(--text3);font-style:italic;margin:4px 0">${l.notes}</div>` : ''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn btn-primary btn-sm" onclick="openLabResult('${l.id}','${l.test_name}','${l.normal_range||''}')">📊 Enter Result</button>
+        <button class="btn btn-secondary btn-sm" onclick="markLabProcessing('${l.id}')">🔬 Processing</button>
+        ${l.result ? `<button class="btn btn-navy btn-sm" onclick="printLabSlip('${l.id}')">🖨️ Print</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openLabResult(id, testName, normalRange) {
+  const result = prompt(`Enter result for: ${testName}\nNormal range: ${normalRange || 'not specified'}`);
+  if (result === null) return;
+  const flag = prompt('Flag result:\n1=Normal  2=High  3=Low  4=Critical  5=Abnormal\nEnter number (or blank for normal):', '1');
+  const flags = {'1':'normal','2':'high','3':'low','4':'critical','5':'abnormal'};
+  const flagVal = flags[flag] || 'normal';
+  await sb.from('lab_tests').update({result, flag:flagVal, status:'completed', updated_at:new Date().toISOString()}).eq('id',id);
+  if (flagVal === 'critical') showToast('🚨 CRITICAL VALUE entered — notify doctor immediately!', 'error');
+  else showToast('✅ Result saved!', 'success');
+  logAudit('Lab', 'Result entered: ' + testName + ' = ' + result + ' (' + flagVal + ')');
+  loadLabQueue();
+}
+
+async function markLabProcessing(id) {
+  await sb.from('lab_tests').update({status:'processing'}).eq('id',id);
+  showToast('🔬 Marked as processing', 'success');
+  loadLabQueue();
+}
+
+// ── CASHIER STATION ──
+async function loadCashier() {
+  const { data: invs } = await sb.from('invoices')
+    .select('*,patients(full_name,patient_number,age)')
+    .eq('hospital_id', currentHospital)
+    .in('payment_status', ['pending','partial'])
+    .order('created_at', {ascending:false}).limit(100);
+
+  const pending = (invs||[]).length;
+  const totalDue = (invs||[]).reduce((a,i) => a + Math.max(0,(i.total_amount||0)-(i.paid_amount||0)), 0);
+  const overdue = (invs||[]).filter(i => new Date(i.created_at) < new Date(Date.now() - 86400000*3)).length;
+
+  document.getElementById('cashier-stats').innerHTML = `
+    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">💰</div><div class="stat-label">Pending Invoices</div><div class="stat-value">${pending}</div></div>
+    <div class="stat-card sc-orange"><div class="stat-icon-wrap si-orange">💵</div><div class="stat-label">Total Outstanding</div><div class="stat-value">$${totalDue.toFixed(0)}</div></div>
+    <div class="stat-card sc-red"><div class="stat-icon-wrap si-red">⚠️</div><div class="stat-label">Overdue (3+ days)</div><div class="stat-value">${overdue}</div></div>`;
+
+  const list = document.getElementById('cashier-list');
+  if (!pending) { list.innerHTML = '<div class="empty"><div class="empty-icon">🏦</div>No pending payments</div>'; return; }
+
+  list.innerHTML = (invs||[]).map(inv => {
+    const balance = Math.max(0, (inv.total_amount||0) - (inv.paid_amount||0));
+    const age = Math.floor((Date.now() - new Date(inv.created_at).getTime()) / 3600000);
+    const isOverdue = age > 72;
+    return `<div class="pq-card" style="border-left-color:${isOverdue?'var(--red)':'var(--yellow)'}">
+      <div class="pq-header">
+        <div>
+          <div style="font-size:13px;font-weight:900;color:var(--navy)">${inv.patients?.full_name || '—'}</div>
+          <div style="font-size:11px;color:var(--teal);font-weight:800">${inv.patients?.patient_number || '—'} · ${inv.invoice_number}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:16px;font-weight:900;color:${isOverdue?'var(--red)':'var(--navy)'}">$${balance.toFixed(2)}</div>
+          <div style="font-size:10px;color:var(--text3)">${age < 24 ? age+'h ago' : Math.floor(age/24)+'d ago'}${isOverdue?' — OVERDUE':''}</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin:4px 0">
+        Total: $${(inv.total_amount||0).toFixed(2)} · Paid: $${(inv.paid_amount||0).toFixed(2)} · Method: ${inv.payment_method}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn btn-green btn-sm" onclick="quickPayCash('${inv.id}','${inv.patients?.full_name}',${balance})">💵 Pay Cash</button>
+        <button class="btn btn-primary btn-sm" onclick="quickPayMobile('${inv.id}','${inv.patients?.full_name}',${balance})">📱 Mobile $</button>
+        <button class="btn btn-secondary btn-sm" onclick="printPOSReceipt('${inv.id}')">🧾 Receipt</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function quickPayCash(invId, name, amount) {
+  const paid = parseFloat(prompt(`Cash payment for ${name}\nBalance due: $${amount.toFixed(2)}\nAmount received:`, amount.toFixed(2)));
+  if (isNaN(paid) || paid <= 0) return;
+  const { data: inv } = await sb.from('invoices').select('paid_amount,total_amount').eq('id',invId).single().catch(()=>({data:null}));
+  if (!inv) return;
+  const newPaid = (inv.paid_amount||0) + paid;
+  const status = newPaid >= inv.total_amount ? 'paid' : 'partial';
+  await sb.from('invoices').update({paid_amount:newPaid, payment_status:status, payment_method:'cash'}).eq('id',invId);
+  await sb.from('payments').insert({invoice_id:invId, amount:paid, payment_method:'cash', notes:'Cash collected by '+CU?.name}).catch(()=>{});
+  showToast(`✅ $${paid.toFixed(2)} cash received from ${name}!`, 'success');
+  logAudit('Payment', 'Cash $'+paid.toFixed(2)+' for '+name);
+  loadCashier();loadBilling();
+}
+
+async function quickPayMobile(invId, name, amount) {
+  const ref = prompt(`Mobile Money — ${name}\nBalance: $${amount.toFixed(2)}\nEnter transaction reference:`);
+  if (!ref) return;
+  const paid = parseFloat(prompt('Amount confirmed on phone:', amount.toFixed(2)));
+  if (isNaN(paid)) return;
+  const { data: inv } = await sb.from('invoices').select('paid_amount,total_amount').eq('id',invId).single().catch(()=>({data:null}));
+  if (!inv) return;
+  const newPaid = (inv.paid_amount||0) + paid;
+  const status = newPaid >= inv.total_amount ? 'paid' : 'partial';
+  await sb.from('invoices').update({paid_amount:newPaid, payment_status:status, payment_method:'mobile_money'}).eq('id',invId);
+  await sb.from('payments').insert({invoice_id:invId, amount:paid, payment_method:'mobile_money', reference_number:ref, notes:'Mobile Money ref: '+ref}).catch(()=>{});
+  showToast(`✅ Mobile Money $${paid.toFixed(2)} confirmed! Ref: ${ref}`, 'success');
+  logAudit('Payment', 'Mobile Money $'+paid.toFixed(2)+' ref:'+ref+' for '+name);
+  loadCashier();loadBilling();
+}
+
+// ── DUPLICATE PATIENT DETECTION ──
+async function checkDuplicatePatient(name, phone) {
+  if (!name || name.length < 3) return;
+  const { data } = await sb.from('patients').select('id,full_name,patient_number,age,phone').eq('hospital_id', currentHospital).ilike('full_name','%'+name+'%').limit(5).catch(()=>({data:[]}));
+  const warn = document.getElementById('pt-duplicate-warning');
+  if (!warn) return;
+  if ((data||[]).length) {
+    warn.style.display = '';
+    warn.innerHTML = `<strong>⚠️ Possible duplicate patient${data.length>1?'s':''} found:</strong><br>` +
+      data.map(p=>`<span style="color:var(--teal);cursor:pointer;font-weight:700" onclick="selectExistingPatient('${p.id}','${p.full_name}')">${p.full_name} (${p.patient_number||'—'}) · ${p.age||'?'}yrs · ${p.phone||'no phone'}</span>`).join('<br>') +
+      '<br><small style="color:var(--text3)">Click to use existing patient instead of creating new.</small>';
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
+async function selectExistingPatient(id, name) {
+  closeModal('modal-patient');
+  // Add to queue instead
+  selectedQueuePatient = {id, full_name: name};
+  openModal('modal-add-queue');
+  document.getElementById('add-queue-selected').style.display = '';
+  document.getElementById('add-queue-selected').innerHTML = `<strong>${name}</strong> — existing patient`;
+  showToast('Existing patient selected — add to queue', 'success');
+}
+
+// ── PRINT PATIENT CARD / WRISTBAND ──
+function printPatientCard(patientId) {
+  sb.from('patients').select('*').eq('id', patientId).single().then(({data:p}) => {
+    if (!p) return;
+    const hospital = allHospitals.find(h=>h.id===currentHospital) || {name:'MediTrack Pro'};
+    document.getElementById('invoice-print-content').innerHTML = `
+      <div class="patient-card-print" style="max-width:340px;margin:0 auto;font-family:'Nunito Sans',sans-serif;border:2px solid #1B2A4A;border-radius:10px;overflow:hidden">
+        <div style="background:#1B2A4A;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:13px;font-weight:900">${hospital.name}</div><div style="font-size:10px;opacity:0.7">Patient Identification Card</div></div>
+          <div style="font-size:24px">🏥</div>
+        </div>
+        <div style="padding:12px 14px">
+          <div style="font-size:18px;font-weight:900;color:#1B2A4A;margin-bottom:2px">${p.full_name}</div>
+          <div style="font-size:22px;font-weight:900;color:#00B4D8;letter-spacing:1px;margin-bottom:8px">${p.patient_number}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;color:#555">
+            <div>Age: <strong>${p.age || '?'}yrs</strong></div>
+            <div>Gender: <strong>${p.gender || '—'}</strong></div>
+            <div>Blood: <strong style="color:#CC0000">${p.blood_group || '?'}</strong></div>
+            <div>Insurance: <strong>${p.insurance || 'Cash'}</strong></div>
+          </div>
+          ${p.allergies ? `<div style="background:#FFF0F0;border:1px solid #FFAAAA;border-radius:4px;padding:4px 8px;margin-top:6px;font-size:10px;color:#CC0000;font-weight:800">⚠️ ALLERGIES: ${p.allergies}</div>` : ''}
+        </div>
+        <div style="background:#F5F7FA;padding:6px 14px;font-size:10px;color:#888;display:flex;justify-content:space-between">
+          <span>Reg: ${new Date(p.created_at).toLocaleDateString('en-GB')}</span>
+          <span>Ph: ${p.phone || '—'}</span>
+        </div>
+      </div>`;
+    openModal('modal-print-invoice');
+  });
+}
+
+// ── REGISTER ROUTING ADDITIONS ──
+
+async function addPatientToQueueDirect(patientId, patientName) {
+  selectedQueuePatient = {id: patientId, full_name: patientName};
+  openModal('modal-add-queue');
+  document.getElementById('add-queue-selected').style.display = '';
+  document.getElementById('add-queue-selected').innerHTML = `<strong>${patientName}</strong> — add to today's queue`;
+}
+const _b8ExtraRoles = {
+  'flow':'admin,doctor,nurse,receptionist',
+  'pharmacy-queue':'admin,pharmacist,doctor',
+  'lab-queue':'admin,lab,doctor',
+  'cashier':'admin,billing,receptionist'
+};
+const _b8ExtraTitles = {
+  'flow':'Patient Flow',
+  'pharmacy-queue':'Pharmacy Queue',
+  'lab-queue':'Lab Queue',
+  'cashier':'Cashier Station'
+};
+const _b8ExtraLoaders = {
+  'flow':loadPatientFlow,
+  'pharmacy-queue':loadPharmacyQueue,
+  'lab-queue':loadLabQueue,
+  'cashier':loadCashier
+};
+Object.assign(PAGE_ROLES, _b8ExtraRoles);
+Object.assign(PTITLES, _b8ExtraTitles);
+Object.assign(PLOADERS, _b8ExtraLoaders);
+
+// Auto-refresh flow board every 60s when on flow page
+setInterval(() => {
+  if (document.getElementById('page-flow')?.classList.contains('active')) {
+    loadPatientFlow();
+  }
+}, 60000);
 
 
 // ── BATCH 5 ADDITIONS ──

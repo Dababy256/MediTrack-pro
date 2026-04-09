@@ -287,14 +287,15 @@ tr:hover td{background:#fafbff;}
     <details style="margin-top:12px;background:#f8fafc;border:1px solid var(--bd);border-radius:6px;padding:8px;text-align:left;">
       <summary style="font-size:12px;cursor:pointer;font-weight:700;">Demo Credentials</summary>
       <div style="font-size:11px;margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-        <div style="background:#eff6ff;padding:5px 8px;border-radius:4px;"><b>admin</b><br>admin@meditrack / admin123</div>
-        <div style="background:#f0fdf4;padding:5px 8px;border-radius:4px;"><b>doctor</b><br>doctor@meditrack / doctor123</div>
-        <div style="background:#fef3c7;padding:5px 8px;border-radius:4px;"><b>nurse</b><br>nurse@meditrack / nurse123</div>
-        <div style="background:#fce7f3;padding:5px 8px;border-radius:4px;"><b>lab</b><br>lab@meditrack / lab123</div>
-        <div style="background:#ede9fe;padding:5px 8px;border-radius:4px;"><b>pharmacy</b><br>pharmacy@meditrack / pharm123</div>
-        <div style="background:#fff7ed;padding:5px 8px;border-radius:4px;"><b>billing</b><br>billing@meditrack / billing123</div>
+        <div style="background:#eff6ff;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #bfdbfe;" onclick="gid('lu').value='admin';document.getElementById('lp2').value='admin123'"><b>admin</b><br><span style="color:#1e40af;">admin / admin123</span></div>
+        <div style="background:#f0fdf4;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #bbf7d0;" onclick="gid('lu').value='doctor';document.getElementById('lp2').value='doctor123'"><b>doctor</b><br><span style="color:#065f46;">doctor / doctor123</span></div>
+        <div style="background:#fef3c7;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fde68a;" onclick="gid('lu').value='nurse';document.getElementById('lp2').value='nurse123'"><b>nurse</b><br><span style="color:#92400e;">nurse / nurse123</span></div>
+        <div style="background:#fce7f3;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fbcfe8;" onclick="gid('lu').value='lab';document.getElementById('lp2').value='lab123'"><b>lab</b><br><span style="color:#9d174d;">lab / lab123</span></div>
+        <div style="background:#ede9fe;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #ddd6fe;" onclick="gid('lu').value='pharmacy';document.getElementById('lp2').value='pharm123'"><b>pharmacy</b><br><span style="color:#5b21b6;">pharmacy / pharm123</span></div>
+        <div style="background:#fff7ed;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fed7aa;" onclick="gid('lu').value='billing';document.getElementById('lp2').value='billing123'"><b>billing</b><br><span style="color:#92400e;">billing / billing123</span></div>
       </div>
-    </details>
+      <p style="font-size:10px;color:#94a3b8;margin-top:5px;text-align:center;">👆 Click any box to auto-fill</p>
+      </details>
   </div>
 </div>
 
@@ -1894,34 +1895,57 @@ async function login() {
   const u = gv('lu'), pw = document.getElementById('lp2')?.value || '';
   const le = gid('le');
   if (!u || !pw) { if(le) le.textContent = 'Enter username and password.'; return; }
-  // Try Supabase auth first
-  const { data: authData, error: authError } = await sb.auth.signInWithPassword({
-    email: u.includes('@') ? u : u + '@meditrack.pro',
-    password: pw
-  }).catch(() => ({data:null, error:{message:'Auth failed'}}));
+  if(le) le.textContent = 'Signing in…';
 
-  if (authError) {
-    // Fallback: check staffList (local accounts)
-    const staff = staffList.find(s =>
-      (s.username === u || s.email === u) && s.password === pw
-    );
-    if (!staff) {
-      if(le) le.textContent = 'Incorrect username or password.';
-      return;
-    }
-    currentUser = {...staff, auth_uid: staff.id};
+  // ── BUILT-IN DEMO ACCOUNTS (always work, no Supabase auth needed) ──
+  const DEMO_ACCOUNTS = {
+    'admin':    {name:'Admin Manager',   role:'admin',      isAdmin:true,  sections:[...ALL_SECS], password:'admin123'},
+    'doctor':   {name:'Dr. Gerald Apule',role:'doctor',     isAdmin:false, sections:['doctor','lab','pharmacy','radiology','billing','inventory'], password:'doctor123'},
+    'nurse':    {name:'Nurse Station',   role:'nurse',      isAdmin:false, sections:['nurse','reception'], password:'nurse123'},
+    'lab':      {name:'Lab Technician',  role:'lab',        isAdmin:false, sections:['lab'], password:'lab123'},
+    'pharmacy': {name:'Pharmacist',      role:'pharmacy',   isAdmin:false, sections:['pharmacy','inventory'], password:'pharm123'},
+    'billing':  {name:'Billing Officer', role:'billing',    isAdmin:false, sections:['billing','reception'], password:'billing123'},
+    'director': {name:'Medical Director',role:'director',   isAdmin:true,  sections:[...ALL_SECS], password:'director123'},
+  };
+
+  // Check demo accounts first (fastest path)
+  const demoKey = Object.keys(DEMO_ACCOUNTS).find(k =>
+    (k === u || u === k+'@meditrack.pro') && DEMO_ACCOUNTS[k].password === pw
+  );
+  if (demoKey) {
+    const d = DEMO_ACCOUNTS[demoKey];
+    currentUser = {id:'demo-'+demoKey, name:d.name, username:demoKey, role:d.role,
+      isAdmin:d.isAdmin, sections:d.sections, auth_uid:'demo-'+demoKey, password:d.password};
+    staffList = Object.entries(DEMO_ACCOUNTS).map(([k,v])=>({id:'demo-'+k,name:v.name,username:k,role:v.role,isAdmin:v.isAdmin,sections:v.sections,password:v.password}));
   } else {
-    const { data: staffRow } = await sb.from('staff').select('*')
-      .eq('auth_user_id', authData.user.id).maybeSingle()
-      .catch(() => ({data:null}));
-    if (!staffRow) {
-      // create minimal user
-      currentUser = {id: authData.user.id, name: u, username: u, role: 'admin',
-        isAdmin: true, sections: [...ALL_SECS], auth_uid: authData.user.id};
+    // Try Supabase auth
+    const { data: authData, error: authError } = await sb.auth.signInWithPassword({
+      email: u.includes('@') ? u : u + '@meditrack.pro',
+      password: pw
+    }).catch(() => ({data:null, error:{message:'Auth failed'}}));
+
+    if (authError) {
+      // Final fallback: check local staffList
+      const staff = staffList.find(s =>
+        (s.username === u || s.email === u) && s.password === pw
+      );
+      if (!staff) {
+        if(le) le.textContent = 'Incorrect username or password.';
+        return;
+      }
+      currentUser = {...staff, auth_uid: staff.id};
     } else {
-      currentUser = {...staffRow, auth_uid: authData.user.id};
-      staffList = staffList.filter(s=>s.id!==staffRow.id);
-      staffList.push(currentUser);
+      const { data: staffRow } = await sb.from('staff').select('*')
+        .eq('auth_user_id', authData.user.id).maybeSingle()
+        .catch(() => ({data:null}));
+      if (!staffRow) {
+        currentUser = {id: authData.user.id, name: u, username: u, role: 'admin',
+          isAdmin: true, sections: [...ALL_SECS], auth_uid: authData.user.id};
+      } else {
+        currentUser = {...staffRow, auth_uid: authData.user.id};
+        staffList = staffList.filter(s=>s.id!==staffRow.id);
+        staffList.push(currentUser);
+      }
     }
   }
 

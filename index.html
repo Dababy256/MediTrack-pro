@@ -2012,93 +2012,87 @@ function newVisit(vId, patId, name, consultType, payer) {
 }
 
 // ── AUTH ──
-async function login() {
+function login() {
   const u = gv('lu'), pw = document.getElementById('lp2')?.value || '';
   const le = gid('le');
   if (!u || !pw) { if(le) le.textContent = 'Enter username and password.'; return; }
-  if(le) le.textContent = 'Signing in…';
 
-  // ── BUILT-IN DEMO ACCOUNTS (always work, no Supabase auth needed) ──
-  const DEMO_ACCOUNTS = {
-    'admin':    {name:'Admin Manager',   role:'admin',      isAdmin:true,  sections:[...ALL_SECS], password:'admin123'},
-    'doctor':   {name:'Dr. Gerald Apule',role:'doctor',     isAdmin:false, sections:['doctor','lab','pharmacy','radiology','billing','inventory'], password:'doctor123'},
-    'nurse':    {name:'Nurse Station',   role:'nurse',      isAdmin:false, sections:['nurse','reception'], password:'nurse123'},
-    'lab':      {name:'Lab Technician',  role:'lab',        isAdmin:false, sections:['lab'], password:'lab123'},
-    'pharmacy': {name:'Pharmacist',      role:'pharmacy',   isAdmin:false, sections:['pharmacy','inventory'], password:'pharm123'},
-    'billing':  {name:'Billing Officer', role:'billing',    isAdmin:false, sections:['billing','reception'], password:'billing123'},
-    'director': {name:'Medical Director',role:'director',   isAdmin:true,  sections:[...ALL_SECS], password:'director123'},
+  // ── DEMO ACCOUNTS — 100% synchronous, zero network calls ──
+  const DEMO = {
+    'admin':    {name:'Admin Manager',    role:'admin',     isAdmin:true,  sections:[...ALL_SECS]},
+    'director': {name:'Medical Director', role:'director',  isAdmin:true,  sections:[...ALL_SECS]},
+    'doctor':   {name:'Dr. Gerald Apule', role:'doctor',    isAdmin:false, sections:['doctor','lab','pharmacy','radiology','billing','inventory']},
+    'nurse':    {name:'Nurse Station',    role:'nurse',     isAdmin:false, sections:['nurse','reception']},
+    'lab':      {name:'Lab Technician',   role:'lab',       isAdmin:false, sections:['lab']},
+    'pharmacy': {name:'Pharmacist',       role:'pharmacy',  isAdmin:false, sections:['pharmacy','inventory']},
+    'billing':  {name:'Billing Officer',  role:'billing',   isAdmin:false, sections:['billing','reception']},
   };
+  const PWDS = {admin:'admin123',director:'director123',doctor:'doctor123',nurse:'nurse123',lab:'lab123',pharmacy:'pharm123',billing:'billing123'};
 
-  // Check demo accounts first (fastest path)
-  const demoKey = Object.keys(DEMO_ACCOUNTS).find(k =>
-    (k === u || u === k+'@meditrack.pro') && DEMO_ACCOUNTS[k].password === pw
-  );
+  const demoKey = Object.keys(DEMO).find(k => k===u && PWDS[k]===pw);
+
   if (demoKey) {
-    const d = DEMO_ACCOUNTS[demoKey];
-    currentUser = {id:'demo-'+demoKey, name:d.name, username:demoKey, role:d.role,
-      isAdmin:d.isAdmin, sections:d.sections, auth_uid:'demo-'+demoKey, password:d.password};
-    staffList = Object.entries(DEMO_ACCOUNTS).map(([k,v])=>({id:'demo-'+k,name:v.name,username:k,role:v.role,isAdmin:v.isAdmin,sections:v.sections,password:v.password}));
-  } else {
-    // Try Supabase auth
-    const { data: authData, error: authError } = await sb.auth.signInWithPassword({
-      email: u.includes('@') ? u : u + '@meditrack.pro',
-      password: pw
-    }).catch(() => ({data:null, error:{message:'Auth failed'}}));
-
-    if (authError) {
-      // Final fallback: check local staffList
-      const staff = staffList.find(s =>
-        (s.username === u || s.email === u) && s.password === pw
-      );
-      if (!staff) {
-        if(le) le.textContent = 'Incorrect username or password.';
-        return;
-      }
-      currentUser = {...staff, auth_uid: staff.id};
-    } else {
-      const { data: staffRow } = await sb.from('staff').select('*')
-        .eq('auth_user_id', authData.user.id).maybeSingle()
-        .catch(() => ({data:null}));
-      if (!staffRow) {
-        currentUser = {id: authData.user.id, name: u, username: u, role: 'admin',
-          isAdmin: true, sections: [...ALL_SECS], auth_uid: authData.user.id};
-      } else {
-        currentUser = {...staffRow, auth_uid: authData.user.id};
-        staffList = staffList.filter(s=>s.id!==staffRow.id);
-        staffList.push(currentUser);
-      }
-    }
-  }
-
-  // Load hospital + data (with generous timeout for slow networks)
-  const hospPromise = sb.from('hospitals').select('*').limit(10).catch(()=>({data:[]}));
-  const timeoutPromise = new Promise(res => setTimeout(()=>res({data:[]}), 4000));
-  const hospResult = await Promise.race([hospPromise, timeoutPromise]);
-  allHospitals = hospResult.data || [];
-  currentHospital = allHospitals[0]?.id || null;
-
-  // Load data (non-blocking for demo — app shows immediately, data loads in bg)
-  if (demoKey) {
-    // Demo login: boot immediately with local WHO_MEDS inventory, load Supabase in background
+    // INSTANT login — no network whatsoever
+    const d = DEMO[demoKey];
+    currentUser = {id:'demo-'+demoKey, name:d.name, username:demoKey,
+      role:d.role, isAdmin:d.isAdmin, sections:d.sections, auth_uid:'demo-'+demoKey};
+    staffList = Object.entries(DEMO).map(([k,v])=>({id:'demo-'+k,name:v.name,username:k,role:v.role,isAdmin:v.isAdmin,sections:v.sections}));
     inventory = initInv();
+    allHospitals = [{id:'demo-hospital', name:'iCURE Medical Centre', branch:'Juba, South Sudan'}];
+    currentHospital = 'demo-hospital';
     gid('lp').style.display = 'none';
     gid('app').style.display = '';
-    gid('sb-user').textContent = currentUser.name + ' · ' + currentUser.role;
+    gid('sb-user').textContent = d.name + ' · ' + d.role;
     gid('voice-badge').textContent = voiceEnabled ? '🔊' : '🔇';
     renderNav();
-    toast('Welcome, ' + currentUser.name + '!', 'success');
-    // Now load real data silently in background
-    loadSupabaseData().catch(()=>{});
+    toast('Welcome, ' + d.name + '!', 'success');
+    // Load real Supabase data quietly in background after UI is visible
+    setTimeout(() => {
+      sb.from('hospitals').select('*').limit(10).then(r => {
+        if (r.data && r.data.length) {
+          allHospitals = r.data;
+          currentHospital = r.data[0].id;
+        }
+        loadSupabaseData().catch(()=>{});
+      }).catch(()=>{});
+    }, 500);
     setInterval(autoRefresh, 30000);
-  } else {
+    return;
+  }
+
+  // Real account — async login
+  if(le) le.textContent = 'Signing in…';
+  _doRealLogin(u, pw, le);
+}
+
+async function _doRealLogin(u, pw, le) {
+  try {
+    const { data: authData, error: authError } = await sb.auth.signInWithPassword({
+      email: u.includes('@') ? u : u + '@meditrack.pro', password: pw
+    }).catch(() => ({data:null, error:{message:'Network error'}}));
+
+    if (authError) {
+      if(le) le.textContent = 'Incorrect username or password.';
+      return;
+    }
+    const { data: staffRow } = await sb.from('staff').select('*')
+      .eq('auth_user_id', authData.user.id).maybeSingle().catch(()=>({data:null}));
+    currentUser = staffRow
+      ? {...staffRow, auth_uid: authData.user.id}
+      : {id:authData.user.id, name:u, username:u, role:'admin', isAdmin:true, sections:[...ALL_SECS], auth_uid:authData.user.id};
+    const { data: hospData } = await sb.from('hospitals').select('*').limit(10).catch(()=>({data:[]}));
+    allHospitals = hospData || [];
+    currentHospital = allHospitals[0]?.id || null;
     await loadSupabaseData();
     gid('lp').style.display = 'none';
     gid('app').style.display = '';
-    gid('sb-user').textContent = (currentUser.name||u) + ' · ' + (currentUser.role||'Staff');
+    gid('sb-user').textContent = currentUser.name + ' · ' + (currentUser.role||'Staff');
     gid('voice-badge').textContent = voiceEnabled ? '🔊' : '🔇';
     renderNav();
-    toast('Welcome, ' + (currentUser.name||u) + '!', 'success');
+    toast('Welcome, ' + currentUser.name + '!', 'success');
     setInterval(autoRefresh, 30000);
+  } catch(e) {
+    if(le) le.textContent = 'Login error. Please try again.';
   }
 }
 

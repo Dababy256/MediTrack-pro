@@ -13,23 +13,23 @@
    ROOT VARIABLES
 ══════════════════════════════════════════ */
 :root{
-  /* MediTrack Pro — Distinct identity, bright & mobile-first */
-  --p:#0369a1;        /* Primary: ocean blue — professional, trustworthy */
-  --p2:#0284c7;       /* Primary lighter */
-  --s:#06b6d4;        /* Secondary: cyan — modern, health-tech */
-  --a:#059669;        /* Accent: emerald — positive, health */
-  --d:#e11d48;        /* Danger: rose */
+  /* MediTrack Pro — Teal/Green health identity */
+  --p:#0d9488;        /* Primary: teal-600 */
+  --p2:#0f766e;       /* Primary dark */
+  --s:#14b8a6;        /* Secondary: teal-400 */
+  --a:#16a34a;        /* Accent: green-600 */
+  --d:#dc2626;        /* Danger: red-600 */
   --w:#d97706;        /* Warning: amber */
   --pu:#7c3aed;       /* Purple */
   --or:#ea580c;       /* Orange */
-  --bg:#f0f9ff;       /* Background: sky tint — not grey like Tali */
-  --tx:#0c1a2e;       /* Text: deep navy */
-  --bd:#bae6fd;       /* Border: sky blue */
-  --mu:#64748b;       /* Muted */
-  --lt:#e0f2fe;       /* Light: sky 100 */
+  --bg:#f0fdf9;       /* Background: teal tint */
+  --tx:#0d1f1e;       /* Text: deep teal-black */
+  --bd:#99f6e4;       /* Border: teal-200 */
+  --mu:#6b7280;       /* Muted */
+  --lt:#ccfbf1;       /* Light: teal-100 */
   --card:#ffffff;
-  --sidebar-from:#0c4a6e;  /* sidebar gradient top */
-  --sidebar-to:#0369a1;    /* sidebar gradient bottom */
+  --sidebar-from:#134e4a;  /* sidebar gradient top: teal-900 */
+  --sidebar-to:#0d9488;    /* sidebar gradient bottom: teal-600 */
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);font-size:14px;-webkit-font-smoothing:antialiased;}
@@ -292,10 +292,10 @@ tr:hover td{background:#f0f9ff;}
 .pq-card{background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--s);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
 .pq-card.urgent-rx{border-left-color:var(--d);}
 /* ── DARK MODE ── */
-html.dark{--bg:#0f1729;--card:#1e2d45;--bd:#1e3a5f;--lt:#162235;--tx:#e2eaf5;--mu:#8ba3c0;}
+html.dark{--bg:#0a1f1e;--card:#0f2e2c;--bd:#1a4540;--lt:#0f2e2c;--tx:#ccfbf1;--mu:#6b9e98;}
 html.dark .nb{color:rgba(255,255,255,.8);}
-html.dark .nb.active{background:rgba(255,255,255,.9);color:var(--p);}
-html.dark input,html.dark select,html.dark textarea{background:#162235;border-color:#1e3a5f;color:#e2eaf5;}
+html.dark .nb.active{background:rgba(255,255,255,.92);color:var(--p2);}
+html.dark input,html.dark select,html.dark textarea{background:#0f2e2c;border-color:#1a4540;color:#ccfbf1;}
 html.dark th{background:#162235;color:#8ba3c0;}
 html.dark tr:hover td{background:#1a2840;}
 /* ── GLOBAL SEARCH ── */
@@ -321,10 +321,10 @@ html.dark tr:hover td{background:#1a2840;}
 <div id="ls"><div class="spin"></div><div style="font-size:17px;font-weight:700;">MediTrack Pro</div><div style="opacity:.7;font-size:11px;margin-top:4px;">Loading Hospital Management System…</div></div>
 
 <!-- LOGIN PAGE -->
-<div id="lp" style="display:none;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#0c4a6e 0%,#0369a1 50%,#0891b2 100%);">
+<div id="lp" style="display:none;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#134e4a 0%,#0d9488 50%,#14b8a6 100%);">
   <div class="card" style="width:400px;text-align:center;padding:32px 28px;">
     <div style="font-size:38px;margin-bottom:8px;">🏥</div>
-    <div style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#0369a1,#0891b2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:3px;">MediTrack Pro</div>
+    <div style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#0d9488,#14b8a6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:3px;">MediTrack Pro</div>
     <div style="font-size:12px;color:var(--mu);margin-bottom:24px;font-style:italic;">Hospital Management Information System</div>
     <label style="text-align:left;">Username</label>
     <input id="lu" placeholder="Enter username" onkeyup="if(event.key==='Enter')login()" style="margin-bottom:6px;">
@@ -1054,15 +1054,21 @@ html.dark tr:hover td{background:#1a2840;}
 
   <!-- ══════════ ADMIN ══════════ -->
   <section id="sec-admin">
-    <div class="stabs">
-      <button class="st active" onclick="swAdmin('staff',this)">👤 Staff</button>
+    <!-- Super-Admin flag shown only for platform-level admin -->
+    <div id="superadmin-banner" style="display:none;margin-bottom:10px;padding:9px 14px;background:#134e4a;color:#ccfbf1;border-radius:8px;font-size:12px;font-weight:700;">
+      🌐 MediTrack Platform Admin — You have cross-facility access
+    </div>
+    <div class="stabs" style="flex-wrap:wrap;">
+      <button class="st active" onclick="swAdmin('staff',this)">👤 Staff &amp; Roles</button>
+      <button class="st" onclick="swAdmin('permissions',this)">🔐 Permissions</button>
+      <button class="st" onclick="swAdmin('performance',this)">📈 Performance</button>
       <button class="st" onclick="swAdmin('patients',this)">🗑️ Records</button>
       <button class="st" onclick="swAdmin('labtests',this)">🔬 Lab Tests</button>
       <button class="st" onclick="swAdmin('radprocs',this)">📡 Radiology</button>
       <button class="st" onclick="swAdmin('nurseprocs',this)">🔪 Procedures</button>
-      <button class="st" onclick="swAdmin('saas',this)">💼 SaaS / Subscription</button>
+      <button class="st" onclick="swAdmin('saas',this)" id="saas-tab" style="display:none;">💼 Platform SaaS</button>
     </div>
-    <div id="admin-staff">
+    <div id="admin-staff" style="display:block;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <h4>Staff Management</h4>
         <button onclick="oStaffModal(null)" class="bp bsm">+ Add Staff</button>
@@ -1134,6 +1140,41 @@ html.dark tr:hover td{background:#1a2840;}
         <table id="table-facilities">
           <tr><th>Facility</th><th>Location</th><th>Tier</th><th>Created</th><th>Actions</th></tr>
         </table>
+      </div>
+    </div>
+
+    <!-- PERMISSIONS PANEL -->
+    <div id="admin-permissions" style="display:none;">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h4 style="margin:0;">🔐 Role Permissions</h4>
+          <button class="ba bsm" onclick="savePermissions()">💾 Save Permissions</button>
+        </div>
+        <p style="font-size:12px;color:var(--mu);margin-bottom:12px;">Define what each role can access. Changes apply to all staff with that role.</p>
+        <div id="permissions-grid"></div>
+      </div>
+    </div>
+
+    <!-- PERFORMANCE PANEL -->
+    <div id="admin-performance" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+        <h4 style="margin:0;">📈 Staff Performance Dashboard</h4>
+        <div style="display:flex;gap:6px;">
+          <select id="perf-period" onchange="renderPerformance()" style="margin:0;width:auto;font-size:12px;">
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month" selected>This Month</option>
+          </select>
+          <button class="bo bsm" onclick="exportPerformance()">⬇ Export</button>
+        </div>
+      </div>
+      <div id="perf-kpis" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px;margin-bottom:14px;"></div>
+      <div class="g2" style="margin-bottom:12px;">
+        <div class="card"><h4 style="font-size:13px;margin-bottom:8px;">👨‍⚕️ Consultations by Doctor</h4><div id="perf-doctor-chart" style="position:relative;height:200px;"><canvas id="ch-perf-doctor"></canvas></div></div>
+        <div class="card"><h4 style="font-size:13px;margin-bottom:8px;">🔬 Lab Tests Processed</h4><div id="perf-lab-chart" style="position:relative;height:200px;"><canvas id="ch-perf-lab"></canvas></div></div>
+      </div>
+      <div class="card" style="padding:9px;">
+        <table id="table-perf"></table>
       </div>
     </div>
 
@@ -1262,15 +1303,7 @@ html.dark tr:hover td{background:#1a2840;}
 // ══════════════════════════════════════════════
 // ADMIN SECTION
 // ══════════════════════════════════════════════
-function swAdmin(tab,btn){
-  document.querySelectorAll('#sec-admin .st').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');
-  ['staff','patients','labtests','radprocs','nurseprocs','saas'].forEach(t=>{const el=gid('admin-'+t);if(el)el.style.display=t===tab?'block':'none';});
-  if(tab==='staff')renderAdmin();
-  if(tab==='patients')renderAdminPatients();
-  if(tab==='labtests')renderLabTestsEditor();
-  if(tab==='radprocs')renderRadProcsEditor();
-  if(tab==='nurseprocs')renderNursingProcsEditor();
-}
+
 function renderAdmin(){
   let h=`<tr><th>Name</th><th>Role</th><th>Username</th><th>Phone</th><th>Sections</th><th>Admin</th><th>Actions</th></tr>`;
   staffList.forEach(s=>{
@@ -1425,10 +1458,7 @@ function copyOnboardLink(tier,hospId){
 
 // Hook SaaS tab load
 const _origSwAdmin=swAdmin;
-function swAdmin(tab,btn){
-  _origSwAdmin(tab,btn);
-  if(tab==='saas')loadFacilitiesList();
-}
+
 
 // ══════════════════════════════════════════════
 // PRINT FUNCTIONS
@@ -2896,63 +2926,69 @@ async function useExisting(pid,eName) {
   await createVisitForPatient(pid,name,ct,payer,'');
   gid('dup-warn').style.display='none';
 }
+function isDemoMode() { return currentHospital==='demo-hospital'; }
+
 async function registerPatient() {
   const name=gv('pName');const ageVal=gv('pAgeVal');
   if(!name||!ageVal){toast('Enter name and age.','error');return;}
   const ct=gv('pConsultType')||'GENERAL';
   const payer=gv('pPayer')||'cash';
   const note=gv('pRegNote');
-  // Insert patient into Supabase
   const patNum='PT-'+Date.now().toString().slice(-6);
-  const { data:newPat, error:patErr } = await sb.from('patients').insert({
-    hospital_id:currentHospital, full_name:name,
-    gender:gv('pGender')||'Male',
-    age:parseInt(ageVal)||0,
-    phone:gv('pPhone')||null,
-    address:gv('pAddress')||null,
-    blood_group:gv('pBlood')||null,
-    kin_name:gv('pKinName')||null,
-    kin_phone:gv('pKinPhone')||null,
-    patient_number:patNum,
-    insurance:payer,
-    lmp:gv('pLMP')||null, grav_para:gv('pGravPara')||null,
-    marital_status:gv('pMarital')||null,
-  }).select().single().catch(e=>({data:null,error:e}));
-  if(patErr){toast('Save failed — '+patErr.message,'error');return;}
+  const newId='PAT-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);
 
-  // Add to local array
-  const lp={id:newPat.id,name,ageVal:parseInt(ageVal),ageUnit:gv('pAgeUnit')||'years',gender:gv('pGender'),phone:gv('pPhone'),address:gv('pAddress'),patNum,sbId:newPat.id};
+  let savedId = newId;
+
+  if(!isDemoMode()){
+    const { data:newPat, error:patErr } = await sb.from('patients').insert({
+      hospital_id:currentHospital, full_name:name,
+      gender:gv('pGender')||'Male', age:parseInt(ageVal)||0,
+      phone:gv('pPhone')||null, address:gv('pAddress')||null,
+      blood_group:gv('pBlood')||null, kin_name:gv('pKinName')||null,
+      kin_phone:gv('pKinPhone')||null, patient_number:patNum,
+      insurance:payer, lmp:gv('pLMP')||null,
+      grav_para:gv('pGravPara')||null, marital_status:gv('pMarital')||null,
+    }).select().single().catch(e=>({data:null,error:e}));
+    if(patErr){toast('Save failed — '+patErr.message,'error');return;}
+    savedId = newPat.id;
+  }
+
+  const lp={id:savedId,name,ageVal:parseInt(ageVal),ageUnit:gv('pAgeUnit')||'years',
+    gender:gv('pGender'),phone:gv('pPhone'),address:gv('pAddress'),patNum,
+    bloodGroup:gv('pBlood'),insurance:payer,sbId:savedId};
   patients.unshift(lp);
 
-  await createVisitForPatient(newPat.id,name,ct,payer,note);
+  await createVisitForPatient(savedId,name,ct,payer,note);
   speak('Patient '+name+' has been registered for '+ct.replace('_',' ')+'.');
   const routeMsg={GENERAL:'→ Triage Queue',LAB_ONLY:'→ Lab directly',RADIOLOGY:'→ Radiology',DENTAL:'→ Dental',ENT:'→ ENT',OTHER_SPECIAL:'→ Special Clinic'};
-  toast(name+' registered. '+routeMsg[ct],'success');
+  toast('✅ '+name+' registered. '+routeMsg[ct],'success');
   ['pName','pPhone','pAddress','pKinName','pKinPhone','pRegNote'].forEach(f=>{const el=gid(f);if(el)el.value='';});
   gid('pAgeVal').value='';
+  gid('dup-warn').style.display='none';
   renderPatients();
 }
 async function createVisitForPatient(patId,name,ct,payer,note) {
   const vId='V-'+Date.now().toString().slice(-7);
-  const { data:newVisitSB } = await sb.from('visits').insert({
-    hospital_id:currentHospital, patient_id:patId,
-    visit_type:'outpatient',
-    status:'active', department:'General OPD',
-    complaint:note||null, payer_type:payer,
-    consultation_type:ct,
-  }).select().single().catch(()=>({data:null}));
-  // Create invoice
-  if(newVisitSB){
-    await sb.from('invoices').insert({
-      hospital_id:currentHospital, patient_id:patId, visit_id:newVisitSB.id,
-      invoice_number:'INV-'+Date.now().toString().slice(-6),
-      payment_method:payer==='cash'?'cash':'insurance',
-      payment_status:payer==='free'?'paid':'pending',
-      total_amount:0, paid_amount:0,
-    }).catch(()=>{});
+  let sbVisitId = vId;
+  if(!isDemoMode()){
+    const { data:newVisitSB } = await sb.from('visits').insert({
+      hospital_id:currentHospital, patient_id:patId,
+      visit_type:'outpatient', status:'active', department:'General OPD',
+      complaint:note||null, payer_type:payer, consultation_type:ct,
+    }).select().single().catch(()=>({data:null}));
+    sbVisitId = newVisitSB?.id || vId;
+    if(newVisitSB){
+      await sb.from('invoices').insert({
+        hospital_id:currentHospital, patient_id:patId, visit_id:newVisitSB.id,
+        invoice_number:'INV-'+Date.now().toString().slice(-6),
+        payment_method:payer==='cash'?'cash':'insurance',
+        payment_status:payer==='free'?'paid':'pending',
+        total_amount:0, paid_amount:0,
+      }).catch(()=>{});
+    }
   }
   const v=newVisit(vId,patId,name,ct,payer);
-  v.sbId=newVisitSB?.id||vId;
+  v.sbId=sbVisitId;
   visits.unshift(v);
   return v;
 }
@@ -3122,7 +3158,7 @@ async function submitTriage(){
   if(!bp&&!temp&&!pulse){{toast('Enter at least BP, Temp, or Pulse.','error');return;}}
   const bpParts=(bp||'').split('/');
   // Save vitals to Supabase
-  if(v.sbId){
+  if(v.sbId&&!isDemoMode()){
     const {error} = await sb.from('vitals').insert({
       visit_id:v.sbId, patient_id:v.patId, hospital_id:currentHospital,
       bp_systolic:bpParts[0]?parseInt(bpParts[0]):null,
@@ -3228,7 +3264,7 @@ async function addTreatEntry(){
   const entry={drug,dose,route:gv('tRoute')||'IV',time:gv('tTime')||new Date().toLocaleTimeString(),notes:gv('tNotes'),by:currentUser?.name,date:new Date().toLocaleDateString()};
   v.treatmentChart.push(entry);
   // Save to Supabase treatment_chart table
-  if(v.sbId){
+  if(v.sbId&&!isDemoMode()){
     await sb.from('treatment_chart').insert({
       visit_id:v.sbId, patient_id:v.patId, hospital_id:currentHospital,
       drug_name:drug, dose, route:entry.route,
@@ -3671,7 +3707,7 @@ async function saveConsultation(){
   else v.status='BILLING';
   if(!v.cleared.includes('Doctor'))v.cleared.push('Doctor');
   // Save to Supabase
-  if(v.sbId){
+  if(v.sbId&&!isDemoMode()){
     const notes=JSON.stringify(cl);
     const {error}=await sb.from('consultations').insert({
       visit_id:v.sbId,hospital_id:currentHospital,
@@ -3817,7 +3853,7 @@ async function recPayment(){
     toast(`Partial payment. Remaining: $${(tot-v.totalPaid).toFixed(2)}`,'success');
   }
   // Save to Supabase
-  if(v.sbId){
+  if(v.sbId&&!isDemoMode()){
     const {data:invData}=await sb.from('invoices').select('id,paid_amount').eq('visit_id',v.sbId).maybeSingle().catch(()=>({data:null}));
     if(invData){
       const newPaid=(invData.paid_amount||0)+amount;
@@ -4540,6 +4576,10 @@ async function loadCashierStation() {
 const _origRenderNav = renderNav;
 function renderNav() {
   _origRenderNav();
+  // Init admin view (super-admin vs facility-admin)
+  initAdminView();
+  // Apply role-based permissions
+  applyRolePermissions();
   // Load facility switcher after nav is built
   setTimeout(() => {
     if (allHospitals.length > 1) loadFacilitySwitcher();
@@ -4558,6 +4598,265 @@ function renderNav() {
 setInterval(() => {
   if (gid('sec-flow')?.style.display === 'block') loadPatientFlow();
 }, 60000);
+
+
+// ══════════════════════════════════════════════════════
+// SUPERADMIN vs FACILITY ADMIN SEPARATION
+// ══════════════════════════════════════════════════════
+// Platform-level super admins (MediTrack company staff)
+const SUPER_ADMINS = ['superadmin','meditrack','gerald','dr.gerald'];
+
+function isSuperAdmin() {
+  return currentUser?.username && SUPER_ADMINS.includes(currentUser.username.toLowerCase());
+}
+
+function initAdminView() {
+  const banner = gid('superadmin-banner');
+  const saasTab = gid('saas-tab');
+  if (isSuperAdmin()) {
+    if (banner) banner.style.display = 'block';
+    if (saasTab) saasTab.style.display = '';
+  } else {
+    if (banner) banner.style.display = 'none';
+    if (saasTab) saasTab.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// ROLE PERMISSIONS SYSTEM
+// ══════════════════════════════════════════════════════
+const ROLE_DEFINITIONS = {
+  'reception':  {label:'Receptionist', icon:'🏥', desc:'Patient registration, appointments, follow-ups'},
+  'nurse':      {label:'Nurse',        icon:'💉', desc:'Triage, vitals, treatment chart, procedures'},
+  'doctor':     {label:'Doctor',       icon:'👨‍⚕️', desc:'Consultation, diagnosis, prescriptions, lab/rad orders'},
+  'lab':        {label:'Lab Tech',     icon:'🔬', desc:'Lab results entry, lab queue management'},
+  'pharmacy':   {label:'Pharmacist',   icon:'💊', desc:'Drug dispensing, pharmacy queue, inventory'},
+  'radiology':  {label:'Radiographer', icon:'🩻', desc:'Radiology results, imaging queue'},
+  'billing':    {label:'Billing',      icon:'💳', desc:'Payment collection, cashier, invoices'},
+  'admin':      {label:'Facility Admin',icon:'⚙️',desc:'Full facility access, staff management, reports'},
+};
+
+const MODULE_PERMISSIONS = [
+  {key:'reception',  label:'Patient Registration'},
+  {key:'nurse',      label:'Nurse Station / Triage'},
+  {key:'doctor',     label:'Doctor Consultation'},
+  {key:'lab',        label:'Laboratory'},
+  {key:'pharmacy',   label:'Pharmacy'},
+  {key:'radiology',  label:'Radiology'},
+  {key:'billing',    label:'Billing & Payments'},
+  {key:'inventory',  label:'Inventory'},
+  {key:'expenses',   label:'Expenses'},
+  {key:'suppliers',  label:'Suppliers'},
+  {key:'flow',       label:'Patient Flow Tracker'},
+  {key:'pharmacy-queue',label:'Pharmacy Queue'},
+  {key:'lab-queue',  label:'Lab Queue'},
+  {key:'cashier',    label:'Cashier Station'},
+  {key:'chat',       label:'Staff Chat'},
+  {key:'protocols',  label:'Protocols / SOPs'},
+  {key:'feedbacks',  label:'Patient Feedback'},
+  {key:'reports',    label:'Reports & Analytics'},
+];
+
+// Default permissions per role
+const DEFAULT_PERMISSIONS = {
+  reception:  ['reception','chat','protocols'],
+  nurse:      ['nurse','reception','chat','protocols','pharmacy-queue','lab-queue'],
+  doctor:     ['doctor','lab','pharmacy','radiology','billing','flow','chat','protocols'],
+  lab:        ['lab','lab-queue','chat'],
+  pharmacy:   ['pharmacy','pharmacy-queue','inventory','chat'],
+  radiology:  ['radiology','chat'],
+  billing:    ['billing','cashier','expenses','chat'],
+  admin:      MODULE_PERMISSIONS.map(m=>m.key),
+};
+
+// Load saved permissions from localStorage (facility-specific)
+function getPermissions() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('mt-permissions-'+currentHospital)||'{}');
+    return Object.keys(ROLE_DEFINITIONS).reduce((acc,role)=>{
+      acc[role] = saved[role] || DEFAULT_PERMISSIONS[role] || [];
+      return acc;
+    }, {});
+  } catch(e) { return {...DEFAULT_PERMISSIONS}; }
+}
+
+function savePermissions() {
+  const perms = {};
+  Object.keys(ROLE_DEFINITIONS).forEach(role => {
+    perms[role] = MODULE_PERMISSIONS
+      .filter(m => document.querySelector(`input[data-role="${role}"][data-module="${m.key}"]`)?.checked)
+      .map(m => m.key);
+  });
+  localStorage.setItem('mt-permissions-'+currentHospital, JSON.stringify(perms));
+  toast('✅ Permissions saved!', 'success');
+}
+
+function renderPermissionsPanel() {
+  const perms = getPermissions();
+  const el = gid('permissions-grid');
+  if (!el) return;
+  el.innerHTML = Object.entries(ROLE_DEFINITIONS).map(([role, def]) => `
+    <div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-size:20px;">${def.icon}</span>
+        <div><div style="font-weight:800;">${def.label}</div><div style="font-size:11px;color:var(--mu);">${def.desc}</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px;">
+        ${MODULE_PERMISSIONS.map(m => `
+          <label style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--lt);border-radius:6px;cursor:pointer;font-size:12px;text-transform:none;font-weight:400;">
+            <input type="checkbox" data-role="${role}" data-module="${m.key}"
+              ${(perms[role]||[]).includes(m.key)?'checked':''}
+              style="width:auto;margin:0;accent-color:var(--p);">
+            ${m.label}
+          </label>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// Apply permissions to nav (call after login)
+function applyRolePermissions() {
+  if (!currentUser || currentUser.isAdmin) return; // admins see everything
+  const role = currentUser.role?.toLowerCase();
+  const perms = getPermissions();
+  const allowed = perms[role] || DEFAULT_PERMISSIONS[role] || [];
+  currentUser.sections = allowed;
+}
+
+// ══════════════════════════════════════════════════════
+// STAFF PERFORMANCE
+// ══════════════════════════════════════════════════════
+function renderPerformance() {
+  const period = gid('perf-period')?.value || 'month';
+  const now = new Date();
+  let fromDate;
+  if (period === 'today') fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  else if (period === 'week') fromDate = new Date(now - 7*86400000);
+  else fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  const fromStr = fromDate.toLocaleDateString();
+
+  // Count by doctor
+  const docCounts = {};
+  const nurseCounts = {};
+  const labCounts = {};
+  const pharmCounts = {};
+
+  visits.filter(v => new Date(v.date) >= fromDate).forEach(v => {
+    // Consultations by doctor
+    const dr = v.clinical?.docName || 'Unknown';
+    if (v.clinical && Object.keys(v.clinical).length > 2) {
+      docCounts[dr] = (docCounts[dr]||0) + 1;
+    }
+    // Lab by tech
+    (v.labs||[]).filter(l=>l.done&&l.resultBy).forEach(l => {
+      labCounts[l.resultBy] = (labCounts[l.resultBy]||0) + 1;
+    });
+    // Pharmacy by pharmacist
+    (v.prescriptions||[]).filter(r=>r.dispensed&&r.dispensedBy).forEach(r => {
+      pharmCounts[r.dispensedBy] = (pharmCounts[r.dispensedBy]||0) + 1;
+    });
+    // Triage by nurse
+    if (v.vitals?.by) nurseCounts[v.vitals.by] = (nurseCounts[v.vitals.by]||0) + 1;
+  });
+
+  const totalConsults = Object.values(docCounts).reduce((a,b)=>a+b,0);
+  const totalLabs = Object.values(labCounts).reduce((a,b)=>a+b,0);
+  const totalTriage = Object.values(nurseCounts).reduce((a,b)=>a+b,0);
+  const totalPharm = Object.values(pharmCounts).reduce((a,b)=>a+b,0);
+  const activePatients = visits.filter(v=>new Date(v.date)>=fromDate).length;
+
+  // KPIs
+  gid('perf-kpis').innerHTML = `
+    <div class="sc" style="background:var(--p)"><div class="sc-label">Patients Seen</div><div class="sc-value">${activePatients}</div></div>
+    <div class="sc" style="background:#0891b2"><div class="sc-label">Consultations</div><div class="sc-value">${totalConsults}</div></div>
+    <div class="sc" style="background:var(--pu)"><div class="sc-label">Labs Processed</div><div class="sc-value">${totalLabs}</div></div>
+    <div class="sc" style="background:var(--a)"><div class="sc-label">Triages Done</div><div class="sc-value">${totalTriage}</div></div>
+    <div class="sc" style="background:var(--w)"><div class="sc-label">Rx Dispensed</div><div class="sc-value">${totalPharm}</div></div>`;
+
+  // Doctor chart
+  const docEntries = Object.entries(docCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  dChart('perf-doc');
+  const ctxD = gid('ch-perf-doctor');
+  if (ctxD && docEntries.length) {
+    _charts['perf-doc'] = new Chart(ctxD, {
+      type:'bar',
+      data:{labels:docEntries.map(x=>x[0].split(' ').slice(-1)[0]),datasets:[{label:'Consultations',data:docEntries.map(x=>x[1]),backgroundColor:'rgba(13,148,136,.7)',borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
+    });
+  }
+
+  // Lab chart
+  const labEntries = Object.entries(labCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  dChart('perf-lab');
+  const ctxL = gid('ch-perf-lab');
+  if (ctxL && labEntries.length) {
+    _charts['perf-lab'] = new Chart(ctxL, {
+      type:'bar',
+      data:{labels:labEntries.map(x=>x[0].split(' ').slice(-1)[0]),datasets:[{label:'Tests',data:labEntries.map(x=>x[1]),backgroundColor:'rgba(124,58,237,.7)',borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
+    });
+  }
+
+  // Performance table - all staff
+  const allPerf = [...new Set([
+    ...Object.keys(docCounts),
+    ...Object.keys(nurseCounts),
+    ...Object.keys(labCounts),
+    ...Object.keys(pharmCounts),
+  ])].filter(n=>n&&n!=='Unknown');
+
+  const tbl = gid('table-perf');
+  if (!allPerf.length) {
+    tbl.innerHTML = '<tr><th>Staff</th><th>Role</th><th>Consultations</th><th>Triages</th><th>Labs</th><th>Rx Dispensed</th><th>Score</th></tr><tr><td colspan="7" class="emp">No activity data yet for this period</td></tr>';
+    return;
+  }
+  tbl.innerHTML = '<tr><th>Staff Member</th><th>Consultations</th><th>Triages</th><th>Labs</th><th>Rx</th><th>Performance Score</th></tr>' +
+    allPerf.map(name => {
+      const cons = docCounts[name]||0;
+      const triage = nurseCounts[name]||0;
+      const labs = labCounts[name]||0;
+      const pharm = pharmCounts[name]||0;
+      const score = cons*3 + triage*2 + labs*2 + pharm*1;
+      const bar_pct = Math.min(100, score*5);
+      const col = score>=20?'var(--a)':score>=10?'var(--w)':'var(--d)';
+      return `<tr>
+        <td><strong>${name}</strong></td>
+        <td>${cons||'—'}</td><td>${triage||'—'}</td>
+        <td>${labs||'—'}</td><td>${pharm||'—'}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="background:var(--lt);border-radius:4px;height:8px;flex:1;min-width:60px;">
+              <div style="background:${col};border-radius:4px;height:8px;width:${bar_pct}%;"></div>
+            </div>
+            <strong style="color:${col};min-width:28px;">${score}</strong>
+          </div>
+        </td></tr>`;
+    }).join('');
+}
+
+function exportPerformance() {
+  const rows = [...gid('table-perf').querySelectorAll('tr')];
+  const csv = rows.map(r=>[...r.querySelectorAll('th,td')].map(c=>'"'+c.textContent.trim()+'"').join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv,'+encodeURIComponent(csv);
+  a.download='staff_performance.csv';a.click();
+}
+
+// ══════════════════════════════════════════════════════
+// PATCHED swAdmin — single definition, handles all tabs
+// ══════════════════════════════════════════════════════
+function swAdmin(tab, btn) {
+  document.querySelectorAll('#sec-admin .st').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const tabs = ['staff','patients','labtests','radprocs','nurseprocs','saas','permissions','performance'];
+  tabs.forEach(t => { const el=gid('admin-'+t); if(el) el.style.display = t===tab?'block':'none'; });
+  if(tab==='staff') renderAdmin();
+  if(tab==='patients') renderAdminPatients();
+  if(tab==='labtests') renderLabTestsEditor();
+  if(tab==='radprocs') renderRadProcsEditor();
+  if(tab==='nurseprocs') renderNursingProcsEditor();
+  if(tab==='saas') loadFacilitiesList();
+  if(tab==='permissions') renderPermissionsPanel();
+  if(tab==='performance') renderPerformance();
+}
 
 </script>
 

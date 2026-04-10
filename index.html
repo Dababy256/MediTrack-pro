@@ -345,10 +345,10 @@ html.dark tr:hover td{background:#1a2840;}
 <body>
 
 <!-- LOADING SCREEN -->
-<div id="ls"><div class="spin"></div><div style="font-size:22px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px;">MediTrack Pro</div><div style="opacity:.7;font-size:12px;margin-top:4px;" id="ls-msg">Starting up…</div><div style="margin-top:16px;background:rgba(255,255,255,.15);border-radius:20px;width:180px;height:4px;overflow:hidden;"><div id="ls-bar" style="background:#fff;height:4px;width:0%;border-radius:20px;transition:width .4s;"></div></div><div style="font-size:10px;opacity:.5;margin-top:24px;">Press any key or tap to continue if stuck</div></div>
+<div id="ls" style="display:none;"><div class="spin"></div><div style="font-size:22px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px;">MediTrack Pro</div><div style="opacity:.7;font-size:12px;margin-top:4px;" id="ls-msg">Starting up…</div><div style="margin-top:16px;background:rgba(255,255,255,.15);border-radius:20px;width:180px;height:4px;overflow:hidden;"><div id="ls-bar" style="background:#fff;height:4px;width:0%;border-radius:20px;transition:width .4s;"></div></div><div style="font-size:10px;opacity:.5;margin-top:24px;">Press any key or tap to continue if stuck</div></div>
 
 <!-- LOGIN PAGE -->
-<div id="lp" style="display:none;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#134e4a 0%,#0d9488 50%,#14b8a6 100%);">
+<div id="lp" style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#134e4a 0%,#0d9488 50%,#14b8a6 100%);">
   <div class="card" style="width:400px;text-align:center;padding:32px 28px;">
     <div style="font-size:38px;margin-bottom:8px;">🏥</div>
     <div style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#0d9488,#14b8a6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:3px;">MediTrack Pro</div>
@@ -1976,51 +1976,8 @@ function checkClinicalPrompts(diagText){
 // ══════════════════════════════════════════════
 // BOOT / INIT
 // ══════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', () => {
-  const _bar = gid('ls-bar');
-  let _pct = 0;
-  const _anim = setInterval(() => { _pct=Math.min(88,_pct+4); if(_bar)_bar.style.width=_pct+'%'; }, 55);
-  const _goLogin = () => {
-    clearInterval(_anim);
-    if(_bar){_bar.style.width='100%';}
-    gid('ls').style.display='none';
-    gid('lp').style.display='flex';
-  };
-  ['keydown','touchstart','click'].forEach(ev=>document.addEventListener(ev,_goLogin,{once:true,capture:true}));
-  const _safety = setTimeout(_goLogin, 2000);
-  if(window.location.hash==='#feedback'){
-    clearTimeout(_safety);_goLogin();
-    setTimeout(()=>{gid('lp').style.display='none';const fb=gid('feedback-public-wrap');if(fb)fb.style.display='flex';},100);
-    return;
-  }
-  Promise.race([
-    sb.auth.getSession().catch(()=>({data:{session:null}})),
-    new Promise(r=>setTimeout(()=>r({data:{session:null}}),1500))
-  ]).then(async (res) => {
-    clearTimeout(_safety);
-    ['keydown','touchstart','click'].forEach(ev=>document.removeEventListener(ev,_goLogin,{capture:true}));
-    const session=res?.data?.session||null;
-    if(session){
-      try{
-        const {data:staffRow}=await sb.from('staff').select('*').eq('auth_user_id',session.user.id).maybeSingle().catch(()=>({data:null}));
-        if(staffRow){
-          currentUser={...staffRow,auth_uid:session.user.id};
-          staffList=[currentUser];
-          const {data:hospData}=await sb.from('hospitals').select('*').limit(10).catch(()=>({data:[]}));
-          allHospitals=hospData||[];currentHospital=allHospitals[0]?.id||null;
-          await loadSupabaseData();
-          _goLogin();
-          gid('lp').style.display='none';gid('app').style.display='';
-          gid('sb-user').textContent=currentUser.name+' · '+(currentUser.role||'Staff');
-          gid('voice-badge').textContent=voiceEnabled?'🔊':'🔇';
-          renderNav();setInterval(autoRefresh,30000);
-          return;
-        }
-      }catch(e){}
-    }
-    _goLogin();
-  }).catch(()=>{clearTimeout(_safety);_goLogin();});
-});
+// Boot complete — login shown immediately, no loading screen needed
+);
 </script>
 
 

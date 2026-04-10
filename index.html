@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#1e3a8a">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 /* ══════════════════════════════════════════
    ROOT VARIABLES
@@ -318,7 +319,7 @@ html.dark tr:hover td{background:#1a2840;}
 <body>
 
 <!-- LOADING SCREEN -->
-<div id="ls"><div class="spin"></div><div style="font-size:17px;font-weight:700;">MediTrack Pro</div><div style="opacity:.7;font-size:11px;margin-top:4px;">Loading Hospital Management System…</div></div>
+<div id="ls"><div class="spin"></div><div style="font-size:22px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px;">MediTrack Pro</div><div style="opacity:.7;font-size:12px;margin-top:4px;" id="ls-msg">Starting up…</div><div style="margin-top:16px;background:rgba(255,255,255,.15);border-radius:20px;width:180px;height:4px;overflow:hidden;"><div id="ls-bar" style="background:#fff;height:4px;width:0%;border-radius:20px;transition:width .4s;"></div></div><div style="font-size:10px;opacity:.5;margin-top:24px;">Press any key or tap to continue if stuck</div></div>
 
 <!-- LOGIN PAGE -->
 <div id="lp" style="display:none;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#134e4a 0%,#0d9488 50%,#14b8a6 100%);">
@@ -1297,8 +1298,6 @@ html.dark tr:hover td{background:#1a2840;}
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
 // ══════════════════════════════════════════════
 // ADMIN SECTION
@@ -1958,15 +1957,40 @@ window.addEventListener('DOMContentLoaded', async () => {
     gid('lp').style.display='none';
     const fbWrap=gid('feedback-public-wrap');
     if(fbWrap)fbWrap.style.display='flex';
-    // Try to load hospital name
-    const {data:hosp}=await sb.from('hospitals').select('name').limit(1).catch(()=>({data:[]}));
-    const hn=gid('fb-hosp-name');if(hn&&hosp&&hosp[0])hn.textContent=hosp[0].name;
+    try{const {data:hosp}=await sb.from('hospitals').select('name').limit(1).catch(()=>({data:[]}));const hn=gid('fb-hosp-name');if(hn&&hosp&&hosp[0])hn.textContent=hosp[0].name;}catch(e){}
     return;
   }
-  const safetyTimer=setTimeout(()=>{gid('ls').style.display='none';gid('lp').style.display='flex';},10000);
-  // Check for existing Supabase session
-  const {data:{session}}=await sb.auth.getSession().catch(()=>({data:{session:null}}));
+  // Animate loading bar
+const _lsBar = gid('ls-bar');
+const _lsMsg = gid('ls-msg');
+let _lsPct = 0;
+const _lsAnim = setInterval(()=>{
+  _lsPct = Math.min(90, _lsPct + (90-_lsPct)*0.08 + 1);
+  if(_lsBar) _lsBar.style.width = _lsPct + '%';
+},80);
+const _showLogin = () => {
+  clearInterval(_lsAnim);
+  if(_lsBar) _lsBar.style.width='100%';
+  setTimeout(()=>{ gid('ls').style.display='none'; gid('lp').style.display='flex'; },200);
+};
+// Escape hatch — any key or tap clears loading
+const _escLoading = ()=>_showLogin();
+document.addEventListener('keydown', _escLoading, {once:true});
+document.addEventListener('touchstart', _escLoading, {once:true});
+// Safety net: ALWAYS show login after 3 seconds max — no more stuck loading screen
+  const safetyTimer = setTimeout(_showLogin, 3000);
+  // Try to resume existing session (non-blocking)
+  let session = null;
+  try {
+    const result = await Promise.race([
+      sb.auth.getSession(),
+      new Promise(r => setTimeout(() => r({data:{session:null}}), 2000))
+    ]);
+    session = result?.data?.session || null;
+  } catch(e) { session = null; }
   clearTimeout(safetyTimer);
+  document.removeEventListener('keydown', _escLoading);
+  document.removeEventListener('touchstart', _escLoading);
   if(session){
     // Resume session
     const {data:staffRow}=await sb.from('staff').select('*').eq('auth_user_id',session.user.id).maybeSingle().catch(()=>({data:null}));
@@ -1983,8 +2007,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       return;
     }
   }
-  gid('ls').style.display='none';
-  gid('lp').style.display='flex';
+  _showLogin();
 });
 </script>
 
@@ -1999,7 +2022,17 @@ window.addEventListener('DOMContentLoaded', async () => {
 // ── SUPABASE CLIENT ──
 const SB_URL = 'https://jrzziyyhllflobtuvwte.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenppeXlobGxmbG9idHV2d3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NjE2ODMsImV4cCI6MjA4OTEzNzY4M30.3GMwHOt5e5xNCbSn3VR_xFsSqPItBmIkkVwyMCw2ctk';
-const sb = supabase.createClient(SB_URL, SB_KEY);
+// Safe Supabase client init — graceful if CDN fails
+let sb;
+try {
+  sb = (window.supabase||supabase).createClient(SB_URL, SB_KEY);
+} catch(e) {
+  // CDN failed — create a mock client so app still runs in demo mode
+  console.warn('Supabase CDN not loaded — running in offline/demo mode');
+  const _noop = () => ({ data: [], error: null, count: 0 });
+  const _chain = () => { const o={select:_chain,insert:()=>Promise.resolve({data:{id:'local-'+Date.now()},error:null}),update:()=>Promise.resolve({data:null,error:null}),delete:()=>Promise.resolve({data:null,error:null}),eq:_chain,neq:_chain,gte:_chain,lte:_chain,in:_chain,ilike:_chain,limit:_chain,order:_chain,range:_chain,single:()=>Promise.resolve({data:{id:'local-'+Date.now()},error:null}),maybeSingle:()=>Promise.resolve({data:null,error:null}),then:(fn)=>Promise.resolve({data:[],error:null}).then(fn),catch:(fn)=>Promise.resolve({data:[],error:null})}; return o; };
+  sb = { from: () => _chain(), auth: { getSession: () => Promise.resolve({data:{session:null}}), signInWithPassword: () => Promise.resolve({data:null,error:{message:'Offline mode'}}), signOut: () => Promise.resolve({}) } };
+}
 
 // ── TALI DATA CONSTANTS (East Africa drug/lab/procedure database) ──
 const WHO_MEDS=[

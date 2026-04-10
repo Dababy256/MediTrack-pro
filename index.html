@@ -1328,7 +1328,6 @@ html.dark tr:hover td{background:#1a2840;}
 
 <script>
 
-'use strict';
 // ══════════════════════════════════════════════
 // MEDITRACK PRO — Complete JavaScript
 // Architecture: Tali Medicals UI + Supabase backend
@@ -4798,13 +4797,7 @@ async function quickPayMobile(invId, name, amount) {
   loadCashier();loadBilling();
 }
 
-function toggleDarkMode(){
-  document.documentElement.classList.toggle('dark');
-  const isDark=document.documentElement.classList.contains('dark');
-  localStorage.setItem('mt-dark',isDark?'1':'0');
-  const btn=document.getElementById('dark-mode-btn');
-  if(btn)btn.textContent=isDark?'☀️':'🌙';
-}
+
 
 async function globalSearch(q){
   const res=document.getElementById('global-search-results');

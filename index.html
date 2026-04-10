@@ -359,22 +359,46 @@ html.dark tr:hover td{background:#1a2840;}
     <input id="lu" placeholder="Enter username" onkeyup="if(event.key==='Enter')login()" style="margin-bottom:6px;">
     <label style="text-align:left;">Password</label>
     <input type="password" id="lp2" placeholder="Enter password" onkeyup="if(event.key==='Enter')login()" style="margin-bottom:12px;">
-    <button onclick="login()" class="bp" style="width:100%;padding:11px;font-size:14px;">Sign In →</button>
+    <button id="signin-btn" class="bp" style="width:100%;padding:11px;font-size:14px;">Sign In →</button>
     <div id="le" style="color:var(--d);font-size:12px;margin-top:8px;min-height:18px;"></div>
     <details style="margin-top:12px;background:#f8fafc;border:1px solid var(--bd);border-radius:6px;padding:8px;text-align:left;">
       <summary style="font-size:12px;cursor:pointer;font-weight:700;">Demo Credentials</summary>
       <div style="font-size:11px;margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-        <div style="background:#eff6ff;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #bfdbfe;" onclick="gid('lu').value='admin';document.getElementById('lp2').value='admin123'"><b>admin</b><br><span style="color:#1e40af;">admin / admin123</span></div>
-        <div style="background:#f0fdf4;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #bbf7d0;" onclick="gid('lu').value='doctor';document.getElementById('lp2').value='doctor123'"><b>doctor</b><br><span style="color:#065f46;">doctor / doctor123</span></div>
-        <div style="background:#fef3c7;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fde68a;" onclick="gid('lu').value='nurse';document.getElementById('lp2').value='nurse123'"><b>nurse</b><br><span style="color:#92400e;">nurse / nurse123</span></div>
-        <div style="background:#fce7f3;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fbcfe8;" onclick="gid('lu').value='lab';document.getElementById('lp2').value='lab123'"><b>lab</b><br><span style="color:#9d174d;">lab / lab123</span></div>
-        <div style="background:#ede9fe;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #ddd6fe;" onclick="gid('lu').value='pharmacy';document.getElementById('lp2').value='pharm123'"><b>pharmacy</b><br><span style="color:#5b21b6;">pharmacy / pharm123</span></div>
-        <div style="background:#fff7ed;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fed7aa;" onclick="gid('lu').value='billing';document.getElementById('lp2').value='billing123'"><b>billing</b><br><span style="color:#92400e;">billing / billing123</span></div>
+        <div style="background:#eff6ff;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #bfdbfe;" onclick="document.getElementById('lu').value='admin';document.getElementById('lp2').value='admin123'"><b>admin</b><br><span style="color:#1e40af;">admin / admin123</span></div>
+        <div style="background:#f0fdf4;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #bbf7d0;" onclick="document.getElementById('lu').value='doctor';document.getElementById('lp2').value='doctor123'"><b>doctor</b><br><span style="color:#065f46;">doctor / doctor123</span></div>
+        <div style="background:#fef3c7;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fde68a;" onclick="document.getElementById('lu').value='nurse';document.getElementById('lp2').value='nurse123'"><b>nurse</b><br><span style="color:#92400e;">nurse / nurse123</span></div>
+        <div style="background:#fce7f3;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fbcfe8;" onclick="document.getElementById('lu').value='lab';document.getElementById('lp2').value='lab123'"><b>lab</b><br><span style="color:#9d174d;">lab / lab123</span></div>
+        <div style="background:#ede9fe;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #ddd6fe;" onclick="document.getElementById('lu').value='pharmacy';document.getElementById('lp2').value='pharm123'"><b>pharmacy</b><br><span style="color:#5b21b6;">pharmacy / pharm123</span></div>
+        <div style="background:#fff7ed;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fed7aa;" onclick="document.getElementById('lu').value='billing';document.getElementById('lp2').value='billing123'"><b>billing</b><br><span style="color:#92400e;">billing / billing123</span></div>
       </div>
       <p style="font-size:10px;color:#94a3b8;margin-top:5px;text-align:center;">👆 Click any box to auto-fill</p>
       </details>
   </div>
 </div>
+
+<script>
+// Wire login button immediately — no dependency on app JS loading
+(function() {
+  function doLogin() {
+    var u = (document.getElementById('lu')||{}).value || '';
+    var pw = (document.getElementById('lp2')||{}).value || '';
+    var le = document.getElementById('le');
+    if (!u || !pw) { if(le) le.textContent='Enter username and password.'; return; }
+    // Try calling the main login() if it loaded
+    if (typeof login === 'function') { login(); return; }
+    // Fallback: if main JS hasn't loaded yet, show error
+    if(le) le.textContent = 'App still loading — please wait a moment and try again.';
+  }
+  // Wire button
+  var btn = document.getElementById('signin-btn');
+  if (btn) btn.addEventListener('click', doLogin);
+  // Wire Enter key
+  ['lu','lp2'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('keyup', function(e) { if(e.key==='Enter') doLogin(); });
+  });
+})();
+</script>
 
 <!-- MAIN APP -->
 <div id="app" style="display:none;">
@@ -1336,8 +1360,15 @@ html.dark tr:hover td{background:#1a2840;}
 // ── SUPABASE CLIENT ──
 const SB_URL = 'https://jrzziyyhllflobtuvwte.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenppeXlobGxmbG9idHV2d3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NjE2ODMsImV4cCI6MjA4OTEzNzY4M30.3GMwHOt5e5xNCbSn3VR_xFsSqPItBmIkkVwyMCw2ctk';
-// Safe Supabase client init — graceful if CDN fails
-const sb = window.supabase.createClient(SB_URL, SB_KEY);
+// Supabase client — wrapped so any failure doesn't kill the rest of the app
+let sb;
+try { sb = supabase.createClient(SB_URL, SB_KEY); } catch(e) {
+  console.warn('Supabase init failed:', e.message);
+  // Offline mock - app works in demo mode without Supabase
+  const _p = (v) => Promise.resolve({data:v,error:null});
+  const _q = () => { const o={data:[],error:null}; const c={select:()=>c,insert:(v)=>_p(Array.isArray(v)?v[0]:v),update:()=>_p(null),delete:()=>_p(null),eq:()=>c,neq:()=>c,gte:()=>c,lte:()=>c,in:()=>c,ilike:()=>c,limit:()=>c,order:()=>c,single:()=>_p({id:'local-'+Date.now()}),maybeSingle:()=>_p(null),then:(fn)=>Promise.resolve({data:[],error:null}).then(fn),catch:(fn)=>Promise.resolve({data:[],error:null})}; return c; };
+  sb = { from:()=>_q(), auth:{ getSession:()=>_p({session:null}), signInWithPassword:()=>_p({user:null}), signOut:()=>_p(null) } };
+}
 
 // ── TALI DATA CONSTANTS (East Africa drug/lab/procedure database) ──
 const WHO_MEDS=[

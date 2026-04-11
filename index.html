@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MediTrack Pro | Hospital Management System</title>
 <link rel="manifest" id="mt-manifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MediTrack Pro">
 <meta name="theme-color" content="#1e3a8a">
 <script>
 /* @supabase/supabase-js v2 — embedded, no CDN needed */
@@ -724,19 +728,21 @@ let _chatTimer = null;
 let pubFbRating = 0;
 
 // ── NAV CONFIG ──
-const ALL_SECS = ['reception','nurse','doctor','billing','lab','pharmacy','radiology','inventory','suppliers','expenses','chat','protocols','flow','pharmacy-queue','lab-queue','cashier'];
+const ALL_SECS = ['reception','nurse','doctor','billing','lab','pharmacy','radiology','inventory','suppliers','expenses','chat','protocols','flow','pharmacy-queue','lab-queue','cashier','appointments','beds'];
 const SEC_LABELS = {
   reception:'Reception',nurse:'Nurse Station',doctor:'Doctor',billing:'Billing',
   lab:'Laboratory',pharmacy:'Pharmacy',radiology:'Radiology',inventory:'Inventory',
   suppliers:'Suppliers',expenses:'Expenses',chat:'Staff Chat',protocols:'Protocols',
   feedbacks:'Feedback',admin:'Admin',director:'Dashboard',
   'flow':'Patient Flow','pharmacy-queue':'Pharm Queue','lab-queue':'Lab Queue','cashier':'Cashier',
+  'appointments':'Appointments','beds':'Bed Management',
 };
 const SEC_ICONS = {
   director:'📊',reception:'🏥',nurse:'💉',doctor:'👨‍⚕️',billing:'💳',
   lab:'🔬',pharmacy:'💊',radiology:'🩻',inventory:'📦',suppliers:'🏪',
   expenses:'💰',chat:'💬',protocols:'📖',feedbacks:'⭐',admin:'⚙️',
   'flow':'🔄','pharmacy-queue':'💊','lab-queue':'🔬','cashier':'🏦',
+  'appointments':'📅','beds':'🛏️',
 };
 const CONSULT_FEE = 10;
 
@@ -760,7 +766,7 @@ function toast(msg, type='info') {
   if (!t) {
     t = document.createElement('div');
     t.id = 'mt-toast';
-    t.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:opacity .3s;max-width:320px;';
+    t.style.cssText = 'position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:99999;padding:11px 22px;border-radius:10px;font-size:14px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.25);transition:opacity .3s,transform .2s;max-width:380px;min-width:220px;text-align:center;white-space:nowrap;';
     document.body.appendChild(t);
   }
   const cols = {info:'#1e3a8a',success:'#065f46',error:'#991b1b',warning:'#92400e'};
@@ -1083,7 +1089,7 @@ function renderNav() {
   ];
   let html = '';
   // Add workstations group
-  groups.push({label:'Workstations', keys:['flow','pharmacy-queue','lab-queue','cashier']});
+  groups.push({label:'Workstations', keys:['flow','pharmacy-queue','lab-queue','cashier','appointments','beds']});
   for (const g of groups) {
     const inGroup = g.keys.filter(k => secs.includes(k));
     if (!inGroup.length) continue;
@@ -1324,18 +1330,17 @@ async function useExisting(pid,eName) {
 function isDemoMode() { return currentHospital==='demo-hospital'; }
 
 async function registerPatient() {
-  const name=gv('pName');const ageVal=gv('pAgeVal');
-  if(!name||!ageVal){toast('Enter name and age.','error');return;}
+  const name=gv('pName'), ageVal=gv('pAgeVal');
+  if(!name||!ageVal){toast('Enter patient name and age.','error');return;}
   const ct=gv('pConsultType')||'GENERAL';
   const payer=gv('pPayer')||'cash';
   const note=gv('pRegNote');
   const patNum='PT-'+Date.now().toString().slice(-6);
   const newId='PAT-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);
-
-  let savedId = newId;
+  let savedId=newId;
 
   if(!isDemoMode()){
-    const { data:newPat, error:patErr } = await sb.from('patients').insert({
+    const {data:newPat,error:patErr}=await sb.from('patients').insert({
       hospital_id:currentHospital, full_name:name,
       gender:gv('pGender')||'Male', age:parseInt(ageVal)||0,
       phone:gv('pPhone')||null, address:gv('pAddress')||null,
@@ -1344,25 +1349,35 @@ async function registerPatient() {
       insurance:payer, lmp:gv('pLMP')||null,
       grav_para:gv('pGravPara')||null, marital_status:gv('pMarital')||null,
     }).select().single().catch(e=>({data:null,error:e}));
-    if(patErr){toast('Save failed — '+patErr.message,'error');return;}
-    savedId = newPat.id;
+    if(patErr){toast('Save failed: '+patErr.message,'error');return;}
+    savedId=newPat.id;
   }
 
   const lp={id:savedId,name,ageVal:parseInt(ageVal),ageUnit:gv('pAgeUnit')||'years',
-    gender:gv('pGender'),phone:gv('pPhone'),address:gv('pAddress'),patNum,
-    bloodGroup:gv('pBlood'),insurance:payer,sbId:savedId};
+    gender:gv('pGender')||'Male',phone:gv('pPhone')||'',address:gv('pAddress')||'',
+    patNum,bloodGroup:gv('pBlood')||'',insurance:payer,sbId:savedId};
   patients.unshift(lp);
-
+  auditLog('CREATE','patients',savedId,{name,patNum,gender:gv('pGender')});
   await createVisitForPatient(savedId,name,ct,payer,note);
-  speak('Patient '+name+' has been registered for '+ct.replace('_',' ')+'.');
-  const routeMsg={GENERAL:'→ Triage Queue',LAB_ONLY:'→ Lab directly',RADIOLOGY:'→ Radiology',DENTAL:'→ Dental',ENT:'→ ENT',OTHER_SPECIAL:'→ Special Clinic'};
+
+  const routeMsg={GENERAL:'→ Triage Queue',LAB_ONLY:'→ Lab',RADIOLOGY:'→ Radiology',
+    DENTAL:'→ Dental',ENT:'→ ENT',OTHER_SPECIAL:'→ Special Clinic'};
   toast('✅ '+name+' registered. '+routeMsg[ct],'success');
   speak('Patient '+name+' registered.');
-  ['pName','pPhone','pAddress','pKinName','pKinPhone','pRegNote','pAgeVal'].forEach(f=>{const el=gid(f);if(el)el.value='';});
+
+  // Clear form
+  ['pName','pPhone','pAddress','pKinName','pKinPhone','pRegNote','pAgeVal'].forEach(f=>{
+    const el=gid(f);if(el)el.value='';
+  });
   const dw=gid('dup-warn');if(dw)dw.style.display='none';
-  // Show success in the form area
-  const le=gid('reg-success');
-  if(le){le.textContent='✅ '+name+' registered — '+routeMsg[ct];le.style.display='block';setTimeout(()=>{le.style.display='none';},4000);}
+
+  // Show success banner
+  const sb_msg=gid('reg-success');
+  if(sb_msg){
+    sb_msg.textContent='✅ '+name+' registered — '+routeMsg[ct];
+    sb_msg.style.display='block';
+    setTimeout(()=>{sb_msg.style.display='none';},5000);
+  }
   renderPatients();
 }
 async function createVisitForPatient(patId,name,ct,payer,note) {
@@ -2133,6 +2148,15 @@ async function saveConsultation(){
     // Update visit
     await sb.from('visits').update({consultation_type:cl.consultType,status:'active'}).eq('id',v.sbId).catch(()=>{});
   }
+  // Check drug interactions
+  if(v.prescriptions.length >= 2) {
+    const warnings = checkDDI(v.prescriptions);
+    if(warnings.length > 0) {
+      const msgs = warnings.map(w=>`${w.drugs.join(' + ')}: ${w.msg}`).join('\n');
+      setTimeout(()=>alert('⚠️ DRUG INTERACTION ALERT\n\n'+msgs+'\n\nPlease review before dispensing.'),300);
+    }
+  }
+  auditLog('CREATE','consultations',v.sbId,{patient:v.name,dx:cl.cFinalDx});
   speak('Consultation for patient '+v.name+' saved.');
   toast('Consultation saved. Patient ready for '+v.status.replace('_',' ')+'.','success');
   closeConsForm();
@@ -3897,6 +3921,234 @@ function checkClinicalPrompts(diagText){
   renderClinicalPrompts();
 }
 
+
+// ══════════════════════════════════════════════
+// AUDIT LOG
+// ══════════════════════════════════════════════
+async function auditLog(action, tableName, recordId, newVals, oldVals) {
+  if(isDemoMode()) return;
+  try {
+    await sb.from('audit_log').insert({
+      hospital_id:currentHospital, user_id:currentUser?.auth_uid||currentUser?.id,
+      user_name:currentUser?.name, action, table_name:tableName,
+      record_id:String(recordId||''),
+      new_values:newVals?JSON.parse(JSON.stringify(newVals)):null,
+      old_values:oldVals?JSON.parse(JSON.stringify(oldVals)):null,
+    }).catch(()=>{});
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════
+// ICD-10 COMMON DIAGNOSES (East Africa)
+// ══════════════════════════════════════════════
+const ICD10_COMMON = [
+  {code:'A09',label:'Diarrhoea and gastroenteritis'},
+  {code:'A15',label:'Respiratory tuberculosis'},
+  {code:'B20',label:'HIV disease'},
+  {code:'B50',label:'Plasmodium falciparum malaria'},
+  {code:'B54',label:'Unspecified malaria'},
+  {code:'D50',label:'Iron deficiency anaemia'},
+  {code:'E11',label:'Type 2 diabetes mellitus'},
+  {code:'E46',label:'Protein-energy malnutrition'},
+  {code:'I10',label:'Essential hypertension'},
+  {code:'J06',label:'Acute upper respiratory infection'},
+  {code:'J18',label:'Pneumonia, unspecified'},
+  {code:'J45',label:'Asthma'},
+  {code:'K29',label:'Gastritis and duodenitis'},
+  {code:'N39',label:'Urinary tract infection'},
+  {code:'O14',label:'Pre-eclampsia'},
+  {code:'O80',label:'Single spontaneous delivery'},
+  {code:'R50',label:'Fever of unknown origin'},
+  {code:'R51',label:'Headache'},
+  {code:'Z34',label:'Supervision of normal pregnancy'},
+  {code:'A90',label:'Dengue fever'},
+  {code:'K35',label:'Acute appendicitis'},
+  {code:'L01',label:'Impetigo'},
+  {code:'T14',label:'Injury of unspecified body region'},
+  {code:'Z00',label:'General examination'},
+];
+function searchICD10(term) {
+  if(!term||term.length<2) return [];
+  const q=term.toLowerCase();
+  return ICD10_COMMON.filter(x=>x.label.toLowerCase().includes(q)||x.code.toLowerCase().startsWith(q)).slice(0,8);
+}
+function showICD10(inputId, listId) {
+  const term = gid(inputId)?.value||'';
+  const results = searchICD10(term);
+  const el = gid(listId); if(!el) return;
+  if(!results.length){el.style.display='none';return;}
+  el.innerHTML = results.map(r=>`<div class="drug-item" onclick="selectICD10('${inputId}','${r.code}','${r.label.replace(/'/g,'\'')}','${listId}')"><b style='color:var(--p);'>${r.code}</b> — ${r.label}</div>`).join('');
+  el.style.display='block';
+}
+function selectICD10(inputId, code, label, listId) {
+  const el=gid(inputId); if(el) el.value=code+' — '+label;
+  const li=gid(listId); if(li) li.style.display='none';
+  // Also set the final diagnosis if we're in consultation
+  const fd=gid('cFinalDx'); if(fd&&!fd.value) fd.value=code+' — '+label;
+}
+
+// ══════════════════════════════════════════════
+// DRUG INTERACTION CHECKER
+// ══════════════════════════════════════════════
+const DDI_PAIRS = [
+  {drugs:['Warfarin','Aspirin'],severity:'HIGH',msg:'Increased bleeding risk — monitor INR closely'},
+  {drugs:['Warfarin','Metronidazole'],severity:'HIGH',msg:'Metronidazole potentiates Warfarin — monitor INR'},
+  {drugs:['Rifampicin','Oral Contraceptive'],severity:'HIGH',msg:'Rifampicin reduces OCP efficacy — use barrier method'},
+  {drugs:['Rifampicin','ARV'],severity:'HIGH',msg:'Rifampicin reduces ARV levels — consult HIV specialist'},
+  {drugs:['Ciprofloxacin','Antacid'],severity:'MOD',msg:'Antacids reduce Ciprofloxacin absorption — take 2h apart'},
+  {drugs:['ACE','Potassium'],severity:'MOD',msg:'Risk of hyperkalaemia — monitor levels'},
+  {drugs:['NSAIDs','Antihypertensive'],severity:'MOD',msg:'NSAIDs may reduce BP control'},
+  {drugs:['Aminoglycoside','Furosemide'],severity:'HIGH',msg:'Additive ototoxicity and nephrotoxicity'},
+  {drugs:['Metronidazole','Alcohol'],severity:'HIGH',msg:'Disulfiram-like reaction — severe nausea/vomiting'},
+  {drugs:['Chloroquine','Amiodarone'],severity:'HIGH',msg:'Additive QT prolongation risk'},
+];
+function checkDDI(drugList) {
+  if(!drugList||drugList.length<2) return [];
+  const names=drugList.map(d=>(d.name||d).toLowerCase());
+  return DDI_PAIRS.filter(pair=>
+    pair.drugs.filter(d=>names.some(n=>n.includes(d.toLowerCase()))).length>=2
+  );
+}
+function showDDIWarnings(drugList) {
+  const warnings=checkDDI(drugList);
+  if(!warnings.length) return;
+  const msgs=warnings.map(w=>`⚠️ <b>${w.drugs.join(' + ')}</b> [${w.severity}]: ${w.msg}`).join('<br>');
+  toast('Drug Interaction Alert!','warning');
+  const banner=gid('allergy-banner');
+  if(banner){banner.style.display='block';banner.innerHTML='💊 DDI ALERTS:<br>'+msgs;}
+}
+
+// ══════════════════════════════════════════════
+// APPOINTMENTS
+// ══════════════════════════════════════════════
+let _apptFilter='upcoming';
+async function renderAppointments() {
+  const {data}=await sb.from('appointments').select('*,patients(full_name,patient_number)')
+    .eq('hospital_id',currentHospital).order('appointment_date').catch(()=>({data:[]}));
+  const today=new Date().toISOString().split('T')[0];
+  let rows=(data||[]);
+  if(_apptFilter==='upcoming') rows=rows.filter(a=>a.appointment_date>=today&&a.status!=='cancelled');
+  else if(_apptFilter==='today') rows=rows.filter(a=>a.appointment_date===today);
+  let h=`<tr><th>Date</th><th>Time</th><th>Patient</th><th>Doctor</th><th>Dept</th><th>Reason</th><th>Status</th><th>Action</th></tr>`;
+  if(!rows.length) h+=`<tr><td colspan="8" class="emp">No appointments found</td></tr>`;
+  rows.forEach(a=>{
+    const sCol={scheduled:'bbl',confirmed:'bpd',done:'bgr',cancelled:'bp2'}[a.status]||'bgr';
+    h+=`<tr>
+      <td><b>${a.appointment_date}</b></td>
+      <td>${a.appointment_time||'—'}</td>
+      <td><b>${a.patients?.full_name||'—'}</b><br><span style="font-size:11px;color:var(--mu);">${a.patients?.patient_number||''}</span></td>
+      <td>${a.doctor_name||'—'}</td>
+      <td>${a.department||'OPD'}</td>
+      <td style="font-size:12px;">${a.reason||'—'}</td>
+      <td><span class="badge ${sCol}">${a.status}</span></td>
+      <td><div style="display:flex;gap:3px;">
+        ${a.status==='scheduled'?`<button class="bsm ba" onclick="updateApptStatus('${a.id}','confirmed')">✓</button>`:''}
+        ${a.status!=='done'&&a.status!=='cancelled'?`<button class="bsm bd2" onclick="updateApptStatus('${a.id}','cancelled')">✕</button>`:''}
+      </div></td>
+    </tr>`;
+  });
+  const tbl=gid('table-appts');if(tbl)tbl.innerHTML=h;
+}
+function filterAppts(f,btn) {
+  _apptFilter=f;
+  document.querySelectorAll('#sec-appointments .st').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderAppointments();
+}
+function apptPatSearch(term) {
+  const el=gid('appt-pat-results');if(!el)return;
+  if(!term||term.length<2){el.style.display='none';return;}
+  const matches=patients.filter(p=>p.name.toLowerCase().includes(term.toLowerCase())).slice(0,6);
+  if(!matches.length){el.style.display='none';return;}
+  el.innerHTML=matches.map(p=>`<div class="drug-item" onclick="selectApptPat('${p.id}','${enc(p.name)}')">${p.name} — ${p.ageVal}${p.ageUnit?p.ageUnit[0]:'y'} / ${p.gender}</div>`).join('');
+  el.style.display='block';
+}
+function selectApptPat(id,nameEnc) {
+  const el=gid('appt-patient');if(el)el.value=dec(nameEnc);
+  const hi=gid('appt-pat-id');if(hi)hi.value=id;
+  const res=gid('appt-pat-results');if(res)res.style.display='none';
+}
+async function saveAppointment() {
+  const patId=gv('appt-pat-id');const date=gv('appt-date');
+  if(!date){toast('Select appointment date.','error');return;}
+  const payload={hospital_id:currentHospital,patient_id:patId||null,
+    doctor_name:gv('appt-doctor')||null,appointment_date:date,
+    appointment_time:gv('appt-time')||null,department:gv('appt-dept')||'General OPD',
+    reason:gv('appt-reason')||null,status:'scheduled'};
+  const {error}=await sb.from('appointments').insert(payload).catch(e=>({error:e}));
+  if(error){toast('Save failed: '+error.message,'error');return;}
+  cModal('appt-modal');renderAppointments();
+  toast('✅ Appointment saved.','success');
+}
+async function updateApptStatus(id,status) {
+  await sb.from('appointments').update({status}).eq('id',id).catch(()=>{});
+  renderAppointments();toast('Updated.','success');
+}
+
+// ══════════════════════════════════════════════
+// BED MANAGEMENT
+// ══════════════════════════════════════════════
+let _beds=[];
+async function renderBeds() {
+  const {data}=await sb.from('beds').select('*,patients(full_name)')
+    .eq('hospital_id',currentHospital).order('ward').order('bed_number').catch(()=>({data:[]}));
+  _beds=data||[];
+  const total=_beds.length;
+  const occupied=_beds.filter(b=>b.status==='occupied').length;
+  const available=_beds.filter(b=>b.status==='available').length;
+  const maintenance=_beds.filter(b=>['cleaning','maintenance'].includes(b.status)).length;
+  const summary=gid('bed-summary');
+  if(summary)summary.innerHTML=`
+    <div class="sc" style="background:linear-gradient(135deg,#0d9488,#0f766e)"><div class="sc-label">Total Beds</div><div class="sc-value">${total}</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#dc2626,#b91c1c)"><div class="sc-label">Occupied</div><div class="sc-value">${occupied}</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#059669,#047857)"><div class="sc-label">Available</div><div class="sc-value">${available}</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#d97706,#b45309)"><div class="sc-label">Cleaning/Maint.</div><div class="sc-value">${maintenance}</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#0891b2,#0e7490)"><div class="sc-label">Occupancy</div><div class="sc-value">${total?Math.round(occupied/total*100):0}%</div></div>`;
+  // Ward filter buttons
+  const wards=[...new Set(_beds.map(b=>b.ward||'General'))];
+  const wf=gid('bed-ward-filter');
+  if(wf)wf.innerHTML='<button class="st active" onclick="renderBedGrid(null,this)">All Wards</button>'+
+    wards.map(w=>`<button class="st" onclick="renderBedGrid('${w}',this)">${w}</button>`).join('');
+  renderBedGrid(null,null);
+}
+function renderBedGrid(ward,btn) {
+  if(btn){document.querySelectorAll('#sec-beds .st').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  const beds=ward?_beds.filter(b=>(b.ward||'General')===ward):_beds;
+  const grid=gid('bed-grid');if(!grid)return;
+  if(!beds.length){grid.innerHTML='<div class="emp" style="grid-column:1/-1;padding:30px;">No beds found. Add beds using the button above.</div>';return;}
+  const colors={available:'#059669',occupied:'#dc2626',cleaning:'#d97706',maintenance:'#6b7280'};
+  const icons={available:'🟢',occupied:'🔴',cleaning:'🟡',maintenance:'⚫'};
+  grid.innerHTML=beds.map(b=>`
+    <div style="background:var(--card);border:2px solid ${colors[b.status]||'#99f6e4'};border-radius:10px;padding:12px;text-align:center;cursor:pointer;" onclick="bedAction('${b.id}','${b.status}')">
+      <div style="font-size:20px;margin-bottom:4px;">${icons[b.status]||'⬜'}</div>
+      <div style="font-weight:900;font-size:16px;color:var(--p);">${b.bed_number}</div>
+      <div style="font-size:11px;color:var(--mu);margin:2px 0;">${b.ward||'General'} · ${b.bed_type||'general'}</div>
+      ${b.status==='occupied'?`<div style="font-size:11px;font-weight:700;color:var(--d);margin-top:4px;">${b.patients?.full_name||'Occupied'}</div>`:''}
+      <div style="font-size:11px;margin-top:4px;"><span class="badge" style="background:${colors[b.status]}20;color:${colors[b.status]};">${b.status}</span></div>
+    </div>`).join('');
+}
+async function bedAction(bedId,status) {
+  const bed=_beds.find(b=>b.id===bedId);if(!bed)return;
+  if(status==='available') {
+    const action=prompt('Bed '+bed.bed_number+' — Set status:\n1=Occupied (admit patient)\n2=Cleaning\n3=Maintenance\nEnter number:');
+    if(!action)return;
+    const map={'1':'occupied','2':'cleaning','3':'maintenance'};
+    await sb.from('beds').update({status:map[action]||status}).eq('id',bedId).catch(()=>{});
+  } else if(status==='occupied') {
+    if(!confirm('Mark bed '+bed.bed_number+' as available (discharge/vacate)?'))return;
+    await sb.from('beds').update({status:'available',patient_id:null,visit_id:null,occupied_since:null}).eq('id',bedId).catch(()=>{});
+  } else {
+    await sb.from('beds').update({status:'available'}).eq('id',bedId).catch(()=>{});
+  }
+  renderBeds();toast('Bed updated.','success');
+}
+async function addBed() {
+  const num=gv('new-bed-num');if(!num){toast('Enter bed number.','error');return;}
+  await sb.from('beds').insert({hospital_id:currentHospital,bed_number:num,ward:gv('new-bed-ward')||'General',bed_type:gv('new-bed-type')||'general',status:'available'}).catch(()=>{});
+  cModal('bed-add-modal');renderBeds();toast('Bed added.','success');
+}
+
+
 // ══════════════════════════════════════════════
 // BOOT / INIT  
 // ══════════════════════════════════════════════
@@ -4296,7 +4548,10 @@ function checkClinicalPrompts(diagText){
         <hr class="dv">
         <!-- FINAL DIAGNOSIS + MANAGEMENT -->
         <label><span class="abbr-hdr">(Dx)</span> <span class="abbr-full">Final / Working Diagnosis</span></label>
-        <input id="cFinalDx" placeholder="Final confirmed diagnosis…">
+        <div style="position:relative;">
+          <input id="cFinalDx" placeholder="Type diagnosis or ICD-10 code…" oninput="showICD10('cFinalDx','icd10-results')">
+          <div id="icd10-results" class="drug-search-results" style="display:none;position:absolute;width:100%;z-index:200;"></div>
+        </div>
         <label><span class="abbr-hdr">(Mx)</span> <span class="abbr-full">Management Plan / Clinical Notes</span></label>
         <textarea id="cNotes" rows="2" placeholder="Management plan, instructions, clinical notes…"></textarea>
         <label><span class="abbr-hdr">(Rec)</span> <span class="abbr-full">Doctor's Recommendations to Patient</span></label>
@@ -4870,6 +5125,67 @@ function checkClinicalPrompts(diagText){
     </div>
   </section>
 
+
+  <!-- ══════════ APPOINTMENTS ══════════ -->
+  <section id="sec-appointments">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <h3 style="margin:0;">📅 Appointments</h3>
+      <button class="bp" onclick="oModal('appt-modal')">+ New Appointment</button>
+    </div>
+    <div class="stabs">
+      <button class="st active" onclick="filterAppts('upcoming',this)">📆 Upcoming</button>
+      <button class="st" onclick="filterAppts('today',this)">Today</button>
+      <button class="st" onclick="filterAppts('all',this)">All</button>
+    </div>
+    <div class="card" style="padding:9px;"><table id="table-appts"></table></div>
+    <div id="appt-modal" class="mo">
+      <div class="mb" style="max-width:520px;">
+        <button class="mc" onclick="cModal('appt-modal')">✕</button>
+        <h3 style="color:var(--p);margin-bottom:12px;">📅 New Appointment</h3>
+        <label>Patient Name *</label><input id="appt-patient" placeholder="Search patient name…" oninput="apptPatSearch(this.value)">
+        <div id="appt-pat-results" style="display:none;" class="drug-search-results"></div>
+        <input type="hidden" id="appt-pat-id">
+        <div class="g2">
+          <div><label>Date *</label><input type="date" id="appt-date"></div>
+          <div><label>Time</label><input type="time" id="appt-time"></div>
+        </div>
+        <div class="g2">
+          <div><label>Doctor / Clinician</label><input id="appt-doctor" placeholder="Assigned doctor"></div>
+          <div><label>Department</label><select id="appt-dept" style="margin:2px 0;"><option>General OPD</option><option>Antenatal</option><option>Dental</option><option>ENT</option><option>Lab</option><option>Pharmacy</option><option>Radiology</option></select></div>
+        </div>
+        <label>Reason / Notes</label><textarea id="appt-reason" rows="2" placeholder="Reason for appointment…"></textarea>
+        <div class="ab"><button class="bp" onclick="saveAppointment()">Save</button><button onclick="cModal('appt-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════ BED MANAGEMENT ══════════ -->
+  <section id="sec-beds">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <h3 style="margin:0;">🛏️ Bed Management</h3>
+      <div style="display:flex;gap:6px;">
+        <button class="bo bsm" onclick="renderBeds()">🔄 Refresh</button>
+        <button class="bp" onclick="oModal('bed-add-modal')">+ Add Bed</button>
+      </div>
+    </div>
+    <div id="bed-summary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px;margin-bottom:12px;"></div>
+    <div id="bed-ward-filter" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;"></div>
+    <div id="bed-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;"></div>
+    <div id="bed-add-modal" class="mo">
+      <div class="mb" style="max-width:480px;">
+        <button class="mc" onclick="cModal('bed-add-modal')">✕</button>
+        <h3 style="color:var(--p);margin-bottom:12px;">🛏️ Add Bed</h3>
+        <div class="g2">
+          <div><label>Bed Number *</label><input id="new-bed-num" placeholder="e.g. W1-01"></div>
+          <div><label>Ward</label><input id="new-bed-ward" placeholder="e.g. General, ICU, Maternity"></div>
+        </div>
+        <div><label>Bed Type</label><select id="new-bed-type"><option>general</option><option>ICU</option><option>maternity</option><option>paediatric</option><option>private</option></select></div>
+        <div class="ab"><button class="bp" onclick="addBed()">Add</button><button onclick="cModal('bed-add-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
+      </div>
+    </div>
+  </section>
+
   </div><!-- /con -->
   </div><!-- /main-wrap -->
 </div><!-- /app -->
@@ -5023,6 +5339,38 @@ function checkClinicalPrompts(diagText){
   <div id="cashier-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px;margin-bottom:12px;"></div>
   <div id="cashier-list"><div class="emp" style="padding:30px;">Loading…</div></div>
 </div>
+
+
+<script>
+// ── PWA SERVICE WORKER REGISTRATION ──
+if('serviceWorker' in navigator) {
+  // Create SW blob for offline capability
+  const swCode = `
+self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+self.addEventListener('fetch', e => {
+  // Network first, fall back to cache for same-origin requests
+  if(e.request.url.startsWith(self.location.origin)) {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(e.request))
+    );
+  }
+});`;
+  const blob = new Blob([swCode], {type:'application/javascript'});
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(()=>{});
+}
+// PWA Install prompt
+let _pwaPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); _pwaPrompt = e;
+  const btn = document.createElement('button');
+  btn.innerHTML = '📲 Install App';
+  btn.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:9998;background:var(--p);color:#fff;border:none;padding:8px 16px;border-radius:20px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2);font-size:13px;';
+  btn.onclick = () => { if(_pwaPrompt){_pwaPrompt.prompt();_pwaPrompt=null;btn.remove();} };
+  document.body.appendChild(btn);
+});
+</script>
 
 </body>
 </html>

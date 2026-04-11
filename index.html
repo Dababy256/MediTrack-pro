@@ -1372,12 +1372,7 @@ async function registerPatient() {
   const dw=gid('dup-warn');if(dw)dw.style.display='none';
 
   // Show success banner
-  const sb_msg=gid('reg-success');
-  if(sb_msg){
-    sb_msg.textContent='✅ '+name+' registered — '+routeMsg[ct];
-    sb_msg.style.display='block';
-    setTimeout(()=>{sb_msg.style.display='none';},5000);
-  }
+  showRegFeedback('✅ '+name+' registered successfully. '+routeMsg[ct], true);
   renderPatients();
 }
 async function createVisitForPatient(patId,name,ct,payer,note) {
@@ -4286,34 +4281,78 @@ async function addBed() {
     </div>
     <!-- Patient registration -->
     <div class="card">
-      <h3 style="margin-bottom:11px;">New Patient Registration</h3>
+      <h3 style="margin-bottom:14px;color:var(--p);display:flex;align-items:center;gap:8px;">
+        <span style="background:var(--p);color:#fff;border-radius:8px;padding:4px 10px;font-size:13px;">NEW</span>
+        Patient Registration
+      </h3>
       <div class="g">
-        <div><label>Full Name *</label><input id="pName" placeholder="Full legal name" oninput="checkDuplicate(this.value)"></div>
-        <div><label>Gender *</label><select id="pGender" onchange="toggleObsGyn()"><option>Male</option><option>Female</option></select></div>
-        <div><label>Age *</label>
-          <div style="display:flex;gap:5px;margin-top:2px;">
-            <input type="number" id="pAgeVal" placeholder="32" min="0" style="width:55%;margin:0;">
-            <select id="pAgeUnit" style="width:45%;margin:0;"><option value="years">Years</option><option value="months">Months</option><option value="days">Days</option></select>
+        <div>
+          <label>Full Name <span style="color:var(--d);">*</span></label>
+          <input id="pName" placeholder="Patient full name" 
+            style="font-size:14px;padding:9px 10px;"
+            oninput="checkDuplicate(this.value)">
+        </div>
+        <div>
+          <label>Gender <span style="color:var(--d);">*</span></label>
+          <select id="pGender" onchange="toggleObsGyn()" style="font-size:14px;padding:9px 10px;">
+            <option>Male</option><option>Female</option>
+          </select>
+        </div>
+        <div>
+          <label>Age <span style="color:var(--d);">*</span></label>
+          <div style="display:flex;gap:6px;margin-top:2px;">
+            <input type="number" id="pAgeVal" placeholder="25" min="0" 
+              style="width:50%;margin:0;font-size:14px;padding:9px 10px;">
+            <select id="pAgeUnit" style="width:50%;margin:0;font-size:13px;">
+              <option value="years">Years</option>
+              <option value="months">Months</option>
+              <option value="days">Days</option>
+            </select>
           </div>
         </div>
-        <div><label>Phone</label><input id="pPhone" placeholder="+256 / +211..."></div>
-        <div><label>Address / Village</label><input id="pAddress" placeholder="Village, District"></div>
-        <div><label>Next of Kin</label><input id="pKinName" placeholder="Name"></div>
-        <div><label>Kin Phone</label><input id="pKinPhone" placeholder="+256..."></div>
-        <div><label>Blood Group</label><select id="pBlood"><option value="">— Unknown —</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+        <div>
+          <label>Phone</label>
+          <input id="pPhone" placeholder="+256 / +211...">
+        </div>
+        <div>
+          <label>Address</label>
+          <input id="pAddress" placeholder="Village, District">
+        </div>
+        <div>
+          <label>Next of Kin</label>
+          <input id="pKinName" placeholder="Name">
+        </div>
+        <div>
+          <label>Kin Phone</label>
+          <input id="pKinPhone" placeholder="+256...">
+        </div>
+        <div>
+          <label>Blood Group</label>
+          <select id="pBlood">
+            <option value="">— Unknown —</option>
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+          </select>
+        </div>
       </div>
-      <!-- Female-only obs/gyn -->
+      <!-- Female obs/gyn -->
       <div id="obs-gyn-reg" style="display:none;margin-top:8px;">
         <div class="g3">
           <div><label>LMP</label><input type="date" id="pLMP"></div>
-          <div><label>Gravida / Para</label><input id="pGravPara" placeholder="e.g. G3P2"></div>
-          <div><label>Marital Status</label><select id="pMarital"><option value="">—</option><option>Single</option><option>Married</option><option>Widowed</option><option>Separated</option></select></div>
+          <div><label>Gravida/Para</label><input id="pGravPara" placeholder="G3P2"></div>
+          <div><label>Marital Status</label>
+            <select id="pMarital">
+              <option value="">—</option><option>Single</option><option>Married</option>
+              <option>Widowed</option><option>Separated</option>
+            </select>
+          </div>
         </div>
       </div>
-      <div class="g2" style="margin-top:8px;">
+      <!-- Consult type + payer -->
+      <div class="g2" style="margin-top:10px;">
         <div>
-          <label>Consultation Type *</label>
-          <select id="pConsultType">
+          <label>Consultation Type <span style="color:var(--d);">*</span></label>
+          <select id="pConsultType" style="font-size:13px;">
             <option value="GENERAL">General Consultation</option>
             <option value="LAB_ONLY">Lab Only</option>
             <option value="RADIOLOGY">Radiology / Imaging</option>
@@ -4324,7 +4363,7 @@ async function addBed() {
         </div>
         <div>
           <label>Payer Type</label>
-          <select id="pPayer">
+          <select id="pPayer" style="font-size:13px;">
             <option value="cash">Cash</option>
             <option value="insurance">Insurance / NHIF</option>
             <option value="ngo">NGO / UN Covered</option>
@@ -4333,11 +4372,28 @@ async function addBed() {
           </select>
         </div>
       </div>
-      <div><label>Notes / Reason for Visit</label><input id="pRegNote" placeholder="Brief reason for visit (optional)"></div>
+      <div style="margin-top:8px;">
+        <label>Notes / Reason for Visit</label>
+        <input id="pRegNote" placeholder="Brief reason for visit (optional)">
+      </div>
       <!-- Duplicate warning -->
-      <div id="dup-warn" style="display:none;margin-top:8px;padding:8px 12px;background:#fef3c7;border:1.5px solid var(--w);border-radius:6px;font-size:12px;"></div>
-      <button onclick="registerPatient()" class="bp" style="margin-top:11px;width:100%;padding:11px;font-size:14px;">✅ Register &amp; Route Patient</button>
-      <div id="reg-success" style="display:none;margin-top:8px;padding:9px 12px;background:#d1fae5;border:1.5px solid #059669;border-radius:7px;color:#065f46;font-weight:700;font-size:13px;"></div>
+      <div id="dup-warn" style="display:none;margin-top:8px;padding:8px 12px;
+        background:#fef3c7;border:1.5px solid var(--w);border-radius:6px;font-size:12px;"></div>
+      <!-- THE BUTTON -->
+      <button id="reg-btn" 
+        style="margin-top:16px;width:100%;padding:14px;font-size:16px;
+               font-weight:800;letter-spacing:.02em;border-radius:10px;
+               background:var(--p);color:#fff;border:none;cursor:pointer;
+               box-shadow:0 4px 12px rgba(13,148,136,.3);
+               transition:all .15s;"
+        onmousedown="this.style.transform='scale(0.98)'"
+        onmouseup="this.style.transform=''"
+        onclick="doRegister()">
+        ✅ Register &amp; Route Patient
+      </button>
+      <!-- Success/error feedback inline -->
+      <div id="reg-feedback" style="display:none;margin-top:10px;padding:10px 14px;
+        border-radius:8px;font-weight:700;font-size:14px;text-align:center;"></div>
     </div>
     <!-- Patient search / list -->
     <div class="card">
@@ -5370,6 +5426,62 @@ window.addEventListener('beforeinstallprompt', e => {
   btn.onclick = () => { if(_pwaPrompt){_pwaPrompt.prompt();_pwaPrompt=null;btn.remove();} };
   document.body.appendChild(btn);
 });
+
+function showRegFeedback(msg, ok) {
+  const fb = document.getElementById('reg-feedback');
+  if (!fb) return;
+  fb.style.display = 'block';
+  fb.style.background = ok ? '#d1fae5' : '#fee2e2';
+  fb.style.border = ok ? '1.5px solid #059669' : '1.5px solid #dc2626';
+  fb.style.color = ok ? '#065f46' : '#991b1b';
+  fb.textContent = msg;
+  if (ok) setTimeout(() => { fb.style.display = 'none'; }, 5000);
+}
+
+function doRegister() {
+  const name = document.getElementById('pName') ? document.getElementById('pName').value.trim() : '';
+  const age  = document.getElementById('pAgeVal') ? document.getElementById('pAgeVal').value.trim() : '';
+  const btn  = document.getElementById('reg-btn');
+
+  // Clear previous feedback
+  const fb = document.getElementById('reg-feedback');
+  if (fb) fb.style.display = 'none';
+
+  // Validate
+  if (!name) {
+    const el = document.getElementById('pName');
+    if (el) { el.style.borderColor = '#dc2626'; el.focus(); }
+    showRegFeedback('⚠️ Please enter the patient full name.', false);
+    return;
+  }
+  if (!age || isNaN(parseInt(age))) {
+    const el = document.getElementById('pAgeVal');
+    if (el) { el.style.borderColor = '#dc2626'; el.focus(); }
+    showRegFeedback('⚠️ Please enter the patient age.', false);
+    return;
+  }
+
+  // Reset borders
+  ['pName','pAgeVal'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.borderColor = '';
+  });
+
+  // Visual: button loading state
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.7'; btn.textContent = '⏳ Registering...'; }
+
+  // Call registerPatient
+  registerPatient()
+    .then(function() {
+      if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.textContent = '✅ Register & Route Patient'; }
+    })
+    .catch(function(err) {
+      if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.textContent = '✅ Register & Route Patient'; }
+      showRegFeedback('❌ Error: ' + (err.message || 'Unknown error'), false);
+      console.error('doRegister error:', err);
+    });
+}
+
 </script>
 
 </body>

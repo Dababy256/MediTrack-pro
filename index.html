@@ -364,12 +364,46 @@ const SB_URL = 'https://jrzziyyhllflobtuvwte.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenppeXlobGxmbG9idHV2d3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NjE2ODMsImV4cCI6MjA4OTEzNzY4M30.3GMwHOt5e5xNCbSn3VR_xFsSqPItBmIkkVwyMCw2ctk';
 // Supabase client — wrapped so any failure doesn't kill the rest of the app
 let sb;
-try { sb = supabase.createClient(SB_URL, SB_KEY); } catch(e) {
+try { 
+  const _rawSb = supabase.createClient(SB_URL, SB_KEY);
+  // Patch: ensure all query results have .catch() 
+  const _origFrom = _rawSb.from.bind(_rawSb);
+  _rawSb.from = function(table) {
+    const q = _origFrom(table);
+    // Override methods that return query results to ensure thenable
+    ['insert','update','delete','upsert'].forEach(method => {
+      if (typeof q[method] === 'function') {
+        const orig = q[method].bind(q);
+        q[method] = function(...args) {
+          const r = orig(...args);
+          if (r && typeof r.then === 'function' && !r.catch) {
+            r.catch = (fn) => r.then(null, fn);
+          }
+          return r;
+        };
+      }
+    });
+    return q;
+  };
+  sb = _rawSb;
+} catch(e) {
   console.warn('Supabase init failed:', e.message);
   // Offline mock - app works in demo mode without Supabase
-  const _p = (v) => Promise.resolve({data:v,error:null});
-  const _q = () => { const o={data:[],error:null}; const c={select:()=>c,insert:(v)=>_p(Array.isArray(v)?v[0]:v),update:()=>_p(null),delete:()=>_p(null),eq:()=>c,neq:()=>c,gte:()=>c,lte:()=>c,in:()=>c,ilike:()=>c,limit:()=>c,order:()=>c,single:()=>_p({id:'local-'+Date.now()}),maybeSingle:()=>_p(null),then:(fn)=>Promise.resolve({data:[],error:null}).then(fn),catch:(fn)=>Promise.resolve({data:[],error:null})}; return c; };
-  sb = { from:()=>_q(), auth:{ getSession:()=>_p({session:null}), signInWithPassword:()=>_p({user:null}), signOut:()=>_p(null) } };
+  const _q = (stored) => {
+    let _val = stored;
+    const c = {
+      select:()=>c, insert:(v)=>{ _val=Array.isArray(v)?v[0]:{id:'local-'+Date.now(),...(v||{})}; return c; },
+      update:(v)=>{ _val=v; return c; }, delete:()=>c,
+      eq:()=>c, neq:()=>c, gte:()=>c, lte:()=>c, in:()=>c, ilike:()=>c,
+      limit:()=>c, order:()=>c, range:()=>c,
+      single:()=>Promise.resolve({data:{id:'local-'+Date.now(),...(_val||{})},error:null}),
+      maybeSingle:()=>Promise.resolve({data:null,error:null}),
+      then:(fn)=>Promise.resolve({data:Array.isArray(_val)?_val:[],error:null}).then(fn),
+      catch:()=>Promise.resolve({data:[],error:null}),
+    };
+    return c;
+  };
+  sb = { from:()=>_q(null), auth:{ getSession:()=>_p({session:null}), signInWithPassword:()=>_p({user:null}), signOut:()=>_p(null) } };
 }
 
 // ── TALI DATA CONSTANTS (East Africa drug/lab/procedure database) ──
@@ -1340,17 +1374,22 @@ async function registerPatient() {
   let savedId=newId;
 
   if(!isDemoMode()){
-    const {data:newPat,error:patErr}=await sb.from('patients').insert({
-      hospital_id:currentHospital, full_name:name,
-      gender:gv('pGender')||'Male', age:parseInt(ageVal)||0,
-      phone:gv('pPhone')||null, address:gv('pAddress')||null,
-      blood_group:gv('pBlood')||null, kin_name:gv('pKinName')||null,
-      kin_phone:gv('pKinPhone')||null, patient_number:patNum,
-      insurance:payer, lmp:gv('pLMP')||null,
-      grav_para:gv('pGravPara')||null, marital_status:gv('pMarital')||null,
-    }).select().single().catch(e=>({data:null,error:e}));
+    let newPat=null, patErr=null;
+    try {
+      const res = await sb.from('patients').insert({
+        hospital_id:currentHospital, full_name:name,
+        gender:gv('pGender')||'Male', age:parseInt(ageVal)||0,
+        phone:gv('pPhone')||null, address:gv('pAddress')||null,
+        blood_group:gv('pBlood')||null, kin_name:gv('pKinName')||null,
+        kin_phone:gv('pKinPhone')||null, patient_number:patNum,
+        insurance:payer, lmp:gv('pLMP')||null,
+        grav_para:gv('pGravPara')||null, marital_status:gv('pMarital')||null,
+      }).select().single();
+      newPat = res.data;
+      patErr = res.error;
+    } catch(e) { patErr = e; }
     if(patErr){toast('Save failed: '+patErr.message,'error');return;}
-    savedId=newPat.id;
+    if(newPat) savedId=newPat.id;
   }
 
   const lp={id:savedId,name,ageVal:parseInt(ageVal),ageUnit:gv('pAgeUnit')||'years',
@@ -1379,11 +1418,15 @@ async function createVisitForPatient(patId,name,ct,payer,note) {
   const vId='V-'+Date.now().toString().slice(-7);
   let sbVisitId = vId;
   if(!isDemoMode()){
-    const { data:newVisitSB } = await sb.from('visits').insert({
-      hospital_id:currentHospital, patient_id:patId,
-      visit_type:'outpatient', status:'active', department:'General OPD',
-      complaint:note||null, payer_type:payer, consultation_type:ct,
-    }).select().single().catch(()=>({data:null}));
+    let newVisitSB = null;
+    try {
+      const vres = await sb.from('visits').insert({
+        hospital_id:currentHospital, patient_id:patId,
+        visit_type:'outpatient', status:'active', department:'General OPD',
+        complaint:note||null, payer_type:payer, consultation_type:ct,
+      }).select().single();
+      newVisitSB = vres.data;
+    } catch(e) { newVisitSB = null; }
     sbVisitId = newVisitSB?.id || vId;
     if(newVisitSB){
       await sb.from('invoices').insert({
@@ -4144,6 +4187,17 @@ async function addBed() {
 }
 
 
+
+// Safe Supabase query wrapper - handles all chain patterns
+async function sbq(queryFn) {
+  try {
+    const result = await queryFn();
+    return result || {data: null, error: null};
+  } catch(e) {
+    console.warn('Supabase query error:', e.message);
+    return {data: null, error: e};
+  }
+}
 // ══════════════════════════════════════════════
 // BOOT / INIT  
 // ══════════════════════════════════════════════

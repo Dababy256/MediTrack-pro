@@ -341,1015 +341,6 @@ html.dark tr:hover td{background:#1a2840;}
   .mb{padding:14px;}
 }
 </style>
-</head>
-
-
-<body>
-
-<!-- LOADING SCREEN -->
-<div id="ls" style="display:none;"><div class="spin"></div><div style="font-size:22px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px;">MediTrack Pro</div><div style="opacity:.7;font-size:12px;margin-top:4px;" id="ls-msg">Starting up…</div><div style="margin-top:16px;background:rgba(255,255,255,.15);border-radius:20px;width:180px;height:4px;overflow:hidden;"><div id="ls-bar" style="background:#fff;height:4px;width:0%;border-radius:20px;transition:width .4s;"></div></div><div style="font-size:10px;opacity:.5;margin-top:24px;">Press any key or tap to continue if stuck</div></div>
-
-<!-- LOGIN PAGE -->
-<div id="lp" style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#134e4a 0%,#0d9488 50%,#14b8a6 100%);">
-  <div class="card" style="width:400px;text-align:center;padding:32px 28px;">
-    <div style="font-size:38px;margin-bottom:8px;">🏥</div>
-    <div style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#0d9488,#14b8a6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:3px;">MediTrack Pro</div>
-    <div style="font-size:12px;color:var(--mu);margin-bottom:24px;font-style:italic;">Hospital Management Information System</div>
-    <label style="text-align:left;">Username</label>
-    <input id="lu" placeholder="Enter username" onkeyup="if(event.key==='Enter')login()" style="margin-bottom:6px;">
-    <label style="text-align:left;">Password</label>
-    <input type="password" id="lp2" placeholder="Enter password" onkeyup="if(event.key==='Enter')login()" style="margin-bottom:12px;">
-    <button id="signin-btn" class="bp" style="width:100%;padding:11px;font-size:14px;">Sign In →</button>
-    <div id="le" style="color:var(--d);font-size:12px;margin-top:8px;min-height:18px;"></div>
-    <details style="margin-top:12px;background:#f8fafc;border:1px solid var(--bd);border-radius:6px;padding:8px;text-align:left;">
-      <summary style="font-size:12px;cursor:pointer;font-weight:700;">Demo Credentials</summary>
-      <div style="font-size:11px;margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-        <div style="background:#eff6ff;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #bfdbfe;" onclick="document.getElementById('lu').value='admin';document.getElementById('lp2').value='admin123'"><b>admin</b><br><span style="color:#1e40af;">admin / admin123</span></div>
-        <div style="background:#f0fdf4;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #bbf7d0;" onclick="document.getElementById('lu').value='doctor';document.getElementById('lp2').value='doctor123'"><b>doctor</b><br><span style="color:#065f46;">doctor / doctor123</span></div>
-        <div style="background:#fef3c7;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fde68a;" onclick="document.getElementById('lu').value='nurse';document.getElementById('lp2').value='nurse123'"><b>nurse</b><br><span style="color:#92400e;">nurse / nurse123</span></div>
-        <div style="background:#fce7f3;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fbcfe8;" onclick="document.getElementById('lu').value='lab';document.getElementById('lp2').value='lab123'"><b>lab</b><br><span style="color:#9d174d;">lab / lab123</span></div>
-        <div style="background:#ede9fe;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #ddd6fe;" onclick="document.getElementById('lu').value='pharmacy';document.getElementById('lp2').value='pharm123'"><b>pharmacy</b><br><span style="color:#5b21b6;">pharmacy / pharm123</span></div>
-        <div style="background:#fff7ed;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fed7aa;" onclick="document.getElementById('lu').value='billing';document.getElementById('lp2').value='billing123'"><b>billing</b><br><span style="color:#92400e;">billing / billing123</span></div>
-      </div>
-      <p style="font-size:10px;color:#94a3b8;margin-top:5px;text-align:center;">👆 Click any box to auto-fill</p>
-      </details>
-  </div>
-</div>
-
-<script>
-// Wire login button immediately — no dependency on app JS loading
-(function() {
-  function doLogin() {
-    var u = (document.getElementById('lu')||{}).value || '';
-    var pw = (document.getElementById('lp2')||{}).value || '';
-    var le = document.getElementById('le');
-    if (!u || !pw) { if(le) le.textContent='Enter username and password.'; return; }
-    // Try calling the main login() if it loaded
-    if (typeof login === 'function') { login(); return; }
-    // Fallback: if main JS hasn't loaded yet, show error
-    if(le) le.textContent = 'App still loading — please wait a moment and try again.';
-  }
-  // Wire button
-  var btn = document.getElementById('signin-btn');
-  if (btn) btn.addEventListener('click', doLogin);
-  // Wire Enter key
-  ['lu','lp2'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.addEventListener('keyup', function(e) { if(e.key==='Enter') doLogin(); });
-  });
-})();
-</script>
-
-<!-- MAIN APP -->
-<div id="app" style="display:none;">
-  <!-- SIDEBAR -->
-  <aside id="sidebar" class="no-print">
-    <div class="sb-logo">
-      <div class="sb-logo-icon">🏥</div>
-      <div class="sb-title" style="font-size:15px;letter-spacing:.02em;">MediTrack<br><span style="font-size:10px;opacity:.75;letter-spacing:.1em;font-weight:400;">PRO · HIMS</span></div>
-    </div>
-    <div style="padding:4px 8px 2px;">
-        <input class="global-search-input" id="global-search-input" 
-          placeholder="🔍 Search patient…" 
-          oninput="globalSearch(this.value)" 
-          onblur="setTimeout(()=>{hideGlobalSearch();},200)" 
-          autocomplete="off" style="border-radius:8px;font-size:12px;">
-        <div class="global-search-results" id="global-search-results"></div>
-      </div>
-    <nav id="dn"></nav>
-    <div class="sb-footer">
-      <select id="facility-switcher" onchange="switchFacility(this.value)" title="Switch facility" style="display:none;">
-        <option value="">iCURE Medical Centre</option>
-      </select>
-      <div class="sb-footer-user" id="sb-user">Loading...</div>
-      <div class="sb-footer-btns">
-        <button class="voice-badge" id="voice-badge" onclick="toggleVoice()" title="Voice alerts">🔊</button>
-        <button class="voice-badge" id="dark-mode-btn" onclick="toggleDarkMode()" title="Dark mode">🌙</button>
-        <span id="sb-status" class="sb-status">●  Live</span>
-      </div>
-      <button onclick="doLogout()" class="sb-logout">🔓 Logout</button>
-    </div>
-  </aside>
-  <button id="sb-toggle" onclick="document.getElementById('sidebar').classList.toggle('sb-open')">☰</button>
-
-  <!-- CONTENT -->
-  <div id="main-wrap">
-  <div class="con">
-
-  <!-- ══════════ DIRECTOR DASHBOARD ══════════ -->
-  <section id="sec-director">
-    <!-- 8 KPI cards -->
-    <div class="g4" style="margin-bottom:14px;" id="dash-kpis">
-      <div class="sc" style="background:var(--p)"><div class="sc-label">Today Revenue</div><div class="sc-value" id="d-rev">$0</div><div class="sc-icon">💰</div></div>
-      <div class="sc" style="background:#dc2626"><div class="sc-label">Today Expenses</div><div class="sc-value" id="d-exp">$0</div><div class="sc-icon">📉</div></div>
-      <div class="sc" style="background:var(--a)"><div class="sc-label">Today Patients</div><div class="sc-value" id="d-pats">0</div><div class="sc-icon">👥</div></div>
-      <div class="sc" style="background:var(--w)"><div class="sc-label">Outstanding Debt</div><div class="sc-value" id="d-debt">$0</div><div class="sc-icon">⚠️</div></div>
-      <div class="sc" style="background:var(--pu)"><div class="sc-label">Stock Value</div><div class="sc-value" id="d-stock-val">$0</div><div class="sc-icon">📦</div></div>
-      <div class="sc" style="background:#0f766e"><div class="sc-label">Admitted</div><div class="sc-value" id="d-adm">0</div><div class="sc-icon">🛏️</div></div>
-      <div class="sc" style="background:#b45309"><div class="sc-label">Lab Tests Today</div><div class="sc-value" id="d-labs">0</div><div class="sc-icon">🔬</div></div>
-      <div class="sc" style="background:#6d28d9"><div class="sc-label">Discharged Today</div><div class="sc-value" id="d-disc">0</div><div class="sc-icon">✅</div></div>
-    </div>
-    <!-- Charts row 1 -->
-    <div class="g2">
-      <div class="card"><h4 style="margin-bottom:8px;font-size:13px">📈 Revenue vs Expenses — Last 7 Days</h4><div class="chart-box"><canvas id="ch-revexp"></canvas></div></div>
-      <div class="card"><h4 style="margin-bottom:8px;font-size:13px">👥 Patient Visits This Month</h4><div class="chart-box"><canvas id="ch-visits"></canvas></div></div>
-    </div>
-    <!-- Charts row 2 -->
-    <div class="g2">
-      <div class="card"><h4 style="margin-bottom:8px;font-size:13px">💳 Billing Status</h4>
-        <div style="display:flex;align-items:center;gap:14px;">
-          <div style="width:150px;height:150px;flex-shrink:0;"><canvas id="ch-debt"></canvas></div>
-          <div id="debt-legend" style="font-size:12px;flex:1;"></div>
-        </div>
-      </div>
-      <div class="card"><h4 style="margin-bottom:8px;font-size:13px">🔬 Top Lab Tests This Month</h4><div class="chart-box"><canvas id="ch-labs"></canvas></div></div>
-    </div>
-    <!-- Revenue by department -->
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-        <h4 style="margin:0;font-size:13px;">💹 Revenue by Department</h4>
-        <input type="month" id="dept-rev-month" style="width:auto;margin:0;font-size:12px;" onchange="buildDeptRevChart()">
-      </div>
-      <div class="g2">
-        <div style="position:relative;height:200px;"><canvas id="ch-dept-rev"></canvas></div>
-        <table id="dept-rev-table" style="font-size:12px;align-self:start;"></table>
-      </div>
-    </div>
-    <!-- Low stock alerts + stock value by category -->
-    <div class="g2">
-      <div class="card"><h4 style="margin-bottom:8px;font-size:13px;">📦 Stock Value by Category</h4><table id="d-stockval"></table></div>
-      <div class="card"><h4 style="margin-bottom:8px;font-size:13px;">⚠️ Low Stock / Near Expiry</h4><table id="d-lowstock"></table></div>
-    </div>
-  </section>
-
-  <!-- ══════════ RECEPTION ══════════ -->
-  <section id="sec-reception">
-    <!-- Follow-ups due today -->
-    <div id="followup-panel" class="card" style="margin-bottom:12px;border-left:4px solid var(--w);display:none;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <h4 style="margin:0;color:var(--w);">📅 Follow-ups Due Today</h4>
-        <span id="followup-count" class="badge bpa"></span>
-      </div>
-      <table id="followup-table" style="font-size:13px;"></table>
-    </div>
-    <!-- Patient registration -->
-    <div class="card">
-      <h3 style="margin-bottom:11px;">New Patient Registration</h3>
-      <div class="g">
-        <div><label>Full Name *</label><input id="pName" placeholder="Full legal name" oninput="checkDuplicate(this.value)"></div>
-        <div><label>Gender *</label><select id="pGender" onchange="toggleObsGyn()"><option>Male</option><option>Female</option></select></div>
-        <div><label>Age *</label>
-          <div style="display:flex;gap:5px;margin-top:2px;">
-            <input type="number" id="pAgeVal" placeholder="32" min="0" style="width:55%;margin:0;">
-            <select id="pAgeUnit" style="width:45%;margin:0;"><option value="years">Years</option><option value="months">Months</option><option value="days">Days</option></select>
-          </div>
-        </div>
-        <div><label>Phone</label><input id="pPhone" placeholder="+256 / +211..."></div>
-        <div><label>Address / Village</label><input id="pAddress" placeholder="Village, District"></div>
-        <div><label>Next of Kin</label><input id="pKinName" placeholder="Name"></div>
-        <div><label>Kin Phone</label><input id="pKinPhone" placeholder="+256..."></div>
-        <div><label>Blood Group</label><select id="pBlood"><option value="">— Unknown —</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
-      </div>
-      <!-- Female-only obs/gyn -->
-      <div id="obs-gyn-reg" style="display:none;margin-top:8px;">
-        <div class="g3">
-          <div><label>LMP</label><input type="date" id="pLMP"></div>
-          <div><label>Gravida / Para</label><input id="pGravPara" placeholder="e.g. G3P2"></div>
-          <div><label>Marital Status</label><select id="pMarital"><option value="">—</option><option>Single</option><option>Married</option><option>Widowed</option><option>Separated</option></select></div>
-        </div>
-      </div>
-      <div class="g2" style="margin-top:8px;">
-        <div>
-          <label>Consultation Type *</label>
-          <select id="pConsultType">
-            <option value="GENERAL">General Consultation</option>
-            <option value="LAB_ONLY">Lab Only</option>
-            <option value="RADIOLOGY">Radiology / Imaging</option>
-            <option value="DENTAL">Special — Dental</option>
-            <option value="ENT">Special — ENT</option>
-            <option value="OTHER_SPECIAL">Special — Other</option>
-          </select>
-        </div>
-        <div>
-          <label>Payer Type</label>
-          <select id="pPayer">
-            <option value="cash">Cash</option>
-            <option value="insurance">Insurance / NHIF</option>
-            <option value="ngo">NGO / UN Covered</option>
-            <option value="free">Free / Waived</option>
-            <option value="credit">Credit / Debtor</option>
-          </select>
-        </div>
-      </div>
-      <div><label>Notes / Reason for Visit</label><input id="pRegNote" placeholder="Brief reason for visit (optional)"></div>
-      <!-- Duplicate warning -->
-      <div id="dup-warn" style="display:none;margin-top:8px;padding:8px 12px;background:#fef3c7;border:1.5px solid var(--w);border-radius:6px;font-size:12px;"></div>
-      <button onclick="registerPatient()" class="bp" style="margin-top:11px;">Register &amp; Route Patient</button>
-    </div>
-    <!-- Patient search / list -->
-    <div class="card">
-      <h4 style="margin-bottom:8px;">Today's Patients &amp; All Records</h4>
-      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-        <input id="patSearch" placeholder="Search by name, phone, number…" onkeyup="renderPatients()" style="flex:1;min-width:200px;margin:0;">
-        <button class="bp bsm" onclick="renderPatients()">🔍 Search</button>
-      </div>
-      <table id="table-pats"></table>
-    </div>
-  </section>
-
-  <!-- ══════════ NURSE ══════════ -->
-  <section id="sec-nurse">
-    <div class="stabs">
-      <button class="st active" onclick="swNurse('triage',this)">🩺 Triage Queue</button>
-      <button class="st" onclick="swNurse('treatment',this)">💉 Treatment Chart</button>
-      <button class="st" onclick="swNurse('procedures',this)">🔪 Procedures</button>
-      <button class="st" onclick="swNurse('reg',this)">➕ Register Patient</button>
-    </div>
-
-    <!-- TRIAGE QUEUE -->
-    <div id="nurse-triage">
-      <div class="card"><h4 style="margin-bottom:8px;">Patients Awaiting Triage</h4><table id="table-triage"></table></div>
-      <div id="triage-form" class="card" style="display:none;">
-        <h4 id="triage-target" style="color:var(--p);margin-bottom:9px;"></h4>
-        <div class="g">
-          <div><label>BP (mmHg)</label><input id="vBP" placeholder="120/80"></div>
-          <div><label>Temp (°C)</label><input type="number" step="0.1" id="vTemp" placeholder="37.2"></div>
-          <div><label>Weight (kg)</label><input type="number" id="vWeight" placeholder="70" onchange="calcBMI()"></div>
-          <div><label>Height (cm)</label><input type="number" id="vHeight" placeholder="170" onchange="calcBMI()"></div>
-          <div><label>Pulse (bpm)</label><input type="number" id="vPulse" placeholder="78"></div>
-          <div><label>SpO2 (%)</label><input type="number" id="vSpO2" placeholder="98"></div>
-          <div><label>Resp Rate (/min)</label><input type="number" id="vRR" placeholder="16"></div>
-          <div>
-            <label>BMI <span id="bmi-val" style="font-size:12px;font-weight:400;"></span></label>
-            <div id="bmi-display" style="padding:7px;background:var(--lt);border-radius:5px;min-height:32px;font-size:13px;color:var(--mu);margin-top:2px;">Enter weight and height</div>
-          </div>
-        </div>
-        <div><label>Nurse Notes</label><textarea id="vNurseNotes" rows="2" placeholder="Observations, pain scale, history summary…"></textarea></div>
-        <div class="ab">
-          <button onclick="submitTriage()" class="bp">✅ Send to Doctor Queue</button>
-          <button onclick="document.getElementById('triage-form').style.display='none'" style="background:#e2e8f0;color:#475569;">Cancel</button>
-        </div>
-      </div>
-      <!-- Vitals trend after recording -->
-      <div id="nurse-vitals-trend-wrap" class="vitals-trend-box card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <h5 style="margin:0;color:var(--p);font-size:12px;">📈 Vitals Trend — Previous Visits</h5>
-          <span id="nurse-vitals-trend-label" style="font-size:11px;color:var(--mu);"></span>
-        </div>
-        <div class="vt-btns">
-          <button class="vt-btn active" id="nvt-bp" onclick="switchNurseVitalChart('bp',this)">BP</button>
-          <button class="vt-btn" id="nvt-temp" onclick="switchNurseVitalChart('temp',this)">Temp</button>
-          <button class="vt-btn" id="nvt-weight" onclick="switchNurseVitalChart('weight',this)">Weight</button>
-          <button class="vt-btn" id="nvt-pulse" onclick="switchNurseVitalChart('pulse',this)">Pulse</button>
-        </div>
-        <div style="position:relative;height:160px;"><canvas id="nurse-vitals-chart"></canvas></div>
-      </div>
-    </div>
-
-    <!-- TREATMENT CHART (MAR) -->
-    <div id="nurse-treatment" style="display:none;">
-      <div class="card"><h4 style="margin-bottom:8px;">Active Patients — Treatment Chart (MAR)</h4><table id="table-treat-pats"></table></div>
-      <div id="treatment-detail" class="card" style="display:none;">
-        <h4 id="treat-name" style="color:var(--p);margin-bottom:8px;"></h4>
-        <div id="treat-orders" style="background:var(--lt);border-radius:6px;padding:9px;margin-bottom:10px;font-size:13px;"></div>
-        <div class="g">
-          <div><label>Drug / Treatment</label><input id="tDrug" placeholder="e.g. Ampicillin 500mg"></div>
-          <div><label>Dose</label><input id="tDose" placeholder="e.g. 1g IV"></div>
-          <div><label>Route</label><select id="tRoute"><option>IV</option><option>IM</option><option>PO</option><option>SC</option><option>PR</option><option>SL</option><option>Topical</option><option>Inhalation</option></select></div>
-          <div><label>Time Given</label><input type="time" id="tTime"></div>
-        </div>
-        <label>Observations / Patient Response</label>
-        <textarea id="tNotes" rows="2" placeholder="Patient response, adverse reactions, observations…"></textarea>
-        <div class="ab">
-          <button onclick="addTreatEntry()" class="ba">➕ Add Entry</button>
-          <button onclick="document.getElementById('treatment-detail').style.display='none'" style="background:#e2e8f0;color:#475569;">Close</button>
-        </div>
-        <div id="existing-treats" style="margin-top:12px;"></div>
-      </div>
-    </div>
-
-    <!-- PROCEDURES PANEL -->
-    <div id="nurse-procedures" style="display:none;">
-      <div class="card" style="margin-bottom:10px;">
-        <h4 style="margin-bottom:8px;">🔪 Ordered Procedures — Active Patients</h4>
-        <table id="table-proc-pats"></table>
-      </div>
-      <div id="procedure-detail" class="card" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
-          <h4 id="proc-patient-name" style="margin:0;color:var(--p);"></h4>
-          <button onclick="document.getElementById('procedure-detail').style.display='none'" style="background:#e2e8f0;color:#475569;font-size:12px;padding:4px 10px;border-radius:5px;border:none;cursor:pointer;">✕ Close</button>
-        </div>
-        <div id="proc-existing"></div>
-      </div>
-    </div>
-
-    <!-- REGISTER (inline) -->
-    <div id="nurse-reg" style="display:none;"></div>
-  </section>
-
-  <!-- ══════════ DOCTOR ══════════ -->
-  <section id="sec-doctor">
-    <div class="stabs">
-      <button class="st active" onclick="swDoc('queue',this)">📋 Queue</button>
-      <button class="st" onclick="swDoc('allpats',this)">📁 All Patients</button>
-      <button class="st" onclick="swDoc('reg',this)">➕ Register</button>
-    </div>
-    <div id="doc-queue">
-      <div id="queue-list-card" class="card"><table id="table-cons"></table></div>
-      <!-- CONSULTATION FORM — opens inline below queue -->
-      <div id="cons-form" class="card" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:11px;">
-          <div>
-            <h3 id="c-name" style="color:var(--p);margin:0;"></h3>
-            <span id="c-type-badge" style="margin-top:3px;display:inline-block;"></span>
-          </div>
-          <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
-            <span id="c-date" style="font-size:12px;color:var(--mu);"></span>
-            <span id="c-pay"></span>
-            <button onclick="closeConsForm()" style="background:#e2e8f0;color:#475569;font-size:12px;padding:4px 10px;border-radius:5px;border:none;cursor:pointer;">✕ Close</button>
-          </div>
-        </div>
-        <!-- Previous visit history strip -->
-        <div id="c-hist" style="background:var(--lt);border-left:3px solid var(--s);padding:8px 12px;border-radius:5px;margin-bottom:10px;font-size:12px;max-height:90px;overflow-y:auto;"></div>
-        <!-- Allergy banner -->
-        <div id="allergy-banner"></div>
-        <!-- Vitals summary -->
-        <div id="c-vitals" style="display:none;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:6px;padding:9px;margin-bottom:8px;font-size:13px;"></div>
-        <!-- Vitals trend chart -->
-        <div id="vitals-trend-wrap" class="vitals-trend-box">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <span style="font-size:11px;font-weight:700;color:var(--p);text-transform:uppercase;">📈 Vitals Trend</span>
-            <div class="vt-btns">
-              <button class="vt-btn active" onclick="switchVitalChart('bp',this)">BP</button>
-              <button class="vt-btn" onclick="switchVitalChart('temp',this)">Temp</button>
-              <button class="vt-btn" onclick="switchVitalChart('weight',this)">Weight</button>
-              <button class="vt-btn" onclick="switchVitalChart('pulse',this)">Pulse</button>
-            </div>
-          </div>
-          <div style="position:relative;height:150px;"><canvas id="vitals-trend-chart"></canvas></div>
-        </div>
-        <!-- Lab results panel -->
-        <div id="lab-res-panel" style="display:none;margin-bottom:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <h4 style="color:var(--a);margin:0;font-size:13px;">🔬 Lab Results Ready</h4>
-            <button onclick="printLabResults()" class="bsm bo">🖨 Print</button>
-          </div>
-          <div id="lab-res-display"></div>
-        </div>
-        <!-- Radiology results panel -->
-        <div id="rad-res-panel" style="display:none;margin-bottom:12px;">
-          <h4 style="color:var(--pu);margin-bottom:8px;font-size:13px;">📡 Radiology Results</h4>
-          <div id="rad-res-display"></div>
-        </div>
-        <!-- ── CLINICAL HISTORY (collapsible accordions) ── -->
-        <p style="font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;margin-bottom:7px;">Clinical History &amp; Examination</p>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PC)</span> <span class="abbr-full">Presenting Complaint</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hPC" rows="2" placeholder="Chief complaint in patient's own words, duration…"></textarea></div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(HPC)</span> <span class="abbr-full">History of Presenting Complaint</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hHPC" rows="3" placeholder="Onset, character, severity, duration, modifying factors, associated symptoms…"></textarea></div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PM/PSH)</span> <span class="abbr-full">Past Medical &amp; Surgical History</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hPMH" rows="3" placeholder="Known conditions, previous operations, hospitalisations, TB, HIV status…"></textarea></div></div>
-        <div class="cb" id="ogBlock" style="display:none;"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(O/G)</span> <span class="abbr-full">Obstetric &amp; Gynaecological History</span></span><span class="cr">▼</span></div><div class="cbody"><div class="g2"><div><label>LMP</label><input id="hLMP" type="date"></div><div><label>Gravida / Para</label><input id="hGP" placeholder="e.g. G3P2+1"></div></div><textarea id="hOG" rows="2" placeholder="Contraception, antenatal, delivery history…" style="margin-top:6px;"></textarea></div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span>👨‍👩‍👧 Family &amp; Social History</span><span class="cr">▼</span></div><div class="cbody"><textarea id="hFSH" rows="2" placeholder="Family diseases, alcohol, tobacco, occupation, housing…"></textarea></div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(DH/A)</span> <span class="abbr-full">Drug History &amp; Allergies</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hDrug" rows="2" placeholder="Current medications, doses, OTC, traditional…"></textarea><label>Known Allergies</label><input id="hAllergy" placeholder="e.g. Penicillin — rash. None known."></div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PE)</span> <span class="abbr-full">Physical Examination</span></span><span class="cr">▼</span></div><div class="cbody">
-          <div class="g2">
-            <div><label>General Appearance</label><input id="hPEGeneral" placeholder="Alert, oriented, not in distress…"></div>
-            <div><label>Head &amp; Neck</label><input id="hPEHead" placeholder="No lymphadenopathy, JVP normal…"></div>
-            <div><label>Chest / Respiratory</label><input id="hPEChest" placeholder="Clear to auscultation bilaterally…"></div>
-            <div><label>Cardiovascular</label><input id="hPECVS" placeholder="Regular rate, no murmurs…"></div>
-            <div><label>Abdomen</label><input id="hPEAbdomen" placeholder="Soft, non-tender, no organomegaly…"></div>
-            <div><label>CNS / Neurological</label><input id="hPECNS" placeholder="GCS 15, pupils equal and reactive…"></div>
-            <div><label>Extremities / MSK</label><input id="hPEExtremities" placeholder="No oedema, full range of motion…"></div>
-            <div><label>Skin</label><input id="hPESkin" placeholder="No rash, jaundice, or cyanosis…"></div>
-          </div>
-          <label>Other Examination Findings</label>
-          <textarea id="hPEOther" rows="2" placeholder="Any additional examination findings…"></textarea>
-        </div></div>
-        <hr class="dv">
-        <!-- DIFFERENTIAL DIAGNOSIS -->
-        <label><span class="abbr-hdr">(Diff Dx)</span> <span class="abbr-full">Differential Diagnosis</span></label>
-        <textarea id="cDiffDx" rows="2" placeholder="Working differentials in order of likelihood…"></textarea>
-        <hr class="dv">
-        <!-- LAB ORDERS (multi-select chips) -->
-        <div id="lab-order-sec">
-          <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;"><span class="abbr-hdr">(Ix)</span> <span class="abbr-full" style="text-transform:uppercase;">Investigations — Lab Orders</span></p>
-          <input id="lab-search" placeholder="Search lab tests…" onkeyup="filterLabTests()" style="margin-bottom:5px;">
-          <div class="lab-check-list" id="lab-check-list"></div>
-          <div id="selected-labs-display" style="margin-top:6px;font-size:12px;color:var(--mu);"></div>
-        </div>
-        <hr class="dv">
-        <!-- RADIOLOGY ORDERS -->
-        <div>
-          <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;"><span class="abbr-hdr">(Rad)</span> <span class="abbr-full" style="text-transform:uppercase;">Radiology / Imaging</span></p>
-          <div id="rad-orders-list"></div>
-          <button class="badd" onclick="addRadRow()">+ Add Imaging</button>
-        </div>
-        <hr class="dv">
-        <!-- NURSING PROCEDURES -->
-        <div id="proc-order-sec">
-          <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;"><span class="abbr-hdr">(Pr)</span> <span class="abbr-full" style="text-transform:uppercase;">Nursing &amp; Surgical Procedures</span></p>
-          <div id="proc-orders-list"></div>
-          <div style="display:flex;gap:6px;align-items:center;margin-top:5px;flex-wrap:wrap;">
-            <select id="proc-order-select" style="flex:1;min-width:200px;margin:0;font-size:13px;"><option value="">-- Select procedure --</option></select>
-            <button class="badd" onclick="addProcOrder()">+ Order</button>
-          </div>
-        </div>
-        <hr class="dv">
-        <!-- FINAL DIAGNOSIS + MANAGEMENT -->
-        <label><span class="abbr-hdr">(Dx)</span> <span class="abbr-full">Final / Working Diagnosis</span></label>
-        <input id="cFinalDx" placeholder="Final confirmed diagnosis…">
-        <label><span class="abbr-hdr">(Mx)</span> <span class="abbr-full">Management Plan / Clinical Notes</span></label>
-        <textarea id="cNotes" rows="2" placeholder="Management plan, instructions, clinical notes…"></textarea>
-        <label><span class="abbr-hdr">(Rec)</span> <span class="abbr-full">Doctor's Recommendations to Patient</span></label>
-        <textarea id="cRecommendations" rows="2" placeholder="Patient education, lifestyle advice, dietary instructions, warning signs to watch for…"></textarea>
-        <hr class="dv">
-        <!-- PRESCRIPTIONS (formulation-aware Rx) -->
-        <div>
-          <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;"><span class="abbr-hdr">(Rx)</span> <span class="abbr-full" style="text-transform:uppercase;">Prescription Orders</span></p>
-          <input id="med-search" placeholder="Search drug by name, class or formulation…" onkeyup="filterMeds()" style="margin-bottom:5px;">
-          <div class="drug-search-results" id="drug-results" style="display:none;"></div>
-          <div id="med-orders-list"></div>
-        </div>
-        <!-- Order Summary -->
-        <div class="osum"><h5>📋 Current Visit Bill</h5><div id="order-sum-body"><div class="emp" style="padding:8px;">No orders yet.</div></div></div>
-        <!-- Follow-up return date -->
-        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:7px;padding:10px 13px;margin-bottom:8px;">
-          <label style="margin:0 0 5px;color:var(--p);">📅 Follow-up Return Date</label>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input type="date" id="c-return-date" style="width:auto;margin:0;font-size:13px;">
-            <input id="c-return-note" placeholder="Instructions for patient (optional)" style="flex:1;margin:0;font-size:13px;min-width:180px;">
-          </div>
-        </div>
-        <!-- Consultation fee -->
-        <div class="g2">
-          <div><label>Consultation Fee ($)</label><input type="number" id="c-consult-fee" value="10" step="0.01" min="0"></div>
-          <div><label>Consult Type (confirm)</label>
-            <select id="c-consult-type">
-              <option value="GENERAL">General</option><option value="LAB_ONLY">Lab Only</option>
-              <option value="RADIOLOGY">Radiology</option><option value="DENTAL">Dental</option>
-              <option value="ENT">ENT</option><option value="OTHER_SPECIAL">Other Special</option>
-            </select>
-          </div>
-        </div>
-        <!-- Actions -->
-        <div class="ab" id="cons-actions">
-          <button onclick="saveConsultation()" class="bp">💾 Save &amp; Close Consultation</button>
-          <button onclick="closeConsForm()" style="background:#e2e8f0;color:#475569;">Cancel</button>
-        </div>
-      </div><!-- end cons-form -->
-    </div><!-- end doc-queue -->
-
-    <!-- ALL PATIENTS TAB -->
-    <div id="doc-allpats" style="display:none;">
-      <div class="card">
-        <h4 style="margin-bottom:8px;">All Patients — Cumulative Records</h4>
-        <div class="g2" style="margin-bottom:8px;">
-          <input id="allpat-search" placeholder="Search by name…" onkeyup="renderAllPats()" style="margin:0;">
-          <input type="number" id="allpat-age" placeholder="Filter by age…" onkeyup="renderAllPats()" style="margin:0;">
-        </div>
-        <table id="table-allpats"></table>
-      </div>
-    </div>
-    <div id="doc-reg" style="display:none;"></div>
-  </section>
-
-  <!-- ══════════ BILLING ══════════ -->
-  <section id="sec-billing">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;flex-wrap:wrap;gap:6px;">
-      <h3>Billing &amp; Payments</h3>
-      <div style="display:flex;gap:6px;">
-        <button onclick="exportBillingCSV()" class="bo bsm">⬇ Export CSV</button>
-      </div>
-    </div>
-    <div class="stabs">
-      <button class="st active" onclick="fBill('all',this)">All</button>
-      <button class="st" onclick="fBill('PENDING',this)">Unpaid</button>
-      <button class="st" onclick="fBill('PARTIAL',this)">Partial</button>
-      <button class="st" onclick="fBill('PAID',this)">Paid</button>
-    </div>
-    <div class="card" style="padding:9px;"><table id="table-bill"></table></div>
-    <!-- Pay modal -->
-    <div id="pay-modal" class="mo">
-      <div class="mb" style="max-width:560px;">
-        <button class="mc" onclick="cModal('pay-modal')">✕</button>
-        <h3 id="pay-title" style="color:var(--p);margin-bottom:11px;"></h3>
-        <details open><summary style="margin-bottom:7px;cursor:pointer;font-size:13px;font-weight:700;">Bill Items</summary><div id="pay-breakdown"></div></details>
-        <hr class="dv">
-        <div class="g2" style="margin-bottom:9px;">
-          <div><label>Discount ($)</label><input type="number" id="discAmt" placeholder="0.00" min="0" step="0.01" onchange="updPayBal()"></div>
-          <div><label>Discount Reason</label><input id="discReason" placeholder="e.g. Staff, Indigent, Waiver…"></div>
-        </div>
-        <div id="pay-bal" style="font-size:13px;font-weight:700;margin-bottom:11px;padding:9px;background:var(--lt);border-radius:6px;"></div>
-        <label>Payment Method</label>
-        <select id="payMethod"><option>Cash</option><option>Mobile Money (MTN)</option><option>Mobile Money (Airtel)</option><option>Insurance</option><option>Bank Transfer</option><option>Cheque</option></select>
-        <label>Amount Paying ($)</label>
-        <input type="number" id="payAmt" placeholder="Amount" step="0.01" min="0.01" onchange="updPayBal()">
-        <div class="ab"><button onclick="recPayment()" class="ba">✅ Record Payment</button><button onclick="cModal('pay-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════ LAB ══════════ -->
-  <section id="sec-lab">
-    <div class="stabs">
-      <button class="st active" onclick="swLab('pending',this)">🔬 Pending</button>
-      <button class="st" onclick="swLab('completed',this)">✅ Completed</button>
-      <button class="st" onclick="swLab('history',this)">📋 All History</button>
-      <button class="st" onclick="swLab('summary',this)">📊 Summary</button>
-    </div>
-    <div class="card"><table id="table-lab"></table></div>
-    <div id="lab-entry" class="card" style="display:none;">
-      <h4 id="lab-hdr" style="color:var(--p);margin-bottom:9px;"></h4>
-      <div id="lab-tests-entry"></div>
-      <div class="ab">
-        <button onclick="updateLab()" class="bp">📤 Release Results to Doctor</button>
-        <button onclick="document.getElementById('lab-entry').style.display='none'" style="background:#e2e8f0;color:#475569;">Cancel</button>
-      </div>
-    </div>
-    <div id="lab-summary-panel" style="display:none;">
-      <div class="g2">
-        <div class="card"><h4 style="margin-bottom:8px;font-size:13px;">📊 Lab Test Statistics (This Month)</h4><table id="lab-stats-table"></table></div>
-        <div class="card"><h4 style="margin-bottom:8px;font-size:13px;">🏆 Most Requested Tests</h4><div class="chart-box"><canvas id="ch-lab-stats"></canvas></div></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════ PHARMACY ══════════ -->
-  <section id="sec-pharmacy">
-    <div class="stabs">
-      <button class="st active" onclick="swPharm('pending',this)">💊 Pending Dispense</button>
-      <button class="st" onclick="swPharm('dispensed',this)">✅ Dispensed History</button>
-    </div>
-    <div class="card"><table id="table-pharm"></table></div>
-  </section>
-
-  <!-- ══════════ RADIOLOGY ══════════ -->
-  <section id="sec-radiology">
-    <div class="stabs">
-      <button class="st active" onclick="swRad('pending',this)">📡 Pending</button>
-      <button class="st" onclick="swRad('completed',this)">✅ Completed</button>
-      <button class="st" onclick="swRad('history',this)">📋 History</button>
-    </div>
-    <div class="card"><table id="table-rad"></table></div>
-    <div id="rad-entry" class="card" style="display:none;">
-      <h4 id="rad-hdr" style="color:var(--pu);margin-bottom:9px;"></h4>
-      <div id="rad-tests-entry"></div>
-      <div class="ab">
-        <button onclick="updateRad()" class="bpu">📤 Release Radiology Results</button>
-        <button onclick="document.getElementById('rad-entry').style.display='none'" style="background:#e2e8f0;color:#475569;">Cancel</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════ INVENTORY ══════════ -->
-  <section id="sec-inventory">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:7px;">
-      <h3>Drug &amp; Supply Inventory</h3>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-        <input id="inv-search" placeholder="🔍 Search name, class…" oninput="renderInventory()" style="width:200px;margin:0;font-size:12px;">
-        <select id="inv-class-filter" onchange="renderInventory()" style="width:auto;margin:0;font-size:12px;"><option value="">All Classes</option></select>
-        <button onclick="oModal('inv-add-modal')" class="ba">+ Add / Restock</button>
-        <button onclick="downloadInvTemplate()" class="bo bsm">⬇ Template</button>
-        <label class="bp bsm" style="padding:5px 10px;font-size:12px;cursor:pointer;border-radius:5px;font-weight:600;">📥 Import CSV<input type="file" accept=".csv" onchange="importInvCSV(event)" style="display:none;"></label>
-      </div>
-    </div>
-    <div class="stabs" style="margin-bottom:8px;">
-      <button class="st" onclick="swInv('all',this)">📦 All Items</button>
-      <button class="st active" onclick="swInv('general',this)">💊 Pharmacy</button>
-      <button class="st" onclick="swInv('lab',this)">🔬 Lab</button>
-      <button class="st" onclick="swInv('ent',this)">👂 ENT</button>
-      <button class="st" onclick="swInv('dental',this)">🦷 Dental</button>
-      <button class="st" onclick="swInv('expiry',this)">⚠️ Near Expiry</button>
-    </div>
-    <div id="inv-near-expiry-banner"></div>
-    <div class="card" style="padding:9px;"><table id="table-inv"></table></div>
-    <!-- Add/edit modal -->
-    <div id="inv-add-modal" class="mo">
-      <div class="mb" style="max-width:520px;">
-        <button class="mc" onclick="cModal('inv-add-modal')">✕</button>
-        <h3 id="inv-modal-title" style="color:var(--p);margin-bottom:11px;">Add / Restock Item</h3>
-        <input type="hidden" id="invEditId">
-        <label>Item Name *</label><input id="invName" placeholder="e.g. Amoxicillin 500mg">
-        <div class="g3">
-          <div><label>Category</label><select id="invCat"><option>Medication</option><option>Consumable</option><option>Equipment</option><option>Reagent</option></select></div>
-          <div><label>Section</label><select id="invSection"><option value="general">General Pharmacy</option><option value="lab">Lab</option><option value="ent">ENT</option><option value="dental">Dental</option></select></div>
-          <div><label>Drug Class</label><select id="invClass"><option>Antibiotic</option><option>Analgesic</option><option>Analgesic/NSAID</option><option>Antimalarial</option><option>Antihypertensive</option><option>Antidiabetic</option><option>Antiparasitic</option><option>Antifungal</option><option>Antiretroviral</option><option>CNS/Neurological</option><option>Cardiovascular</option><option>Corticosteroid</option><option>Gastrointestinal</option><option>Respiratory</option><option>Vitamins &amp; Minerals</option><option>Hormones &amp; Steroids</option><option>IV Fluids &amp; Electrolytes</option><option>Dermatological</option><option>Ophthalmological</option><option>Lab Reagent</option><option>Lab Consumable</option><option>ENT Medication</option><option>Dental Material</option><option>Consumable</option><option>Other</option></select></div>
-        </div>
-        <div class="g2">
-          <div><label>Formulation</label><select id="invForm"><option>Tablet</option><option>Capsule</option><option>Syrup</option><option>Suspension</option><option>Injection (IV)</option><option>Injection (IM)</option><option>Injection (SC)</option><option>IV Fluid</option><option>Cream</option><option>Ointment</option><option>Drops</option><option>Eye Drops</option><option>Ear Drops</option><option>Inhaler</option><option>Suppository</option><option>Powder</option><option>Solution</option><option>Patch</option><option>N/A</option></select></div>
-          <div><label>Strength / Concentration</label><input id="invStrength" placeholder="e.g. 500mg, 125mg/5ml"></div>
-        </div>
-        <div class="g3">
-          <div><label>Unit Price ($) *</label><input type="number" id="invPrice" placeholder="0.00" step="0.01" min="0"></div>
-          <div><label>Selling Price ($)</label><input type="number" id="invSellPrice" placeholder="0.00" step="0.01" min="0"></div>
-          <div><label>Reorder Level</label><input type="number" id="invReorder" placeholder="10" min="0"></div>
-        </div>
-        <div class="g3">
-          <div><label>Quantity to Add *</label><input type="number" id="invQty" placeholder="0" min="0"></div>
-          <div><label>Batch Number</label><input id="invBatch" placeholder="BATCH-001"></div>
-          <div><label>Expiry Date</label><input type="date" id="invExpiry"></div>
-        </div>
-        <div class="g2">
-          <div><label>Supplier</label><input id="invSupplier" placeholder="Supplier name"></div>
-          <div><label>Unit</label><input id="invUnit" placeholder="Tablets / Vials / Bottles…"></div>
-        </div>
-        <div class="ab"><button onclick="saveInvItem()" class="ba">Save Item</button><button onclick="cModal('inv-add-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
-      </div>
-    </div>
-    <!-- CSV import preview modal -->
-    <div id="inv-import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;justify-content:center;align-items:flex-start;padding:24px 12px;overflow-y:auto;">
-      <div style="background:#fff;border-radius:10px;width:100%;max-width:700px;padding:20px;position:relative;margin:auto;">
-        <button onclick="document.getElementById('inv-import-modal').style.display='none'" style="position:absolute;top:11px;right:11px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--mu);">✕</button>
-        <h3 style="color:var(--p);margin-bottom:12px;">📥 CSV Import Preview</h3>
-        <div id="csv-preview-content"></div>
-        <div style="display:flex;gap:6px;margin-top:12px;">
-          <button onclick="document.getElementById('inv-import-modal').style.display='none'" style="background:#e2e8f0;color:#475569;padding:7px 18px;border-radius:6px;font-weight:600;border:none;cursor:pointer;">Cancel</button>
-          <button onclick="confirmImport()" class="ba" style="padding:7px 22px;">✅ Confirm &amp; Save</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════ EXPENSES ══════════ -->
-  <section id="sec-expenses">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;flex-wrap:wrap;gap:6px;">
-      <h3>💸 Expenses</h3>
-      <button onclick="oModal('exp-modal')" class="bp">+ Add Expense</button>
-    </div>
-    <div class="stabs">
-      <button class="st active" onclick="filterExpenses('all',this)">All</button>
-      <button class="st" onclick="filterExpenses('today',this)">Today</button>
-      <button class="st" onclick="filterExpenses('week',this)">This Week</button>
-      <button class="st" onclick="filterExpenses('month',this)">This Month</button>
-    </div>
-    <div id="exp-dept-chart-wrap" class="card" style="margin-bottom:10px;">
-      <div class="g2">
-        <div><h4 style="font-size:13px;margin-bottom:8px;">💹 Revenue vs Expenses</h4><div style="position:relative;height:160px;"><canvas id="ch-dept-rev-exp"></canvas></div></div>
-        <table id="dept-rev-table-exp" style="font-size:12px;align-self:start;"></table>
-      </div>
-    </div>
-    <div class="card" style="padding:9px;"><table id="table-exp"></table></div>
-    <div id="exp-modal" class="mo">
-      <div class="mb" style="max-width:480px;">
-        <button class="mc" onclick="cModal('exp-modal')">✕</button>
-        <h3 style="color:var(--p);margin-bottom:11px;">Add Expense</h3>
-        <div class="g2">
-          <div><label>Category</label><select id="expCat"><option>Staff</option><option>Supplies/Consumables</option><option>Drugs/Stock Purchase</option><option>Utilities</option><option>Equipment</option><option>Maintenance</option><option>Transport</option><option>Other</option></select></div>
-          <div><label>Amount ($) *</label><input type="number" id="expAmt" placeholder="0.00" step="0.01" min="0"></div>
-          <div><label>Date</label><input type="date" id="expDate"></div>
-          <div><label>Reference / Receipt No.</label><input id="expRef" placeholder="INV-001, REC-002…"></div>
-        </div>
-        <label>Description *</label><input id="expDesc" placeholder="What was this expense for?">
-        <div class="ab"><button onclick="saveExpense()" class="ba">Save</button><button onclick="cModal('exp-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════ SUPPLIERS ══════════ -->
-  <section id="sec-suppliers">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:7px;">
-      <h3>🏪 Suppliers</h3>
-      <button onclick="oModal('sup-add-modal')" class="ba">+ Add Supplier</button>
-    </div>
-    <div class="g4" id="sup-summary-cards" style="margin-bottom:12px;"></div>
-    <div class="card" style="padding:9px;">
-      <input id="sup-search" placeholder="🔍 Search suppliers…" oninput="renderSuppliers()" style="width:220px;margin:0 0 8px;font-size:12px;">
-      <table id="table-suppliers" style="font-size:13px;"></table>
-    </div>
-    <div id="sup-detail-wrap" style="display:none;margin-top:12px;">
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
-          <h4 id="sup-detail-name" style="margin:0;color:var(--p);"></h4>
-          <button onclick="document.getElementById('sup-detail-wrap').style.display='none'" style="background:#e2e8f0;color:#475569;font-size:12px;padding:4px 10px;border-radius:5px;border:none;cursor:pointer;">✕ Close</button>
-        </div>
-        <div id="sup-detail-info" style="font-size:13px;margin-bottom:10px;background:var(--lt);border-radius:6px;padding:8px 12px;"></div>
-        <h5 style="margin-bottom:6px;color:var(--mu);font-size:11px;text-transform:uppercase;">Items Supplied</h5>
-        <div id="sup-items-list" style="margin-bottom:12px;"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <h5 style="margin:0;color:var(--mu);font-size:11px;text-transform:uppercase;">Purchase Orders</h5>
-          <button onclick="oModal('sup-po-modal')" class="ba bsm">+ Add PO</button>
-        </div>
-        <table id="sup-po-table" style="font-size:13px;"></table>
-        <div id="sup-balance-bar" style="margin-top:10px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:7px;padding:10px 14px;font-size:13px;"></div>
-      </div>
-    </div>
-    <div id="sup-add-modal" class="mo">
-      <div class="mb" style="max-width:480px;">
-        <button class="mc" onclick="cModal('sup-add-modal')">✕</button>
-        <h3 id="sup-modal-title" style="color:var(--p);margin-bottom:11px;">Add Supplier</h3>
-        <input type="hidden" id="supEditId">
-        <label>Supplier Name *</label><input id="supName" placeholder="e.g. Kampala Pharma Ltd">
-        <div class="g2"><div><label>Phone</label><input id="supPhone" placeholder="+256…"></div><div><label>Email</label><input id="supEmail"></div></div>
-        <label>Address</label><input id="supAddress">
-        <label>Notes</label><textarea id="supNotes" rows="2"></textarea>
-        <div class="ab"><button onclick="saveSupplier()" class="ba">Save</button><button onclick="cModal('sup-add-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
-      </div>
-    </div>
-    <div id="sup-po-modal" class="mo">
-      <div class="mb" style="max-width:540px;">
-        <button class="mc" onclick="cModal('sup-po-modal')">✕</button>
-        <h3 style="color:var(--p);margin-bottom:11px;">📦 Add Purchase Order / Delivery</h3>
-        <input type="hidden" id="poSupId">
-        <div class="g2">
-          <div><label>Date</label><input type="date" id="poDate"></div>
-          <div><label>Invoice / Ref No.</label><input id="poRef" placeholder="INV-001"></div>
-        </div>
-        <label>Items Description</label><textarea id="poItems" rows="3" placeholder="Amoxicillin 500mg ×200, Paracetamol ×500…"></textarea>
-        <div class="g2">
-          <div><label>Total Amount ($)</label><input type="number" id="poAmount" step="0.01" min="0"></div>
-          <div><label>Amount Paid ($)</label><input type="number" id="poPaid" step="0.01" min="0"></div>
-        </div>
-        <label>Notes</label><input id="poNotes">
-        <div class="ab"><button onclick="savePO()" class="ba">Save PO</button><button onclick="cModal('sup-po-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════ STAFF CHAT ══════════ -->
-  <section id="sec-chat">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;flex-wrap:wrap;gap:6px;">
-      <h3>💬 Staff Chat</h3>
-      <select id="chat-filter" onchange="renderChat()" style="width:auto;margin:0;font-size:12px;">
-        <option value="all">All Messages</option><option value="mine">My Messages</option>
-      </select>
-    </div>
-    <div class="card" style="padding:0;overflow:hidden;">
-      <div style="padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;gap:8px;align-items:center;">
-        <label style="margin:0;font-size:11px;font-weight:700;color:var(--mu);min-width:24px;">To:</label>
-        <select id="chat-to" style="flex:1;max-width:260px;margin:0;font-size:12px;"><option value="all">📢 All Staff</option></select>
-      </div>
-      <div class="chat-area" style="padding:10px;">
-        <div class="chat-msgs" id="chat-messages"><div class="emp" style="padding:20px;">No messages yet. Say hello! 👋</div></div>
-        <div class="chat-input-row">
-          <textarea id="chat-input" placeholder="Type message… (Enter to send, Shift+Enter for newline)" style="flex:1;min-height:42px;max-height:100px;resize:none;margin:0;font-size:13px;" onkeydown="chatKeyDown(event)"></textarea>
-          <button onclick="sendChat()" class="bp" style="align-self:flex-end;">Send ▶</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════ PROTOCOLS / SOPs ══════════ -->
-  <section id="sec-protocols">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;flex-wrap:wrap;gap:6px;">
-      <h3>📖 Standard Operating Procedures</h3>
-      <button onclick="printSOPs()" class="bo bsm">🖨️ Print All SOPs</button>
-    </div>
-    <div id="sop-list"></div>
-  </section>
-
-  <!-- ══════════ PATIENT FEEDBACK ══════════ -->
-  <section id="sec-feedbacks">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;flex-wrap:wrap;gap:6px;">
-      <h3>⭐ Patient Feedback</h3>
-      <div style="display:flex;gap:6px;"><button onclick="exportFeedback()" class="bo bsm">⬇ Export</button></div>
-    </div>
-    <div class="g4" id="fb-kpis" style="margin-bottom:12px;"></div>
-    <div class="card" style="padding:9px;"><table id="table-feedbacks"></table></div>
-  </section>
-
-  <!-- ══════════ ADMIN ══════════ -->
-  <section id="sec-admin">
-    <!-- Super-Admin flag shown only for platform-level admin -->
-    <div id="superadmin-banner" style="display:none;margin-bottom:10px;padding:9px 14px;background:#134e4a;color:#ccfbf1;border-radius:8px;font-size:12px;font-weight:700;">
-      🌐 MediTrack Platform Admin — You have cross-facility access
-    </div>
-    <div class="stabs" style="flex-wrap:wrap;">
-      <button class="st active" onclick="swAdmin('staff',this)">👤 Staff &amp; Roles</button>
-      <button class="st" onclick="swAdmin('permissions',this)">🔐 Permissions</button>
-      <button class="st" onclick="swAdmin('performance',this)">📈 Performance</button>
-      <button class="st" onclick="swAdmin('patients',this)">🗑️ Records</button>
-      <button class="st" onclick="swAdmin('labtests',this)">🔬 Lab Tests</button>
-      <button class="st" onclick="swAdmin('radprocs',this)">📡 Radiology</button>
-      <button class="st" onclick="swAdmin('nurseprocs',this)">🔪 Procedures</button>
-      <button class="st" onclick="swAdmin('saas',this)" id="saas-tab" style="display:none;">💼 Platform SaaS</button>
-    </div>
-    <div id="admin-staff" style="display:block;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <h4>Staff Management</h4>
-        <button onclick="oStaffModal(null)" class="bp bsm">+ Add Staff</button>
-      </div>
-      <div class="card" style="padding:9px;"><table id="table-staff"></table></div>
-    </div>
-    <div id="admin-patients" style="display:none;">
-      <div class="card">
-        <h4 style="margin-bottom:8px;">Records Management</h4>
-        <input id="admin-pat-search" placeholder="Search patients…" oninput="renderAdminPatients()" style="margin-bottom:8px;">
-        <table id="table-admin-pats"></table>
-      </div>
-    </div>
-    <div id="admin-labtests" style="display:none;">
-      <div class="card"><h4 style="margin-bottom:8px;">Lab Test Pricelist</h4><div id="lab-tests-editor"></div></div>
-    </div>
-    <div id="admin-radprocs" style="display:none;">
-      <div class="card"><h4 style="margin-bottom:8px;">Radiology Procedure Pricelist</h4><div id="rad-procs-editor"></div></div>
-    </div>
-    <div id="admin-nurseprocs" style="display:none;">
-      <div class="card"><h4 style="margin-bottom:8px;">Nursing &amp; Surgical Procedures</h4><div id="nurse-procs-editor"></div></div>
-    </div>
-    <!-- SaaS / Subscription panel -->
-    <div id="admin-saas" style="display:none;">
-      <div class="g3" style="margin-bottom:14px;">
-        <div class="card" style="border-top:4px solid #10b981;text-align:center;padding:20px;">
-          <div style="font-size:11px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Clinic Tier</div>
-          <div style="font-size:32px;font-weight:900;color:#0f172a;">$50<span style="font-size:14px;font-weight:400;color:#64748b;">/month</span></div>
-          <div style="font-size:12px;color:#64748b;margin:10px 0;line-height:1.7;">✓ 1 site · Up to 5 staff<br>✓ OPD, Pharmacy, Lab<br>✓ Basic billing &amp; reports<br>✓ Email support</div>
-          <button class="ba" style="width:100%;margin-top:8px;" onclick="copyOnboardLink('clinic')">📋 Copy Onboard Link</button>
-        </div>
-        <div class="card" style="border-top:4px solid #1e3a8a;text-align:center;padding:20px;position:relative;">
-          <div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:#1e3a8a;color:#fff;font-size:10px;font-weight:800;padding:2px 10px;border-radius:0 0 6px 6px;">MOST POPULAR</div>
-          <div style="font-size:11px;font-weight:800;color:#1e3a8a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Hospital Tier</div>
-          <div style="font-size:32px;font-weight:900;color:#0f172a;">$200<span style="font-size:14px;font-weight:400;color:#64748b;">/month</span></div>
-          <div style="font-size:12px;color:#64748b;margin:10px 0;line-height:1.7;">✓ Up to 3 sites · Unlimited staff<br>✓ All modules + Insurance/NHIF<br>✓ Director dashboard + Charts<br>✓ DHIS2 export · Priority support</div>
-          <button class="bp" style="width:100%;margin-top:8px;" onclick="copyOnboardLink('hospital')">📋 Copy Onboard Link</button>
-        </div>
-        <div class="card" style="border-top:4px solid #7c3aed;text-align:center;padding:20px;">
-          <div style="font-size:11px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">NGO / Enterprise</div>
-          <div style="font-size:32px;font-weight:900;color:#0f172a;">Custom</div>
-          <div style="font-size:12px;color:#64748b;margin:10px 0;line-height:1.7;">✓ Unlimited sites &amp; staff<br>✓ White-label (your logo/brand)<br>✓ Offline mode (Service Worker)<br>✓ Dedicated support + training</div>
-          <button class="bpu" style="width:100%;margin-top:8px;" onclick="copyOnboardLink('enterprise')">📋 Copy Onboard Link</button>
-        </div>
-      </div>
-      <!-- Facility onboarding -->
-      <div class="card">
-        <h4 style="margin-bottom:10px;">🏥 Onboard New Facility</h4>
-        <div class="g">
-          <div><label>Facility Name *</label><input id="ob-name" placeholder="e.g. iCURE Medical Centre"></div>
-          <div><label>Location / Branch</label><input id="ob-location" placeholder="e.g. Juba, South Sudan"></div>
-          <div><label>Contact Person</label><input id="ob-contact" placeholder="Name of administrator"></div>
-          <div><label>Phone</label><input id="ob-phone" placeholder="+211 / +256…"></div>
-          <div><label>Email</label><input id="ob-email" placeholder="admin@facility.com"></div>
-          <div><label>Subscription Tier</label>
-            <select id="ob-tier">
-              <option value="clinic">Clinic — $50/month</option>
-              <option value="hospital" selected>Hospital — $200/month</option>
-              <option value="ngo">NGO/Enterprise — Custom</option>
-            </select>
-          </div>
-        </div>
-        <div class="ab"><button class="bp" onclick="onboardFacility()">➕ Create Facility Account</button></div>
-        <div id="ob-result" style="margin-top:10px;display:none;"></div>
-      </div>
-      <!-- Active facilities -->
-      <div class="card">
-        <h4 style="margin-bottom:8px;">📋 Active Facilities</h4>
-        <table id="table-facilities">
-          <tr><th>Facility</th><th>Location</th><th>Tier</th><th>Created</th><th>Actions</th></tr>
-        </table>
-      </div>
-    </div>
-
-    <!-- PERMISSIONS PANEL -->
-    <div id="admin-permissions" style="display:none;">
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h4 style="margin:0;">🔐 Role Permissions</h4>
-          <button class="ba bsm" onclick="savePermissions()">💾 Save Permissions</button>
-        </div>
-        <p style="font-size:12px;color:var(--mu);margin-bottom:12px;">Define what each role can access. Changes apply to all staff with that role.</p>
-        <div id="permissions-grid"></div>
-      </div>
-    </div>
-
-    <!-- PERFORMANCE PANEL -->
-    <div id="admin-performance" style="display:none;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-        <h4 style="margin:0;">📈 Staff Performance Dashboard</h4>
-        <div style="display:flex;gap:6px;">
-          <select id="perf-period" onchange="renderPerformance()" style="margin:0;width:auto;font-size:12px;">
-            <option value="today">Today</option>
-            <option value="week">This Week</option>
-            <option value="month" selected>This Month</option>
-          </select>
-          <button class="bo bsm" onclick="exportPerformance()">⬇ Export</button>
-        </div>
-      </div>
-      <div id="perf-kpis" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px;margin-bottom:14px;"></div>
-      <div class="g2" style="margin-bottom:12px;">
-        <div class="card"><h4 style="font-size:13px;margin-bottom:8px;">👨‍⚕️ Consultations by Doctor</h4><div id="perf-doctor-chart" style="position:relative;height:200px;"><canvas id="ch-perf-doctor"></canvas></div></div>
-        <div class="card"><h4 style="font-size:13px;margin-bottom:8px;">🔬 Lab Tests Processed</h4><div id="perf-lab-chart" style="position:relative;height:200px;"><canvas id="ch-perf-lab"></canvas></div></div>
-      </div>
-      <div class="card" style="padding:9px;">
-        <table id="table-perf"></table>
-      </div>
-    </div>
-
-    <!-- Staff modal -->
-    <div id="staff-modal" class="mo">
-      <div class="mb" style="max-width:560px;">
-        <button class="mc" onclick="cModal('staff-modal')">✕</button>
-        <h3 id="staff-modal-title" style="color:var(--p);margin-bottom:11px;">Staff Member</h3>
-        <input type="hidden" id="staffEid">
-        <div class="g3">
-          <div><label>Full Name *</label><input id="staffName"></div>
-          <div><label>Username *</label><input id="staffUser"></div>
-          <div><label>Password *</label><input type="password" id="staffPass"></div>
-          <div><label>Role / Title</label><input id="staffRole" placeholder="e.g. Nurse, Lab Tech"></div>
-          <div><label>Phone</label><input id="staffPhone"></div>
-          <div><label>Employee ID</label><input id="staffEmpId"></div>
-        </div>
-        <label>Sections / Access</label>
-        <div id="sec-checks" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;"></div>
-        <label style="margin-top:8px;display:flex;align-items:center;gap:6px;cursor:pointer;">
-          <input type="checkbox" id="staffAdmin" style="width:auto;margin:0;"> <span style="text-transform:none;font-size:12px;color:var(--tx);">Full Admin Access</span>
-        </label>
-        <div class="ab"><button onclick="saveStaff()" class="bp">Save</button><button onclick="cModal('staff-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
-      </div>
-    </div>
-  </section>
-
-  </div><!-- /con -->
-  </div><!-- /main-wrap -->
-</div><!-- /app -->
-
-<!-- PRINT AREA -->
-<div id="pra" style="display:none;">
-  <div id="pra-sub" style="font-size:11px;color:#64748b;margin-bottom:6px;"></div>
-  <div id="pra-con"></div>
-</div>
-
-<!-- PUBLIC FEEDBACK PAGE -->
-<div id="feedback-public-wrap" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%);z-index:9999;justify-content:center;align-items:flex-start;overflow-y:auto;padding:24px 12px;">
-  <div style="background:#fff;border-radius:14px;width:100%;max-width:520px;padding:28px 24px;margin:auto;box-shadow:0 8px 32px rgba(0,0,0,.25);">
-    <div style="text-align:center;margin-bottom:18px;">
-      <div style="font-size:40px;margin-bottom:6px;">🏥</div>
-      <h2 style="color:#1e3a8a;margin:0 0 3px;">Patient Feedback</h2>
-      <p id="fb-hosp-name" style="color:#64748b;font-size:13px;margin:0;"></p>
-    </div>
-    <div id="fb-public-form">
-      <label>Your Name <span style="color:#94a3b8;font-weight:400;">(optional)</span></label><input id="fb-pub-name" placeholder="e.g. John Doe" style="margin-bottom:8px;">
-      <label>Visit Date</label><input type="date" id="fb-pub-date" style="margin-bottom:8px;">
-      <label>Department Visited</label>
-      <select id="fb-pub-dept" style="margin-bottom:8px;">
-        <option value="">-- Select --</option>
-        <option>General Consultation</option><option>Laboratory</option><option>Pharmacy</option>
-        <option>Radiology</option><option>Dental</option><option>ENT</option>
-        <option>Triage / Nursing</option><option>Reception / Registration</option>
-      </select>
-      <label>Overall Experience</label>
-      <div style="text-align:center;margin:10px 0 14px;">
-        <span class="fb-star" onclick="setPubRating(1)" id="pstar1">★</span>
-        <span class="fb-star" onclick="setPubRating(2)" id="pstar2">★</span>
-        <span class="fb-star" onclick="setPubRating(3)" id="pstar3">★</span>
-        <span class="fb-star" onclick="setPubRating(4)" id="pstar4">★</span>
-        <span class="fb-star" onclick="setPubRating(5)" id="pstar5">★</span>
-        <div id="pub-rating-label" style="font-size:12px;color:#64748b;margin-top:4px;"></div>
-      </div>
-      <label>How was the waiting time?</label>
-      <select id="fb-pub-wait" style="margin-bottom:8px;">
-        <option value="">-- Select --</option><option>Very short (&lt;15 min)</option>
-        <option>Acceptable (15–30 min)</option><option>Long (30–60 min)</option><option>Very long (&gt;1 hour)</option>
-      </select>
-      <label>Was staff courteous and professional?</label>
-      <select id="fb-pub-staff" style="margin-bottom:8px;">
-        <option value="">-- Select --</option><option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option>
-      </select>
-      <label>Would you recommend us?</label>
-      <select id="fb-pub-recommend" style="margin-bottom:8px;">
-        <option value="">-- Select --</option><option>Definitely yes</option><option>Probably yes</option>
-        <option>Not sure</option><option>Probably not</option><option>Definitely not</option>
-      </select>
-      <label>Additional Comments</label>
-      <textarea id="fb-pub-comment" rows="3" placeholder="Tell us how we can improve…" style="margin-bottom:14px;"></textarea>
-      <button onclick="submitPublicFeedback()" style="width:100%;background:#1e3a8a;color:#fff;border:none;border-radius:7px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;">Submit Feedback</button>
-      <div id="fb-pub-err" style="color:#ef4444;font-size:12px;margin-top:6px;text-align:center;"></div>
-    </div>
-    <div id="fb-public-thanks" style="display:none;text-align:center;padding:30px 0;">
-      <div style="font-size:56px;margin-bottom:12px;">🙏</div>
-      <h3 style="color:#10b981;margin-bottom:8px;">Thank You!</h3>
-      <p style="color:#64748b;margin-bottom:6px;">Your feedback helps us serve you better.</p>
-      <p style="font-size:12px;color:#94a3b8;margin-top:16px;">You may now close this page.</p>
-    </div>
-  </div>
-</div>
-
-<!-- Chart modals (patient chart) -->
-<div id="chart-modal" class="mo">
-  <div class="mb" style="max-width:800px;">
-    <button class="mc" onclick="cModal('chart-modal')">✕</button>
-    <h3 id="cm-title" style="color:var(--p);margin-bottom:8px;"></h3>
-    <div id="cm-info" style="font-size:13px;margin-bottom:10px;padding:8px 12px;background:var(--lt);border-radius:6px;"></div>
-    <div id="cm-visits" style="max-height:70vh;overflow-y:auto;"></div>
-  </div>
-</div>
-
-<!-- Edit patient modal -->
-<div id="edit-modal" class="mo">
-  <div class="mb" style="max-width:520px;">
-    <button class="mc" onclick="cModal('edit-modal')">✕</button>
-    <h3 style="color:var(--p);margin-bottom:11px;">Edit Patient</h3>
-    <input type="hidden" id="editPid">
-    <div class="g2">
-      <div><label>Full Name</label><input id="eName"></div>
-      <div><label>Gender</label><select id="eGender"><option>Male</option><option>Female</option></select></div>
-      <div><label>Age</label><input type="number" id="eAgeVal"></div>
-      <div><label>Age Unit</label><select id="eAgeUnit"><option value="years">Years</option><option value="months">Months</option><option value="days">Days</option></select></div>
-      <div><label>Phone</label><input id="ePhone"></div>
-      <div><label>Address</label><input id="eAddress"></div>
-      <div><label>Next of Kin</label><input id="eKin"></div>
-      <div><label>Kin Phone</label><input id="eKinP"></div>
-    </div>
-    <div class="ab"><button onclick="saveEditPat()" class="bp">Save Changes</button><button onclick="cModal('edit-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
-  </div>
-</div>
-
 <script>
 
 // ══════════════════════════════════════════════
@@ -4882,6 +3873,993 @@ function checkClinicalPrompts(diagText){
 );
 
 </script>
+</head>
+
+
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="ls" style="display:none;"><div class="spin"></div><div style="font-size:22px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px;">MediTrack Pro</div><div style="opacity:.7;font-size:12px;margin-top:4px;" id="ls-msg">Starting up…</div><div style="margin-top:16px;background:rgba(255,255,255,.15);border-radius:20px;width:180px;height:4px;overflow:hidden;"><div id="ls-bar" style="background:#fff;height:4px;width:0%;border-radius:20px;transition:width .4s;"></div></div><div style="font-size:10px;opacity:.5;margin-top:24px;">Press any key or tap to continue if stuck</div></div>
+
+<!-- LOGIN PAGE -->
+<div id="lp" style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#134e4a 0%,#0d9488 50%,#14b8a6 100%);">
+  <div class="card" style="width:400px;text-align:center;padding:32px 28px;">
+    <div style="font-size:38px;margin-bottom:8px;">🏥</div>
+    <div style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#0d9488,#14b8a6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:3px;">MediTrack Pro</div>
+    <div style="font-size:12px;color:var(--mu);margin-bottom:24px;font-style:italic;">Hospital Management Information System</div>
+    <label style="text-align:left;">Username</label>
+    <input id="lu" placeholder="Enter username" onkeyup="if(event.key==='Enter')login()" style="margin-bottom:6px;">
+    <label style="text-align:left;">Password</label>
+    <input type="password" id="lp2" placeholder="Enter password" onkeyup="if(event.key==='Enter')login()" style="margin-bottom:12px;">
+    <button onclick="login()" class="bp" style="width:100%;padding:11px;font-size:14px;">Sign In →</button>
+    <div id="le" style="color:var(--d);font-size:12px;margin-top:8px;min-height:18px;"></div>
+    <details style="margin-top:12px;background:#f8fafc;border:1px solid var(--bd);border-radius:6px;padding:8px;text-align:left;">
+      <summary style="font-size:12px;cursor:pointer;font-weight:700;">Demo Credentials</summary>
+      <div style="font-size:11px;margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+        <div style="background:#eff6ff;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #bfdbfe;" onclick="document.getElementById('lu').value='admin';document.getElementById('lp2').value='admin123'"><b>admin</b><br><span style="color:#1e40af;">admin / admin123</span></div>
+        <div style="background:#f0fdf4;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #bbf7d0;" onclick="document.getElementById('lu').value='doctor';document.getElementById('lp2').value='doctor123'"><b>doctor</b><br><span style="color:#065f46;">doctor / doctor123</span></div>
+        <div style="background:#fef3c7;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fde68a;" onclick="document.getElementById('lu').value='nurse';document.getElementById('lp2').value='nurse123'"><b>nurse</b><br><span style="color:#92400e;">nurse / nurse123</span></div>
+        <div style="background:#fce7f3;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fbcfe8;" onclick="document.getElementById('lu').value='lab';document.getElementById('lp2').value='lab123'"><b>lab</b><br><span style="color:#9d174d;">lab / lab123</span></div>
+        <div style="background:#ede9fe;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #ddd6fe;" onclick="document.getElementById('lu').value='pharmacy';document.getElementById('lp2').value='pharm123'"><b>pharmacy</b><br><span style="color:#5b21b6;">pharmacy / pharm123</span></div>
+        <div style="background:#fff7ed;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fed7aa;" onclick="document.getElementById('lu').value='billing';document.getElementById('lp2').value='billing123'"><b>billing</b><br><span style="color:#92400e;">billing / billing123</span></div>
+      </div>
+      <p style="font-size:10px;color:#94a3b8;margin-top:5px;text-align:center;">👆 Click any box to auto-fill</p>
+      </details>
+  </div>
+</div>
+
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="no-print">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏥</div>
+      <div class="sb-title" style="font-size:15px;letter-spacing:.02em;">MediTrack<br><span style="font-size:10px;opacity:.75;letter-spacing:.1em;font-weight:400;">PRO · HIMS</span></div>
+    </div>
+    <div style="padding:4px 8px 2px;">
+        <input class="global-search-input" id="global-search-input" 
+          placeholder="🔍 Search patient…" 
+          oninput="globalSearch(this.value)" 
+          onblur="setTimeout(()=>{hideGlobalSearch();},200)" 
+          autocomplete="off" style="border-radius:8px;font-size:12px;">
+        <div class="global-search-results" id="global-search-results"></div>
+      </div>
+    <nav id="dn"></nav>
+    <div class="sb-footer">
+      <select id="facility-switcher" onchange="switchFacility(this.value)" title="Switch facility" style="display:none;">
+        <option value="">iCURE Medical Centre</option>
+      </select>
+      <div class="sb-footer-user" id="sb-user">Loading...</div>
+      <div class="sb-footer-btns">
+        <button class="voice-badge" id="voice-badge" onclick="toggleVoice()" title="Voice alerts">🔊</button>
+        <button class="voice-badge" id="dark-mode-btn" onclick="toggleDarkMode()" title="Dark mode">🌙</button>
+        <span id="sb-status" class="sb-status">●  Live</span>
+      </div>
+      <button onclick="doLogout()" class="sb-logout">🔓 Logout</button>
+    </div>
+  </aside>
+  <button id="sb-toggle" onclick="document.getElementById('sidebar').classList.toggle('sb-open')">☰</button>
+
+  <!-- CONTENT -->
+  <div id="main-wrap">
+  <div class="con">
+
+  <!-- ══════════ DIRECTOR DASHBOARD ══════════ -->
+  <section id="sec-director">
+    <!-- 8 KPI cards -->
+    <div class="g4" style="margin-bottom:14px;" id="dash-kpis">
+      <div class="sc" style="background:var(--p)"><div class="sc-label">Today Revenue</div><div class="sc-value" id="d-rev">$0</div><div class="sc-icon">💰</div></div>
+      <div class="sc" style="background:#dc2626"><div class="sc-label">Today Expenses</div><div class="sc-value" id="d-exp">$0</div><div class="sc-icon">📉</div></div>
+      <div class="sc" style="background:var(--a)"><div class="sc-label">Today Patients</div><div class="sc-value" id="d-pats">0</div><div class="sc-icon">👥</div></div>
+      <div class="sc" style="background:var(--w)"><div class="sc-label">Outstanding Debt</div><div class="sc-value" id="d-debt">$0</div><div class="sc-icon">⚠️</div></div>
+      <div class="sc" style="background:var(--pu)"><div class="sc-label">Stock Value</div><div class="sc-value" id="d-stock-val">$0</div><div class="sc-icon">📦</div></div>
+      <div class="sc" style="background:#0f766e"><div class="sc-label">Admitted</div><div class="sc-value" id="d-adm">0</div><div class="sc-icon">🛏️</div></div>
+      <div class="sc" style="background:#b45309"><div class="sc-label">Lab Tests Today</div><div class="sc-value" id="d-labs">0</div><div class="sc-icon">🔬</div></div>
+      <div class="sc" style="background:#6d28d9"><div class="sc-label">Discharged Today</div><div class="sc-value" id="d-disc">0</div><div class="sc-icon">✅</div></div>
+    </div>
+    <!-- Charts row 1 -->
+    <div class="g2">
+      <div class="card"><h4 style="margin-bottom:8px;font-size:13px">📈 Revenue vs Expenses — Last 7 Days</h4><div class="chart-box"><canvas id="ch-revexp"></canvas></div></div>
+      <div class="card"><h4 style="margin-bottom:8px;font-size:13px">👥 Patient Visits This Month</h4><div class="chart-box"><canvas id="ch-visits"></canvas></div></div>
+    </div>
+    <!-- Charts row 2 -->
+    <div class="g2">
+      <div class="card"><h4 style="margin-bottom:8px;font-size:13px">💳 Billing Status</h4>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="width:150px;height:150px;flex-shrink:0;"><canvas id="ch-debt"></canvas></div>
+          <div id="debt-legend" style="font-size:12px;flex:1;"></div>
+        </div>
+      </div>
+      <div class="card"><h4 style="margin-bottom:8px;font-size:13px">🔬 Top Lab Tests This Month</h4><div class="chart-box"><canvas id="ch-labs"></canvas></div></div>
+    </div>
+    <!-- Revenue by department -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+        <h4 style="margin:0;font-size:13px;">💹 Revenue by Department</h4>
+        <input type="month" id="dept-rev-month" style="width:auto;margin:0;font-size:12px;" onchange="buildDeptRevChart()">
+      </div>
+      <div class="g2">
+        <div style="position:relative;height:200px;"><canvas id="ch-dept-rev"></canvas></div>
+        <table id="dept-rev-table" style="font-size:12px;align-self:start;"></table>
+      </div>
+    </div>
+    <!-- Low stock alerts + stock value by category -->
+    <div class="g2">
+      <div class="card"><h4 style="margin-bottom:8px;font-size:13px;">📦 Stock Value by Category</h4><table id="d-stockval"></table></div>
+      <div class="card"><h4 style="margin-bottom:8px;font-size:13px;">⚠️ Low Stock / Near Expiry</h4><table id="d-lowstock"></table></div>
+    </div>
+  </section>
+
+  <!-- ══════════ RECEPTION ══════════ -->
+  <section id="sec-reception">
+    <!-- Follow-ups due today -->
+    <div id="followup-panel" class="card" style="margin-bottom:12px;border-left:4px solid var(--w);display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <h4 style="margin:0;color:var(--w);">📅 Follow-ups Due Today</h4>
+        <span id="followup-count" class="badge bpa"></span>
+      </div>
+      <table id="followup-table" style="font-size:13px;"></table>
+    </div>
+    <!-- Patient registration -->
+    <div class="card">
+      <h3 style="margin-bottom:11px;">New Patient Registration</h3>
+      <div class="g">
+        <div><label>Full Name *</label><input id="pName" placeholder="Full legal name" oninput="checkDuplicate(this.value)"></div>
+        <div><label>Gender *</label><select id="pGender" onchange="toggleObsGyn()"><option>Male</option><option>Female</option></select></div>
+        <div><label>Age *</label>
+          <div style="display:flex;gap:5px;margin-top:2px;">
+            <input type="number" id="pAgeVal" placeholder="32" min="0" style="width:55%;margin:0;">
+            <select id="pAgeUnit" style="width:45%;margin:0;"><option value="years">Years</option><option value="months">Months</option><option value="days">Days</option></select>
+          </div>
+        </div>
+        <div><label>Phone</label><input id="pPhone" placeholder="+256 / +211..."></div>
+        <div><label>Address / Village</label><input id="pAddress" placeholder="Village, District"></div>
+        <div><label>Next of Kin</label><input id="pKinName" placeholder="Name"></div>
+        <div><label>Kin Phone</label><input id="pKinPhone" placeholder="+256..."></div>
+        <div><label>Blood Group</label><select id="pBlood"><option value="">— Unknown —</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+      </div>
+      <!-- Female-only obs/gyn -->
+      <div id="obs-gyn-reg" style="display:none;margin-top:8px;">
+        <div class="g3">
+          <div><label>LMP</label><input type="date" id="pLMP"></div>
+          <div><label>Gravida / Para</label><input id="pGravPara" placeholder="e.g. G3P2"></div>
+          <div><label>Marital Status</label><select id="pMarital"><option value="">—</option><option>Single</option><option>Married</option><option>Widowed</option><option>Separated</option></select></div>
+        </div>
+      </div>
+      <div class="g2" style="margin-top:8px;">
+        <div>
+          <label>Consultation Type *</label>
+          <select id="pConsultType">
+            <option value="GENERAL">General Consultation</option>
+            <option value="LAB_ONLY">Lab Only</option>
+            <option value="RADIOLOGY">Radiology / Imaging</option>
+            <option value="DENTAL">Special — Dental</option>
+            <option value="ENT">Special — ENT</option>
+            <option value="OTHER_SPECIAL">Special — Other</option>
+          </select>
+        </div>
+        <div>
+          <label>Payer Type</label>
+          <select id="pPayer">
+            <option value="cash">Cash</option>
+            <option value="insurance">Insurance / NHIF</option>
+            <option value="ngo">NGO / UN Covered</option>
+            <option value="free">Free / Waived</option>
+            <option value="credit">Credit / Debtor</option>
+          </select>
+        </div>
+      </div>
+      <div><label>Notes / Reason for Visit</label><input id="pRegNote" placeholder="Brief reason for visit (optional)"></div>
+      <!-- Duplicate warning -->
+      <div id="dup-warn" style="display:none;margin-top:8px;padding:8px 12px;background:#fef3c7;border:1.5px solid var(--w);border-radius:6px;font-size:12px;"></div>
+      <button onclick="registerPatient()" class="bp" style="margin-top:11px;">Register &amp; Route Patient</button>
+    </div>
+    <!-- Patient search / list -->
+    <div class="card">
+      <h4 style="margin-bottom:8px;">Today's Patients &amp; All Records</h4>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <input id="patSearch" placeholder="Search by name, phone, number…" onkeyup="renderPatients()" style="flex:1;min-width:200px;margin:0;">
+        <button class="bp bsm" onclick="renderPatients()">🔍 Search</button>
+      </div>
+      <table id="table-pats"></table>
+    </div>
+  </section>
+
+  <!-- ══════════ NURSE ══════════ -->
+  <section id="sec-nurse">
+    <div class="stabs">
+      <button class="st active" onclick="swNurse('triage',this)">🩺 Triage Queue</button>
+      <button class="st" onclick="swNurse('treatment',this)">💉 Treatment Chart</button>
+      <button class="st" onclick="swNurse('procedures',this)">🔪 Procedures</button>
+      <button class="st" onclick="swNurse('reg',this)">➕ Register Patient</button>
+    </div>
+
+    <!-- TRIAGE QUEUE -->
+    <div id="nurse-triage">
+      <div class="card"><h4 style="margin-bottom:8px;">Patients Awaiting Triage</h4><table id="table-triage"></table></div>
+      <div id="triage-form" class="card" style="display:none;">
+        <h4 id="triage-target" style="color:var(--p);margin-bottom:9px;"></h4>
+        <div class="g">
+          <div><label>BP (mmHg)</label><input id="vBP" placeholder="120/80"></div>
+          <div><label>Temp (°C)</label><input type="number" step="0.1" id="vTemp" placeholder="37.2"></div>
+          <div><label>Weight (kg)</label><input type="number" id="vWeight" placeholder="70" onchange="calcBMI()"></div>
+          <div><label>Height (cm)</label><input type="number" id="vHeight" placeholder="170" onchange="calcBMI()"></div>
+          <div><label>Pulse (bpm)</label><input type="number" id="vPulse" placeholder="78"></div>
+          <div><label>SpO2 (%)</label><input type="number" id="vSpO2" placeholder="98"></div>
+          <div><label>Resp Rate (/min)</label><input type="number" id="vRR" placeholder="16"></div>
+          <div>
+            <label>BMI <span id="bmi-val" style="font-size:12px;font-weight:400;"></span></label>
+            <div id="bmi-display" style="padding:7px;background:var(--lt);border-radius:5px;min-height:32px;font-size:13px;color:var(--mu);margin-top:2px;">Enter weight and height</div>
+          </div>
+        </div>
+        <div><label>Nurse Notes</label><textarea id="vNurseNotes" rows="2" placeholder="Observations, pain scale, history summary…"></textarea></div>
+        <div class="ab">
+          <button onclick="submitTriage()" class="bp">✅ Send to Doctor Queue</button>
+          <button onclick="document.getElementById('triage-form').style.display='none'" style="background:#e2e8f0;color:#475569;">Cancel</button>
+        </div>
+      </div>
+      <!-- Vitals trend after recording -->
+      <div id="nurse-vitals-trend-wrap" class="vitals-trend-box card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <h5 style="margin:0;color:var(--p);font-size:12px;">📈 Vitals Trend — Previous Visits</h5>
+          <span id="nurse-vitals-trend-label" style="font-size:11px;color:var(--mu);"></span>
+        </div>
+        <div class="vt-btns">
+          <button class="vt-btn active" id="nvt-bp" onclick="switchNurseVitalChart('bp',this)">BP</button>
+          <button class="vt-btn" id="nvt-temp" onclick="switchNurseVitalChart('temp',this)">Temp</button>
+          <button class="vt-btn" id="nvt-weight" onclick="switchNurseVitalChart('weight',this)">Weight</button>
+          <button class="vt-btn" id="nvt-pulse" onclick="switchNurseVitalChart('pulse',this)">Pulse</button>
+        </div>
+        <div style="position:relative;height:160px;"><canvas id="nurse-vitals-chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- TREATMENT CHART (MAR) -->
+    <div id="nurse-treatment" style="display:none;">
+      <div class="card"><h4 style="margin-bottom:8px;">Active Patients — Treatment Chart (MAR)</h4><table id="table-treat-pats"></table></div>
+      <div id="treatment-detail" class="card" style="display:none;">
+        <h4 id="treat-name" style="color:var(--p);margin-bottom:8px;"></h4>
+        <div id="treat-orders" style="background:var(--lt);border-radius:6px;padding:9px;margin-bottom:10px;font-size:13px;"></div>
+        <div class="g">
+          <div><label>Drug / Treatment</label><input id="tDrug" placeholder="e.g. Ampicillin 500mg"></div>
+          <div><label>Dose</label><input id="tDose" placeholder="e.g. 1g IV"></div>
+          <div><label>Route</label><select id="tRoute"><option>IV</option><option>IM</option><option>PO</option><option>SC</option><option>PR</option><option>SL</option><option>Topical</option><option>Inhalation</option></select></div>
+          <div><label>Time Given</label><input type="time" id="tTime"></div>
+        </div>
+        <label>Observations / Patient Response</label>
+        <textarea id="tNotes" rows="2" placeholder="Patient response, adverse reactions, observations…"></textarea>
+        <div class="ab">
+          <button onclick="addTreatEntry()" class="ba">➕ Add Entry</button>
+          <button onclick="document.getElementById('treatment-detail').style.display='none'" style="background:#e2e8f0;color:#475569;">Close</button>
+        </div>
+        <div id="existing-treats" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <!-- PROCEDURES PANEL -->
+    <div id="nurse-procedures" style="display:none;">
+      <div class="card" style="margin-bottom:10px;">
+        <h4 style="margin-bottom:8px;">🔪 Ordered Procedures — Active Patients</h4>
+        <table id="table-proc-pats"></table>
+      </div>
+      <div id="procedure-detail" class="card" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+          <h4 id="proc-patient-name" style="margin:0;color:var(--p);"></h4>
+          <button onclick="document.getElementById('procedure-detail').style.display='none'" style="background:#e2e8f0;color:#475569;font-size:12px;padding:4px 10px;border-radius:5px;border:none;cursor:pointer;">✕ Close</button>
+        </div>
+        <div id="proc-existing"></div>
+      </div>
+    </div>
+
+    <!-- REGISTER (inline) -->
+    <div id="nurse-reg" style="display:none;"></div>
+  </section>
+
+  <!-- ══════════ DOCTOR ══════════ -->
+  <section id="sec-doctor">
+    <div class="stabs">
+      <button class="st active" onclick="swDoc('queue',this)">📋 Queue</button>
+      <button class="st" onclick="swDoc('allpats',this)">📁 All Patients</button>
+      <button class="st" onclick="swDoc('reg',this)">➕ Register</button>
+    </div>
+    <div id="doc-queue">
+      <div id="queue-list-card" class="card"><table id="table-cons"></table></div>
+      <!-- CONSULTATION FORM — opens inline below queue -->
+      <div id="cons-form" class="card" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:11px;">
+          <div>
+            <h3 id="c-name" style="color:var(--p);margin:0;"></h3>
+            <span id="c-type-badge" style="margin-top:3px;display:inline-block;"></span>
+          </div>
+          <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+            <span id="c-date" style="font-size:12px;color:var(--mu);"></span>
+            <span id="c-pay"></span>
+            <button onclick="closeConsForm()" style="background:#e2e8f0;color:#475569;font-size:12px;padding:4px 10px;border-radius:5px;border:none;cursor:pointer;">✕ Close</button>
+          </div>
+        </div>
+        <!-- Previous visit history strip -->
+        <div id="c-hist" style="background:var(--lt);border-left:3px solid var(--s);padding:8px 12px;border-radius:5px;margin-bottom:10px;font-size:12px;max-height:90px;overflow-y:auto;"></div>
+        <!-- Allergy banner -->
+        <div id="allergy-banner"></div>
+        <!-- Vitals summary -->
+        <div id="c-vitals" style="display:none;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:6px;padding:9px;margin-bottom:8px;font-size:13px;"></div>
+        <!-- Vitals trend chart -->
+        <div id="vitals-trend-wrap" class="vitals-trend-box">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:11px;font-weight:700;color:var(--p);text-transform:uppercase;">📈 Vitals Trend</span>
+            <div class="vt-btns">
+              <button class="vt-btn active" onclick="switchVitalChart('bp',this)">BP</button>
+              <button class="vt-btn" onclick="switchVitalChart('temp',this)">Temp</button>
+              <button class="vt-btn" onclick="switchVitalChart('weight',this)">Weight</button>
+              <button class="vt-btn" onclick="switchVitalChart('pulse',this)">Pulse</button>
+            </div>
+          </div>
+          <div style="position:relative;height:150px;"><canvas id="vitals-trend-chart"></canvas></div>
+        </div>
+        <!-- Lab results panel -->
+        <div id="lab-res-panel" style="display:none;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h4 style="color:var(--a);margin:0;font-size:13px;">🔬 Lab Results Ready</h4>
+            <button onclick="printLabResults()" class="bsm bo">🖨 Print</button>
+          </div>
+          <div id="lab-res-display"></div>
+        </div>
+        <!-- Radiology results panel -->
+        <div id="rad-res-panel" style="display:none;margin-bottom:12px;">
+          <h4 style="color:var(--pu);margin-bottom:8px;font-size:13px;">📡 Radiology Results</h4>
+          <div id="rad-res-display"></div>
+        </div>
+        <!-- ── CLINICAL HISTORY (collapsible accordions) ── -->
+        <p style="font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;margin-bottom:7px;">Clinical History &amp; Examination</p>
+        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PC)</span> <span class="abbr-full">Presenting Complaint</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hPC" rows="2" placeholder="Chief complaint in patient's own words, duration…"></textarea></div></div>
+        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(HPC)</span> <span class="abbr-full">History of Presenting Complaint</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hHPC" rows="3" placeholder="Onset, character, severity, duration, modifying factors, associated symptoms…"></textarea></div></div>
+        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PM/PSH)</span> <span class="abbr-full">Past Medical &amp; Surgical History</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hPMH" rows="3" placeholder="Known conditions, previous operations, hospitalisations, TB, HIV status…"></textarea></div></div>
+        <div class="cb" id="ogBlock" style="display:none;"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(O/G)</span> <span class="abbr-full">Obstetric &amp; Gynaecological History</span></span><span class="cr">▼</span></div><div class="cbody"><div class="g2"><div><label>LMP</label><input id="hLMP" type="date"></div><div><label>Gravida / Para</label><input id="hGP" placeholder="e.g. G3P2+1"></div></div><textarea id="hOG" rows="2" placeholder="Contraception, antenatal, delivery history…" style="margin-top:6px;"></textarea></div></div>
+        <div class="cb"><div class="ch" onclick="tClin(this)"><span>👨‍👩‍👧 Family &amp; Social History</span><span class="cr">▼</span></div><div class="cbody"><textarea id="hFSH" rows="2" placeholder="Family diseases, alcohol, tobacco, occupation, housing…"></textarea></div></div>
+        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(DH/A)</span> <span class="abbr-full">Drug History &amp; Allergies</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hDrug" rows="2" placeholder="Current medications, doses, OTC, traditional…"></textarea><label>Known Allergies</label><input id="hAllergy" placeholder="e.g. Penicillin — rash. None known."></div></div>
+        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PE)</span> <span class="abbr-full">Physical Examination</span></span><span class="cr">▼</span></div><div class="cbody">
+          <div class="g2">
+            <div><label>General Appearance</label><input id="hPEGeneral" placeholder="Alert, oriented, not in distress…"></div>
+            <div><label>Head &amp; Neck</label><input id="hPEHead" placeholder="No lymphadenopathy, JVP normal…"></div>
+            <div><label>Chest / Respiratory</label><input id="hPEChest" placeholder="Clear to auscultation bilaterally…"></div>
+            <div><label>Cardiovascular</label><input id="hPECVS" placeholder="Regular rate, no murmurs…"></div>
+            <div><label>Abdomen</label><input id="hPEAbdomen" placeholder="Soft, non-tender, no organomegaly…"></div>
+            <div><label>CNS / Neurological</label><input id="hPECNS" placeholder="GCS 15, pupils equal and reactive…"></div>
+            <div><label>Extremities / MSK</label><input id="hPEExtremities" placeholder="No oedema, full range of motion…"></div>
+            <div><label>Skin</label><input id="hPESkin" placeholder="No rash, jaundice, or cyanosis…"></div>
+          </div>
+          <label>Other Examination Findings</label>
+          <textarea id="hPEOther" rows="2" placeholder="Any additional examination findings…"></textarea>
+        </div></div>
+        <hr class="dv">
+        <!-- DIFFERENTIAL DIAGNOSIS -->
+        <label><span class="abbr-hdr">(Diff Dx)</span> <span class="abbr-full">Differential Diagnosis</span></label>
+        <textarea id="cDiffDx" rows="2" placeholder="Working differentials in order of likelihood…"></textarea>
+        <hr class="dv">
+        <!-- LAB ORDERS (multi-select chips) -->
+        <div id="lab-order-sec">
+          <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;"><span class="abbr-hdr">(Ix)</span> <span class="abbr-full" style="text-transform:uppercase;">Investigations — Lab Orders</span></p>
+          <input id="lab-search" placeholder="Search lab tests…" onkeyup="filterLabTests()" style="margin-bottom:5px;">
+          <div class="lab-check-list" id="lab-check-list"></div>
+          <div id="selected-labs-display" style="margin-top:6px;font-size:12px;color:var(--mu);"></div>
+        </div>
+        <hr class="dv">
+        <!-- RADIOLOGY ORDERS -->
+        <div>
+          <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;"><span class="abbr-hdr">(Rad)</span> <span class="abbr-full" style="text-transform:uppercase;">Radiology / Imaging</span></p>
+          <div id="rad-orders-list"></div>
+          <button class="badd" onclick="addRadRow()">+ Add Imaging</button>
+        </div>
+        <hr class="dv">
+        <!-- NURSING PROCEDURES -->
+        <div id="proc-order-sec">
+          <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;"><span class="abbr-hdr">(Pr)</span> <span class="abbr-full" style="text-transform:uppercase;">Nursing &amp; Surgical Procedures</span></p>
+          <div id="proc-orders-list"></div>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:5px;flex-wrap:wrap;">
+            <select id="proc-order-select" style="flex:1;min-width:200px;margin:0;font-size:13px;"><option value="">-- Select procedure --</option></select>
+            <button class="badd" onclick="addProcOrder()">+ Order</button>
+          </div>
+        </div>
+        <hr class="dv">
+        <!-- FINAL DIAGNOSIS + MANAGEMENT -->
+        <label><span class="abbr-hdr">(Dx)</span> <span class="abbr-full">Final / Working Diagnosis</span></label>
+        <input id="cFinalDx" placeholder="Final confirmed diagnosis…">
+        <label><span class="abbr-hdr">(Mx)</span> <span class="abbr-full">Management Plan / Clinical Notes</span></label>
+        <textarea id="cNotes" rows="2" placeholder="Management plan, instructions, clinical notes…"></textarea>
+        <label><span class="abbr-hdr">(Rec)</span> <span class="abbr-full">Doctor's Recommendations to Patient</span></label>
+        <textarea id="cRecommendations" rows="2" placeholder="Patient education, lifestyle advice, dietary instructions, warning signs to watch for…"></textarea>
+        <hr class="dv">
+        <!-- PRESCRIPTIONS (formulation-aware Rx) -->
+        <div>
+          <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;"><span class="abbr-hdr">(Rx)</span> <span class="abbr-full" style="text-transform:uppercase;">Prescription Orders</span></p>
+          <input id="med-search" placeholder="Search drug by name, class or formulation…" onkeyup="filterMeds()" style="margin-bottom:5px;">
+          <div class="drug-search-results" id="drug-results" style="display:none;"></div>
+          <div id="med-orders-list"></div>
+        </div>
+        <!-- Order Summary -->
+        <div class="osum"><h5>📋 Current Visit Bill</h5><div id="order-sum-body"><div class="emp" style="padding:8px;">No orders yet.</div></div></div>
+        <!-- Follow-up return date -->
+        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:7px;padding:10px 13px;margin-bottom:8px;">
+          <label style="margin:0 0 5px;color:var(--p);">📅 Follow-up Return Date</label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="date" id="c-return-date" style="width:auto;margin:0;font-size:13px;">
+            <input id="c-return-note" placeholder="Instructions for patient (optional)" style="flex:1;margin:0;font-size:13px;min-width:180px;">
+          </div>
+        </div>
+        <!-- Consultation fee -->
+        <div class="g2">
+          <div><label>Consultation Fee ($)</label><input type="number" id="c-consult-fee" value="10" step="0.01" min="0"></div>
+          <div><label>Consult Type (confirm)</label>
+            <select id="c-consult-type">
+              <option value="GENERAL">General</option><option value="LAB_ONLY">Lab Only</option>
+              <option value="RADIOLOGY">Radiology</option><option value="DENTAL">Dental</option>
+              <option value="ENT">ENT</option><option value="OTHER_SPECIAL">Other Special</option>
+            </select>
+          </div>
+        </div>
+        <!-- Actions -->
+        <div class="ab" id="cons-actions">
+          <button onclick="saveConsultation()" class="bp">💾 Save &amp; Close Consultation</button>
+          <button onclick="closeConsForm()" style="background:#e2e8f0;color:#475569;">Cancel</button>
+        </div>
+      </div><!-- end cons-form -->
+    </div><!-- end doc-queue -->
+
+    <!-- ALL PATIENTS TAB -->
+    <div id="doc-allpats" style="display:none;">
+      <div class="card">
+        <h4 style="margin-bottom:8px;">All Patients — Cumulative Records</h4>
+        <div class="g2" style="margin-bottom:8px;">
+          <input id="allpat-search" placeholder="Search by name…" onkeyup="renderAllPats()" style="margin:0;">
+          <input type="number" id="allpat-age" placeholder="Filter by age…" onkeyup="renderAllPats()" style="margin:0;">
+        </div>
+        <table id="table-allpats"></table>
+      </div>
+    </div>
+    <div id="doc-reg" style="display:none;"></div>
+  </section>
+
+  <!-- ══════════ BILLING ══════════ -->
+  <section id="sec-billing">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;flex-wrap:wrap;gap:6px;">
+      <h3>Billing &amp; Payments</h3>
+      <div style="display:flex;gap:6px;">
+        <button onclick="exportBillingCSV()" class="bo bsm">⬇ Export CSV</button>
+      </div>
+    </div>
+    <div class="stabs">
+      <button class="st active" onclick="fBill('all',this)">All</button>
+      <button class="st" onclick="fBill('PENDING',this)">Unpaid</button>
+      <button class="st" onclick="fBill('PARTIAL',this)">Partial</button>
+      <button class="st" onclick="fBill('PAID',this)">Paid</button>
+    </div>
+    <div class="card" style="padding:9px;"><table id="table-bill"></table></div>
+    <!-- Pay modal -->
+    <div id="pay-modal" class="mo">
+      <div class="mb" style="max-width:560px;">
+        <button class="mc" onclick="cModal('pay-modal')">✕</button>
+        <h3 id="pay-title" style="color:var(--p);margin-bottom:11px;"></h3>
+        <details open><summary style="margin-bottom:7px;cursor:pointer;font-size:13px;font-weight:700;">Bill Items</summary><div id="pay-breakdown"></div></details>
+        <hr class="dv">
+        <div class="g2" style="margin-bottom:9px;">
+          <div><label>Discount ($)</label><input type="number" id="discAmt" placeholder="0.00" min="0" step="0.01" onchange="updPayBal()"></div>
+          <div><label>Discount Reason</label><input id="discReason" placeholder="e.g. Staff, Indigent, Waiver…"></div>
+        </div>
+        <div id="pay-bal" style="font-size:13px;font-weight:700;margin-bottom:11px;padding:9px;background:var(--lt);border-radius:6px;"></div>
+        <label>Payment Method</label>
+        <select id="payMethod"><option>Cash</option><option>Mobile Money (MTN)</option><option>Mobile Money (Airtel)</option><option>Insurance</option><option>Bank Transfer</option><option>Cheque</option></select>
+        <label>Amount Paying ($)</label>
+        <input type="number" id="payAmt" placeholder="Amount" step="0.01" min="0.01" onchange="updPayBal()">
+        <div class="ab"><button onclick="recPayment()" class="ba">✅ Record Payment</button><button onclick="cModal('pay-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ LAB ══════════ -->
+  <section id="sec-lab">
+    <div class="stabs">
+      <button class="st active" onclick="swLab('pending',this)">🔬 Pending</button>
+      <button class="st" onclick="swLab('completed',this)">✅ Completed</button>
+      <button class="st" onclick="swLab('history',this)">📋 All History</button>
+      <button class="st" onclick="swLab('summary',this)">📊 Summary</button>
+    </div>
+    <div class="card"><table id="table-lab"></table></div>
+    <div id="lab-entry" class="card" style="display:none;">
+      <h4 id="lab-hdr" style="color:var(--p);margin-bottom:9px;"></h4>
+      <div id="lab-tests-entry"></div>
+      <div class="ab">
+        <button onclick="updateLab()" class="bp">📤 Release Results to Doctor</button>
+        <button onclick="document.getElementById('lab-entry').style.display='none'" style="background:#e2e8f0;color:#475569;">Cancel</button>
+      </div>
+    </div>
+    <div id="lab-summary-panel" style="display:none;">
+      <div class="g2">
+        <div class="card"><h4 style="margin-bottom:8px;font-size:13px;">📊 Lab Test Statistics (This Month)</h4><table id="lab-stats-table"></table></div>
+        <div class="card"><h4 style="margin-bottom:8px;font-size:13px;">🏆 Most Requested Tests</h4><div class="chart-box"><canvas id="ch-lab-stats"></canvas></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ PHARMACY ══════════ -->
+  <section id="sec-pharmacy">
+    <div class="stabs">
+      <button class="st active" onclick="swPharm('pending',this)">💊 Pending Dispense</button>
+      <button class="st" onclick="swPharm('dispensed',this)">✅ Dispensed History</button>
+    </div>
+    <div class="card"><table id="table-pharm"></table></div>
+  </section>
+
+  <!-- ══════════ RADIOLOGY ══════════ -->
+  <section id="sec-radiology">
+    <div class="stabs">
+      <button class="st active" onclick="swRad('pending',this)">📡 Pending</button>
+      <button class="st" onclick="swRad('completed',this)">✅ Completed</button>
+      <button class="st" onclick="swRad('history',this)">📋 History</button>
+    </div>
+    <div class="card"><table id="table-rad"></table></div>
+    <div id="rad-entry" class="card" style="display:none;">
+      <h4 id="rad-hdr" style="color:var(--pu);margin-bottom:9px;"></h4>
+      <div id="rad-tests-entry"></div>
+      <div class="ab">
+        <button onclick="updateRad()" class="bpu">📤 Release Radiology Results</button>
+        <button onclick="document.getElementById('rad-entry').style.display='none'" style="background:#e2e8f0;color:#475569;">Cancel</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ INVENTORY ══════════ -->
+  <section id="sec-inventory">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:7px;">
+      <h3>Drug &amp; Supply Inventory</h3>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <input id="inv-search" placeholder="🔍 Search name, class…" oninput="renderInventory()" style="width:200px;margin:0;font-size:12px;">
+        <select id="inv-class-filter" onchange="renderInventory()" style="width:auto;margin:0;font-size:12px;"><option value="">All Classes</option></select>
+        <button onclick="oModal('inv-add-modal')" class="ba">+ Add / Restock</button>
+        <button onclick="downloadInvTemplate()" class="bo bsm">⬇ Template</button>
+        <label class="bp bsm" style="padding:5px 10px;font-size:12px;cursor:pointer;border-radius:5px;font-weight:600;">📥 Import CSV<input type="file" accept=".csv" onchange="importInvCSV(event)" style="display:none;"></label>
+      </div>
+    </div>
+    <div class="stabs" style="margin-bottom:8px;">
+      <button class="st" onclick="swInv('all',this)">📦 All Items</button>
+      <button class="st active" onclick="swInv('general',this)">💊 Pharmacy</button>
+      <button class="st" onclick="swInv('lab',this)">🔬 Lab</button>
+      <button class="st" onclick="swInv('ent',this)">👂 ENT</button>
+      <button class="st" onclick="swInv('dental',this)">🦷 Dental</button>
+      <button class="st" onclick="swInv('expiry',this)">⚠️ Near Expiry</button>
+    </div>
+    <div id="inv-near-expiry-banner"></div>
+    <div class="card" style="padding:9px;"><table id="table-inv"></table></div>
+    <!-- Add/edit modal -->
+    <div id="inv-add-modal" class="mo">
+      <div class="mb" style="max-width:520px;">
+        <button class="mc" onclick="cModal('inv-add-modal')">✕</button>
+        <h3 id="inv-modal-title" style="color:var(--p);margin-bottom:11px;">Add / Restock Item</h3>
+        <input type="hidden" id="invEditId">
+        <label>Item Name *</label><input id="invName" placeholder="e.g. Amoxicillin 500mg">
+        <div class="g3">
+          <div><label>Category</label><select id="invCat"><option>Medication</option><option>Consumable</option><option>Equipment</option><option>Reagent</option></select></div>
+          <div><label>Section</label><select id="invSection"><option value="general">General Pharmacy</option><option value="lab">Lab</option><option value="ent">ENT</option><option value="dental">Dental</option></select></div>
+          <div><label>Drug Class</label><select id="invClass"><option>Antibiotic</option><option>Analgesic</option><option>Analgesic/NSAID</option><option>Antimalarial</option><option>Antihypertensive</option><option>Antidiabetic</option><option>Antiparasitic</option><option>Antifungal</option><option>Antiretroviral</option><option>CNS/Neurological</option><option>Cardiovascular</option><option>Corticosteroid</option><option>Gastrointestinal</option><option>Respiratory</option><option>Vitamins &amp; Minerals</option><option>Hormones &amp; Steroids</option><option>IV Fluids &amp; Electrolytes</option><option>Dermatological</option><option>Ophthalmological</option><option>Lab Reagent</option><option>Lab Consumable</option><option>ENT Medication</option><option>Dental Material</option><option>Consumable</option><option>Other</option></select></div>
+        </div>
+        <div class="g2">
+          <div><label>Formulation</label><select id="invForm"><option>Tablet</option><option>Capsule</option><option>Syrup</option><option>Suspension</option><option>Injection (IV)</option><option>Injection (IM)</option><option>Injection (SC)</option><option>IV Fluid</option><option>Cream</option><option>Ointment</option><option>Drops</option><option>Eye Drops</option><option>Ear Drops</option><option>Inhaler</option><option>Suppository</option><option>Powder</option><option>Solution</option><option>Patch</option><option>N/A</option></select></div>
+          <div><label>Strength / Concentration</label><input id="invStrength" placeholder="e.g. 500mg, 125mg/5ml"></div>
+        </div>
+        <div class="g3">
+          <div><label>Unit Price ($) *</label><input type="number" id="invPrice" placeholder="0.00" step="0.01" min="0"></div>
+          <div><label>Selling Price ($)</label><input type="number" id="invSellPrice" placeholder="0.00" step="0.01" min="0"></div>
+          <div><label>Reorder Level</label><input type="number" id="invReorder" placeholder="10" min="0"></div>
+        </div>
+        <div class="g3">
+          <div><label>Quantity to Add *</label><input type="number" id="invQty" placeholder="0" min="0"></div>
+          <div><label>Batch Number</label><input id="invBatch" placeholder="BATCH-001"></div>
+          <div><label>Expiry Date</label><input type="date" id="invExpiry"></div>
+        </div>
+        <div class="g2">
+          <div><label>Supplier</label><input id="invSupplier" placeholder="Supplier name"></div>
+          <div><label>Unit</label><input id="invUnit" placeholder="Tablets / Vials / Bottles…"></div>
+        </div>
+        <div class="ab"><button onclick="saveInvItem()" class="ba">Save Item</button><button onclick="cModal('inv-add-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
+      </div>
+    </div>
+    <!-- CSV import preview modal -->
+    <div id="inv-import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;justify-content:center;align-items:flex-start;padding:24px 12px;overflow-y:auto;">
+      <div style="background:#fff;border-radius:10px;width:100%;max-width:700px;padding:20px;position:relative;margin:auto;">
+        <button onclick="document.getElementById('inv-import-modal').style.display='none'" style="position:absolute;top:11px;right:11px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--mu);">✕</button>
+        <h3 style="color:var(--p);margin-bottom:12px;">📥 CSV Import Preview</h3>
+        <div id="csv-preview-content"></div>
+        <div style="display:flex;gap:6px;margin-top:12px;">
+          <button onclick="document.getElementById('inv-import-modal').style.display='none'" style="background:#e2e8f0;color:#475569;padding:7px 18px;border-radius:6px;font-weight:600;border:none;cursor:pointer;">Cancel</button>
+          <button onclick="confirmImport()" class="ba" style="padding:7px 22px;">✅ Confirm &amp; Save</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ EXPENSES ══════════ -->
+  <section id="sec-expenses">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;flex-wrap:wrap;gap:6px;">
+      <h3>💸 Expenses</h3>
+      <button onclick="oModal('exp-modal')" class="bp">+ Add Expense</button>
+    </div>
+    <div class="stabs">
+      <button class="st active" onclick="filterExpenses('all',this)">All</button>
+      <button class="st" onclick="filterExpenses('today',this)">Today</button>
+      <button class="st" onclick="filterExpenses('week',this)">This Week</button>
+      <button class="st" onclick="filterExpenses('month',this)">This Month</button>
+    </div>
+    <div id="exp-dept-chart-wrap" class="card" style="margin-bottom:10px;">
+      <div class="g2">
+        <div><h4 style="font-size:13px;margin-bottom:8px;">💹 Revenue vs Expenses</h4><div style="position:relative;height:160px;"><canvas id="ch-dept-rev-exp"></canvas></div></div>
+        <table id="dept-rev-table-exp" style="font-size:12px;align-self:start;"></table>
+      </div>
+    </div>
+    <div class="card" style="padding:9px;"><table id="table-exp"></table></div>
+    <div id="exp-modal" class="mo">
+      <div class="mb" style="max-width:480px;">
+        <button class="mc" onclick="cModal('exp-modal')">✕</button>
+        <h3 style="color:var(--p);margin-bottom:11px;">Add Expense</h3>
+        <div class="g2">
+          <div><label>Category</label><select id="expCat"><option>Staff</option><option>Supplies/Consumables</option><option>Drugs/Stock Purchase</option><option>Utilities</option><option>Equipment</option><option>Maintenance</option><option>Transport</option><option>Other</option></select></div>
+          <div><label>Amount ($) *</label><input type="number" id="expAmt" placeholder="0.00" step="0.01" min="0"></div>
+          <div><label>Date</label><input type="date" id="expDate"></div>
+          <div><label>Reference / Receipt No.</label><input id="expRef" placeholder="INV-001, REC-002…"></div>
+        </div>
+        <label>Description *</label><input id="expDesc" placeholder="What was this expense for?">
+        <div class="ab"><button onclick="saveExpense()" class="ba">Save</button><button onclick="cModal('exp-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ SUPPLIERS ══════════ -->
+  <section id="sec-suppliers">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:7px;">
+      <h3>🏪 Suppliers</h3>
+      <button onclick="oModal('sup-add-modal')" class="ba">+ Add Supplier</button>
+    </div>
+    <div class="g4" id="sup-summary-cards" style="margin-bottom:12px;"></div>
+    <div class="card" style="padding:9px;">
+      <input id="sup-search" placeholder="🔍 Search suppliers…" oninput="renderSuppliers()" style="width:220px;margin:0 0 8px;font-size:12px;">
+      <table id="table-suppliers" style="font-size:13px;"></table>
+    </div>
+    <div id="sup-detail-wrap" style="display:none;margin-top:12px;">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+          <h4 id="sup-detail-name" style="margin:0;color:var(--p);"></h4>
+          <button onclick="document.getElementById('sup-detail-wrap').style.display='none'" style="background:#e2e8f0;color:#475569;font-size:12px;padding:4px 10px;border-radius:5px;border:none;cursor:pointer;">✕ Close</button>
+        </div>
+        <div id="sup-detail-info" style="font-size:13px;margin-bottom:10px;background:var(--lt);border-radius:6px;padding:8px 12px;"></div>
+        <h5 style="margin-bottom:6px;color:var(--mu);font-size:11px;text-transform:uppercase;">Items Supplied</h5>
+        <div id="sup-items-list" style="margin-bottom:12px;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h5 style="margin:0;color:var(--mu);font-size:11px;text-transform:uppercase;">Purchase Orders</h5>
+          <button onclick="oModal('sup-po-modal')" class="ba bsm">+ Add PO</button>
+        </div>
+        <table id="sup-po-table" style="font-size:13px;"></table>
+        <div id="sup-balance-bar" style="margin-top:10px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:7px;padding:10px 14px;font-size:13px;"></div>
+      </div>
+    </div>
+    <div id="sup-add-modal" class="mo">
+      <div class="mb" style="max-width:480px;">
+        <button class="mc" onclick="cModal('sup-add-modal')">✕</button>
+        <h3 id="sup-modal-title" style="color:var(--p);margin-bottom:11px;">Add Supplier</h3>
+        <input type="hidden" id="supEditId">
+        <label>Supplier Name *</label><input id="supName" placeholder="e.g. Kampala Pharma Ltd">
+        <div class="g2"><div><label>Phone</label><input id="supPhone" placeholder="+256…"></div><div><label>Email</label><input id="supEmail"></div></div>
+        <label>Address</label><input id="supAddress">
+        <label>Notes</label><textarea id="supNotes" rows="2"></textarea>
+        <div class="ab"><button onclick="saveSupplier()" class="ba">Save</button><button onclick="cModal('sup-add-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
+      </div>
+    </div>
+    <div id="sup-po-modal" class="mo">
+      <div class="mb" style="max-width:540px;">
+        <button class="mc" onclick="cModal('sup-po-modal')">✕</button>
+        <h3 style="color:var(--p);margin-bottom:11px;">📦 Add Purchase Order / Delivery</h3>
+        <input type="hidden" id="poSupId">
+        <div class="g2">
+          <div><label>Date</label><input type="date" id="poDate"></div>
+          <div><label>Invoice / Ref No.</label><input id="poRef" placeholder="INV-001"></div>
+        </div>
+        <label>Items Description</label><textarea id="poItems" rows="3" placeholder="Amoxicillin 500mg ×200, Paracetamol ×500…"></textarea>
+        <div class="g2">
+          <div><label>Total Amount ($)</label><input type="number" id="poAmount" step="0.01" min="0"></div>
+          <div><label>Amount Paid ($)</label><input type="number" id="poPaid" step="0.01" min="0"></div>
+        </div>
+        <label>Notes</label><input id="poNotes">
+        <div class="ab"><button onclick="savePO()" class="ba">Save PO</button><button onclick="cModal('sup-po-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ STAFF CHAT ══════════ -->
+  <section id="sec-chat">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;flex-wrap:wrap;gap:6px;">
+      <h3>💬 Staff Chat</h3>
+      <select id="chat-filter" onchange="renderChat()" style="width:auto;margin:0;font-size:12px;">
+        <option value="all">All Messages</option><option value="mine">My Messages</option>
+      </select>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;gap:8px;align-items:center;">
+        <label style="margin:0;font-size:11px;font-weight:700;color:var(--mu);min-width:24px;">To:</label>
+        <select id="chat-to" style="flex:1;max-width:260px;margin:0;font-size:12px;"><option value="all">📢 All Staff</option></select>
+      </div>
+      <div class="chat-area" style="padding:10px;">
+        <div class="chat-msgs" id="chat-messages"><div class="emp" style="padding:20px;">No messages yet. Say hello! 👋</div></div>
+        <div class="chat-input-row">
+          <textarea id="chat-input" placeholder="Type message… (Enter to send, Shift+Enter for newline)" style="flex:1;min-height:42px;max-height:100px;resize:none;margin:0;font-size:13px;" onkeydown="chatKeyDown(event)"></textarea>
+          <button onclick="sendChat()" class="bp" style="align-self:flex-end;">Send ▶</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ PROTOCOLS / SOPs ══════════ -->
+  <section id="sec-protocols">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;flex-wrap:wrap;gap:6px;">
+      <h3>📖 Standard Operating Procedures</h3>
+      <button onclick="printSOPs()" class="bo bsm">🖨️ Print All SOPs</button>
+    </div>
+    <div id="sop-list"></div>
+  </section>
+
+  <!-- ══════════ PATIENT FEEDBACK ══════════ -->
+  <section id="sec-feedbacks">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;flex-wrap:wrap;gap:6px;">
+      <h3>⭐ Patient Feedback</h3>
+      <div style="display:flex;gap:6px;"><button onclick="exportFeedback()" class="bo bsm">⬇ Export</button></div>
+    </div>
+    <div class="g4" id="fb-kpis" style="margin-bottom:12px;"></div>
+    <div class="card" style="padding:9px;"><table id="table-feedbacks"></table></div>
+  </section>
+
+  <!-- ══════════ ADMIN ══════════ -->
+  <section id="sec-admin">
+    <!-- Super-Admin flag shown only for platform-level admin -->
+    <div id="superadmin-banner" style="display:none;margin-bottom:10px;padding:9px 14px;background:#134e4a;color:#ccfbf1;border-radius:8px;font-size:12px;font-weight:700;">
+      🌐 MediTrack Platform Admin — You have cross-facility access
+    </div>
+    <div class="stabs" style="flex-wrap:wrap;">
+      <button class="st active" onclick="swAdmin('staff',this)">👤 Staff &amp; Roles</button>
+      <button class="st" onclick="swAdmin('permissions',this)">🔐 Permissions</button>
+      <button class="st" onclick="swAdmin('performance',this)">📈 Performance</button>
+      <button class="st" onclick="swAdmin('patients',this)">🗑️ Records</button>
+      <button class="st" onclick="swAdmin('labtests',this)">🔬 Lab Tests</button>
+      <button class="st" onclick="swAdmin('radprocs',this)">📡 Radiology</button>
+      <button class="st" onclick="swAdmin('nurseprocs',this)">🔪 Procedures</button>
+      <button class="st" onclick="swAdmin('saas',this)" id="saas-tab" style="display:none;">💼 Platform SaaS</button>
+    </div>
+    <div id="admin-staff" style="display:block;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <h4>Staff Management</h4>
+        <button onclick="oStaffModal(null)" class="bp bsm">+ Add Staff</button>
+      </div>
+      <div class="card" style="padding:9px;"><table id="table-staff"></table></div>
+    </div>
+    <div id="admin-patients" style="display:none;">
+      <div class="card">
+        <h4 style="margin-bottom:8px;">Records Management</h4>
+        <input id="admin-pat-search" placeholder="Search patients…" oninput="renderAdminPatients()" style="margin-bottom:8px;">
+        <table id="table-admin-pats"></table>
+      </div>
+    </div>
+    <div id="admin-labtests" style="display:none;">
+      <div class="card"><h4 style="margin-bottom:8px;">Lab Test Pricelist</h4><div id="lab-tests-editor"></div></div>
+    </div>
+    <div id="admin-radprocs" style="display:none;">
+      <div class="card"><h4 style="margin-bottom:8px;">Radiology Procedure Pricelist</h4><div id="rad-procs-editor"></div></div>
+    </div>
+    <div id="admin-nurseprocs" style="display:none;">
+      <div class="card"><h4 style="margin-bottom:8px;">Nursing &amp; Surgical Procedures</h4><div id="nurse-procs-editor"></div></div>
+    </div>
+    <!-- SaaS / Subscription panel -->
+    <div id="admin-saas" style="display:none;">
+      <div class="g3" style="margin-bottom:14px;">
+        <div class="card" style="border-top:4px solid #10b981;text-align:center;padding:20px;">
+          <div style="font-size:11px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Clinic Tier</div>
+          <div style="font-size:32px;font-weight:900;color:#0f172a;">$50<span style="font-size:14px;font-weight:400;color:#64748b;">/month</span></div>
+          <div style="font-size:12px;color:#64748b;margin:10px 0;line-height:1.7;">✓ 1 site · Up to 5 staff<br>✓ OPD, Pharmacy, Lab<br>✓ Basic billing &amp; reports<br>✓ Email support</div>
+          <button class="ba" style="width:100%;margin-top:8px;" onclick="copyOnboardLink('clinic')">📋 Copy Onboard Link</button>
+        </div>
+        <div class="card" style="border-top:4px solid #1e3a8a;text-align:center;padding:20px;position:relative;">
+          <div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:#1e3a8a;color:#fff;font-size:10px;font-weight:800;padding:2px 10px;border-radius:0 0 6px 6px;">MOST POPULAR</div>
+          <div style="font-size:11px;font-weight:800;color:#1e3a8a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Hospital Tier</div>
+          <div style="font-size:32px;font-weight:900;color:#0f172a;">$200<span style="font-size:14px;font-weight:400;color:#64748b;">/month</span></div>
+          <div style="font-size:12px;color:#64748b;margin:10px 0;line-height:1.7;">✓ Up to 3 sites · Unlimited staff<br>✓ All modules + Insurance/NHIF<br>✓ Director dashboard + Charts<br>✓ DHIS2 export · Priority support</div>
+          <button class="bp" style="width:100%;margin-top:8px;" onclick="copyOnboardLink('hospital')">📋 Copy Onboard Link</button>
+        </div>
+        <div class="card" style="border-top:4px solid #7c3aed;text-align:center;padding:20px;">
+          <div style="font-size:11px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">NGO / Enterprise</div>
+          <div style="font-size:32px;font-weight:900;color:#0f172a;">Custom</div>
+          <div style="font-size:12px;color:#64748b;margin:10px 0;line-height:1.7;">✓ Unlimited sites &amp; staff<br>✓ White-label (your logo/brand)<br>✓ Offline mode (Service Worker)<br>✓ Dedicated support + training</div>
+          <button class="bpu" style="width:100%;margin-top:8px;" onclick="copyOnboardLink('enterprise')">📋 Copy Onboard Link</button>
+        </div>
+      </div>
+      <!-- Facility onboarding -->
+      <div class="card">
+        <h4 style="margin-bottom:10px;">🏥 Onboard New Facility</h4>
+        <div class="g">
+          <div><label>Facility Name *</label><input id="ob-name" placeholder="e.g. iCURE Medical Centre"></div>
+          <div><label>Location / Branch</label><input id="ob-location" placeholder="e.g. Juba, South Sudan"></div>
+          <div><label>Contact Person</label><input id="ob-contact" placeholder="Name of administrator"></div>
+          <div><label>Phone</label><input id="ob-phone" placeholder="+211 / +256…"></div>
+          <div><label>Email</label><input id="ob-email" placeholder="admin@facility.com"></div>
+          <div><label>Subscription Tier</label>
+            <select id="ob-tier">
+              <option value="clinic">Clinic — $50/month</option>
+              <option value="hospital" selected>Hospital — $200/month</option>
+              <option value="ngo">NGO/Enterprise — Custom</option>
+            </select>
+          </div>
+        </div>
+        <div class="ab"><button class="bp" onclick="onboardFacility()">➕ Create Facility Account</button></div>
+        <div id="ob-result" style="margin-top:10px;display:none;"></div>
+      </div>
+      <!-- Active facilities -->
+      <div class="card">
+        <h4 style="margin-bottom:8px;">📋 Active Facilities</h4>
+        <table id="table-facilities">
+          <tr><th>Facility</th><th>Location</th><th>Tier</th><th>Created</th><th>Actions</th></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- PERMISSIONS PANEL -->
+    <div id="admin-permissions" style="display:none;">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h4 style="margin:0;">🔐 Role Permissions</h4>
+          <button class="ba bsm" onclick="savePermissions()">💾 Save Permissions</button>
+        </div>
+        <p style="font-size:12px;color:var(--mu);margin-bottom:12px;">Define what each role can access. Changes apply to all staff with that role.</p>
+        <div id="permissions-grid"></div>
+      </div>
+    </div>
+
+    <!-- PERFORMANCE PANEL -->
+    <div id="admin-performance" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+        <h4 style="margin:0;">📈 Staff Performance Dashboard</h4>
+        <div style="display:flex;gap:6px;">
+          <select id="perf-period" onchange="renderPerformance()" style="margin:0;width:auto;font-size:12px;">
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month" selected>This Month</option>
+          </select>
+          <button class="bo bsm" onclick="exportPerformance()">⬇ Export</button>
+        </div>
+      </div>
+      <div id="perf-kpis" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px;margin-bottom:14px;"></div>
+      <div class="g2" style="margin-bottom:12px;">
+        <div class="card"><h4 style="font-size:13px;margin-bottom:8px;">👨‍⚕️ Consultations by Doctor</h4><div id="perf-doctor-chart" style="position:relative;height:200px;"><canvas id="ch-perf-doctor"></canvas></div></div>
+        <div class="card"><h4 style="font-size:13px;margin-bottom:8px;">🔬 Lab Tests Processed</h4><div id="perf-lab-chart" style="position:relative;height:200px;"><canvas id="ch-perf-lab"></canvas></div></div>
+      </div>
+      <div class="card" style="padding:9px;">
+        <table id="table-perf"></table>
+      </div>
+    </div>
+
+    <!-- Staff modal -->
+    <div id="staff-modal" class="mo">
+      <div class="mb" style="max-width:560px;">
+        <button class="mc" onclick="cModal('staff-modal')">✕</button>
+        <h3 id="staff-modal-title" style="color:var(--p);margin-bottom:11px;">Staff Member</h3>
+        <input type="hidden" id="staffEid">
+        <div class="g3">
+          <div><label>Full Name *</label><input id="staffName"></div>
+          <div><label>Username *</label><input id="staffUser"></div>
+          <div><label>Password *</label><input type="password" id="staffPass"></div>
+          <div><label>Role / Title</label><input id="staffRole" placeholder="e.g. Nurse, Lab Tech"></div>
+          <div><label>Phone</label><input id="staffPhone"></div>
+          <div><label>Employee ID</label><input id="staffEmpId"></div>
+        </div>
+        <label>Sections / Access</label>
+        <div id="sec-checks" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;"></div>
+        <label style="margin-top:8px;display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="staffAdmin" style="width:auto;margin:0;"> <span style="text-transform:none;font-size:12px;color:var(--tx);">Full Admin Access</span>
+        </label>
+        <div class="ab"><button onclick="saveStaff()" class="bp">Save</button><button onclick="cModal('staff-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
+      </div>
+    </div>
+  </section>
+
+  </div><!-- /con -->
+  </div><!-- /main-wrap -->
+</div><!-- /app -->
+
+<!-- PRINT AREA -->
+<div id="pra" style="display:none;">
+  <div id="pra-sub" style="font-size:11px;color:#64748b;margin-bottom:6px;"></div>
+  <div id="pra-con"></div>
+</div>
+
+<!-- PUBLIC FEEDBACK PAGE -->
+<div id="feedback-public-wrap" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%);z-index:9999;justify-content:center;align-items:flex-start;overflow-y:auto;padding:24px 12px;">
+  <div style="background:#fff;border-radius:14px;width:100%;max-width:520px;padding:28px 24px;margin:auto;box-shadow:0 8px 32px rgba(0,0,0,.25);">
+    <div style="text-align:center;margin-bottom:18px;">
+      <div style="font-size:40px;margin-bottom:6px;">🏥</div>
+      <h2 style="color:#1e3a8a;margin:0 0 3px;">Patient Feedback</h2>
+      <p id="fb-hosp-name" style="color:#64748b;font-size:13px;margin:0;"></p>
+    </div>
+    <div id="fb-public-form">
+      <label>Your Name <span style="color:#94a3b8;font-weight:400;">(optional)</span></label><input id="fb-pub-name" placeholder="e.g. John Doe" style="margin-bottom:8px;">
+      <label>Visit Date</label><input type="date" id="fb-pub-date" style="margin-bottom:8px;">
+      <label>Department Visited</label>
+      <select id="fb-pub-dept" style="margin-bottom:8px;">
+        <option value="">-- Select --</option>
+        <option>General Consultation</option><option>Laboratory</option><option>Pharmacy</option>
+        <option>Radiology</option><option>Dental</option><option>ENT</option>
+        <option>Triage / Nursing</option><option>Reception / Registration</option>
+      </select>
+      <label>Overall Experience</label>
+      <div style="text-align:center;margin:10px 0 14px;">
+        <span class="fb-star" onclick="setPubRating(1)" id="pstar1">★</span>
+        <span class="fb-star" onclick="setPubRating(2)" id="pstar2">★</span>
+        <span class="fb-star" onclick="setPubRating(3)" id="pstar3">★</span>
+        <span class="fb-star" onclick="setPubRating(4)" id="pstar4">★</span>
+        <span class="fb-star" onclick="setPubRating(5)" id="pstar5">★</span>
+        <div id="pub-rating-label" style="font-size:12px;color:#64748b;margin-top:4px;"></div>
+      </div>
+      <label>How was the waiting time?</label>
+      <select id="fb-pub-wait" style="margin-bottom:8px;">
+        <option value="">-- Select --</option><option>Very short (&lt;15 min)</option>
+        <option>Acceptable (15–30 min)</option><option>Long (30–60 min)</option><option>Very long (&gt;1 hour)</option>
+      </select>
+      <label>Was staff courteous and professional?</label>
+      <select id="fb-pub-staff" style="margin-bottom:8px;">
+        <option value="">-- Select --</option><option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option>
+      </select>
+      <label>Would you recommend us?</label>
+      <select id="fb-pub-recommend" style="margin-bottom:8px;">
+        <option value="">-- Select --</option><option>Definitely yes</option><option>Probably yes</option>
+        <option>Not sure</option><option>Probably not</option><option>Definitely not</option>
+      </select>
+      <label>Additional Comments</label>
+      <textarea id="fb-pub-comment" rows="3" placeholder="Tell us how we can improve…" style="margin-bottom:14px;"></textarea>
+      <button onclick="submitPublicFeedback()" style="width:100%;background:#1e3a8a;color:#fff;border:none;border-radius:7px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;">Submit Feedback</button>
+      <div id="fb-pub-err" style="color:#ef4444;font-size:12px;margin-top:6px;text-align:center;"></div>
+    </div>
+    <div id="fb-public-thanks" style="display:none;text-align:center;padding:30px 0;">
+      <div style="font-size:56px;margin-bottom:12px;">🙏</div>
+      <h3 style="color:#10b981;margin-bottom:8px;">Thank You!</h3>
+      <p style="color:#64748b;margin-bottom:6px;">Your feedback helps us serve you better.</p>
+      <p style="font-size:12px;color:#94a3b8;margin-top:16px;">You may now close this page.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Chart modals (patient chart) -->
+<div id="chart-modal" class="mo">
+  <div class="mb" style="max-width:800px;">
+    <button class="mc" onclick="cModal('chart-modal')">✕</button>
+    <h3 id="cm-title" style="color:var(--p);margin-bottom:8px;"></h3>
+    <div id="cm-info" style="font-size:13px;margin-bottom:10px;padding:8px 12px;background:var(--lt);border-radius:6px;"></div>
+    <div id="cm-visits" style="max-height:70vh;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- Edit patient modal -->
+<div id="edit-modal" class="mo">
+  <div class="mb" style="max-width:520px;">
+    <button class="mc" onclick="cModal('edit-modal')">✕</button>
+    <h3 style="color:var(--p);margin-bottom:11px;">Edit Patient</h3>
+    <input type="hidden" id="editPid">
+    <div class="g2">
+      <div><label>Full Name</label><input id="eName"></div>
+      <div><label>Gender</label><select id="eGender"><option>Male</option><option>Female</option></select></div>
+      <div><label>Age</label><input type="number" id="eAgeVal"></div>
+      <div><label>Age Unit</label><select id="eAgeUnit"><option value="years">Years</option><option value="months">Months</option><option value="days">Days</option></select></div>
+      <div><label>Phone</label><input id="ePhone"></div>
+      <div><label>Address</label><input id="eAddress"></div>
+      <div><label>Next of Kin</label><input id="eKin"></div>
+      <div><label>Kin Phone</label><input id="eKinP"></div>
+    </div>
+    <div class="ab"><button onclick="saveEditPat()" class="bp">Save Changes</button><button onclick="cModal('edit-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button></div>
+  </div>
+</div>
+
+
 
 
 

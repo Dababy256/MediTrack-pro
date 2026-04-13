@@ -351,6 +351,17 @@ html.dark tr:hover td{background:#1a2840;}
   .card{border-radius:8px;padding:11px;}
   .mb{padding:14px;}
 }
+
+/* Formulation badges (from b9) */
+.fb-tab{background:#e0e7ff;color:#3730a3;padding:1px 5px;border-radius:8px;font-size:10px;font-weight:700;}
+.fb-cap{background:#fce7f3;color:#9d174d;padding:1px 5px;border-radius:8px;font-size:10px;font-weight:700;}
+.fb-syr{background:#d1fae5;color:#065f46;padding:1px 5px;border-radius:8px;font-size:10px;font-weight:700;}
+.fb-inj{background:#fee2e2;color:#991b1b;padding:1px 5px;border-radius:8px;font-size:10px;font-weight:700;}
+.fb-inh{background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:8px;font-size:10px;font-weight:700;}
+.fb-oth{background:#f3f4f6;color:#374151;padding:1px 5px;border-radius:8px;font-size:10px;font-weight:700;}
+/* Allergy alert banner */
+#allergy-alert-banner{display:none;background:#fef9c3;border:2px solid #fbbf24;border-radius:7px;
+  padding:10px 14px;margin-bottom:8px;font-size:13px;}
 </style>
 <script>
 
@@ -803,12 +814,13 @@ function toast(msg, type='info') {
     t.style.cssText = 'position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:99999;padding:11px 22px;border-radius:10px;font-size:14px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.25);transition:opacity .3s,transform .2s;max-width:380px;min-width:220px;text-align:center;white-space:nowrap;';
     document.body.appendChild(t);
   }
-  const cols = {info:'#1e3a8a',success:'#065f46',error:'#991b1b',warning:'#92400e'};
-  const bgs = {info:'#dbeafe',success:'#d1fae5',error:'#fee2e2',warning:'#fef3c7'};
+  const cols = {info:'#0369a1',success:'#065f46',error:'#991b1b',warning:'#92400e'};
+  const bgs = {info:'#e0f2fe',success:'#d1fae5',error:'#fee2e2',warning:'#fef3c7'};
+  const icons = {info:'ℹ️',success:'✅',error:'❌',warning:'⚠️'};
   t.style.background = bgs[type]||bgs.info;
   t.style.color = cols[type]||cols.info;
   t.style.border = `1.5px solid ${cols[type]||cols.info}40`;
-  t.textContent = msg;
+  t.textContent = (icons[type]||'') + ' ' + msg;
   t.style.opacity = '1';
   clearTimeout(t._timer);
   t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3500);
@@ -816,11 +828,37 @@ function toast(msg, type='info') {
 
 // ── VOICE ──
 function speak(text) {
-  if (!voiceEnabled || !window.speechSynthesis) return;
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate = 0.92; u.pitch = 1;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
+  // Bell ring alert using Web Audio API
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // First bell
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.connect(gain1); gain1.connect(ctx.destination);
+    osc1.type = 'sine'; osc1.frequency.setValueAtTime(880, ctx.currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
+    gain1.gain.setValueAtTime(0.8, ctx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+    osc1.start(ctx.currentTime); osc1.stop(ctx.currentTime + 0.6);
+    // Second bell (echo)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.connect(gain2); gain2.connect(ctx.destination);
+    osc2.type = 'sine'; osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.2);
+    osc2.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5);
+    gain2.gain.setValueAtTime(0.4, ctx.currentTime + 0.2);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+    osc2.start(ctx.currentTime + 0.2); osc2.stop(ctx.currentTime + 0.8);
+    // Close context after bell finishes
+    setTimeout(() => { try { ctx.close(); } catch(e){} }, 1000);
+  } catch(e) {
+    // Fallback: browser speech if AudioContext unavailable
+    if (window.speechSynthesis) {
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.9; window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    }
+  }
 }
 function toggleVoice() {
   voiceEnabled = !voiceEnabled;
@@ -922,6 +960,7 @@ function login() {
     gid('voice-badge').textContent = voiceEnabled ? '🔊' : '🔇';
     renderNav();
     toast('Welcome, ' + d.name + '!', 'success');
+    _startAlertPolling();
     // Load real Supabase data quietly in background after UI is visible
     setTimeout(() => {
       sb.from('hospitals').select('*').limit(10).then(r => {
@@ -1446,7 +1485,8 @@ async function createVisitForPatient(patId,name,ct,payer,note) {
 
 function renderPatients() {
   const term=(gid('patSearch')?.value||'').toLowerCase();
-  let h=`<tr><th>Name</th><th>No.</th><th>Age</th><th>Gender</th><th>Phone</th><th>Last Visit</th><th>Pay</th><th>Cleared</th><th>Actions</th></tr>`;
+  const todayStr = new Date().toLocaleDateString();
+  let h=`<tr><th>Name</th><th>No.</th><th>Age/Sex</th><th>Phone</th><th>Last Visit</th><th>Pay</th><th>Stage</th><th>Actions</th></tr>`;
   const f=patients.filter(p=>p.name.toLowerCase().includes(term)||( p.phone||'').includes(term)||(p.patNum||'').toLowerCase().includes(term)).slice(0,50);
   if(!f.length){h+='<tr><td colspan="9" class="emp">No patients found</td></tr>';}
   f.forEach(p=>{
@@ -1455,13 +1495,15 @@ function renderPatients() {
     const chips=last?last.cleared.map(d=>`<span class="dc">${d}</span>`).join(''):'';
     const st=last?`<span class="badge bgr" style="font-size:10px;">${last.status.replace(/_/g,' ')}</span>`:'-';
     const ctBadge=last?`<span class="consult-type-badge ct-${(last.consultType||'gen').toLowerCase().split('_')[0]}">${last.consultType||'GEN'}</span>`:'';
-    h+=`<tr>
-      <td><b>${p.name}</b></td>
+    const isToday=last&&last.date===new Date().toLocaleDateString();
+    h+=`<tr style="${isToday?'background:#f0fdf9;border-left:3px solid var(--a);':''}">
+      <td><b>${p.name}</b>${p.bloodGroup?`<br><span style="font-size:10px;color:var(--mu);">${p.bloodGroup}</span>`:''}</td>
       <td><code style="background:var(--lt);padding:1px 5px;border-radius:4px;font-size:11px;font-weight:700;">${p.patNum||'—'}</code></td>
-      <td>${p.ageVal} ${p.ageUnit[0]}</td><td>${p.gender}</td><td>${p.phone||'—'}</td>
+      <td>${p.ageVal}${(p.ageUnit||"y")[0]}/${p.gender[0]}</td>
+      <td>${p.phone||'—'}</td>
       <td>${last?last.date+' '+ctBadge:'No visits'}</td>
       <td>${last?payBadge(last):'—'}</td>
-      <td>${chips||'<span style="color:#94a3b8;font-size:11px;">None</span>'}</td>
+      <td>${chips||'<span style="color:#94a3b8;font-size:11px;">—</span>'}</td>
       <td><div style="display:flex;gap:3px;flex-wrap:wrap;">
         <button class="bsm bo" onclick="startVisit('${p.id}','${enc(p.name)}')">+ Visit</button>
         <button class="bsm" style="background:#e2e8f0;color:#475569;" onclick="editPat('${p.id}')">✏️</button>
@@ -1470,6 +1512,8 @@ function renderPatients() {
     </tr>`;
   });
   const tbl=gid('table-pats');if(tbl)tbl.innerHTML=h;
+  const badge=gid('pat-count-badge');
+  if(badge)badge.textContent=f.length+' patient'+(f.length!==1?'s':'');
 }
 
 async function renderFollowups() {
@@ -1855,7 +1899,7 @@ function renderCons(){
       <td><span class="consult-type-badge ${ctCls}">${v.consultType||'GEN'}</span></td>
       <td><span class="badge ${stCls}" style="font-size:10px;">${v.status.replace(/_/g,' ')}</span></td>
       <td>${payBadge(v)}</td>
-      <td>${hasVitals?'<span class="badge bpd">✓</span>':'<span class="badge bp2">✗</span>'}</td>
+      <td>${hasVitals?`<span class="badge bpd" title="${v.vitals?.bp||''} | ${v.vitals?.temp||''}°C">✓</span>`:'<span class="badge bp2" title="No vitals yet">✗</span>'}</td>
       <td style="font-size:12px;">${lc?`${ld}/${lc}`:'—'}</td>
       <td style="font-size:12px;">${rc?`${rd}/${rc}`:'—'}</td>
       <td style="font-size:12px;">${rxc?`${rxd}/${rxc}`:'—'}</td>
@@ -1973,6 +2017,8 @@ function openCons(id){
   gid('cons-form').style.display='block';
   gid('cons-form').scrollIntoView({behavior:'smooth'});
   v.status='WITH_DOCTOR';
+  // Load order summary from visit object (b9 pattern)
+  setTimeout(()=>updateOrderSummary(v), 100);
   renderCons();
 }
 
@@ -2032,12 +2078,9 @@ function selectDrug(nameEnc,strengthEnc,formEnc,price){
   const name=dec(nameEnc),strength=dec(strengthEnc),form=dec(formEnc);
   gid('med-search').value='';gid('drug-results').style.display='none';
   addRxRow({name,strength,formulation:form,qty:1,price,instructions:'',dispensed:false});
-  // Check allergy
+  // Full allergy check from b9
   const v=visits.find(x=>x.id===activeVid);
-  const alg=v?.clinical?.hAllergy||'';
-  if(alg&&alg.toLowerCase().includes(name.toLowerCase().split(' ')[0])){
-    toast('⚠️ ALLERGY ALERT: Patient has noted sensitivity to '+name.split(' ')[0]+'. Check allergies!','error');
-  }
+  if(v) checkAllergyAlert(v);
 }
 
 function addRadRow(prefill){
@@ -2429,8 +2472,9 @@ function renderPharm(){
       <td>${payBadge(v)}</td><td style="font-size:12px;">${rxHtml}</td>
       <td>${pending.length?`<span class="badge bwn">${pending.length} Pending</span>`:`<span class="badge bpd">All Dispensed</span>`}</td>
       <td><div style="display:flex;gap:3px;flex-wrap:wrap;">
-        ${pending.length?`<button class="bsm bp" onclick="dispenseRx('${v.id}')">💊 Dispense</button>`:''}
+        ${pending.length?`<button class="bsm bp" onclick="dispenseRx('${v.id}')">💊 All</button>`:''}
         <button class="bsm bo" onclick="printRxLabel('${v.id}')">🏷️ Label</button>
+        <button class="bsm bo" onclick="printPharmReceipt('${v.id}')">🧾 Receipt</button>
       </div></td></tr>`;
   });
   gid('table-pharm').innerHTML=h;
@@ -4198,6 +4242,510 @@ async function sbq(queryFn) {
     return {data: null, error: e};
   }
 }
+
+
+// ══════════════════════════════════════════════
+// ADOPTED FROM B9
+// ══════════════════════════════════════════════
+
+// ── dispenseOne (adapted from b9) ──
+async function dispenseOne(vid,rxId){
+  const v=visits.find(x=>x.id===vid);
+  const rx=(v.prescriptions||[]).find(r=>r.id===rxId);if(!rx)return;
+  const item=inventory.find(i=>i.name===rx.name);
+  if(!item||item.stock<rx.qty)return alert(`Insufficient stock: ${rx.name}. Stock: ${item?item.stock:0}, Need: ${rx.qty}`);
+  item.stock-=rx.qty;
+  item.history=item.history||[];item.history.push({type:'OUT',qty:rx.qty,reason:`Dispensed to ${v.name}`,date:v.date,by:currentUser.name});
+  rx.dispensed=true;rx.dispensedTime=new Date().toLocaleTimeString();rx.dispensedBy=currentUser.name;
+  auditLog('UPDATE','visits',v.sbId||v.id,{action:'Dispensed '+rx.name+' x'+(rx.qty||1)});
+  checkFullyDispensed(v);// (Supabase saves handled per-operation)renderPharm();
+  speak(`Medication dispensed for patient ${v.name}.`);
+}
+
+// ── checkFullyDispensed (adapted from b9) ──
+function checkFullyDispensed(v){
+  if(!v)return;
+  const allDone=(v.prescriptions||[]).filter(r=>r.name).every(r=>r.dispensed);
+  if(allDone&&v.prescriptions.length>0){
+    if(!v.cleared.includes('Pharmacy'))v.cleared.push('Pharmacy');
+    toast('✅ All medications dispensed for '+v.name,'success');
+  }
+}
+
+// ── checkAllergyAlert (adapted from b9) ──
+function checkAllergyAlert(v){
+  const allergies=(v.clinical||{}).allergies||'';
+  if(!allergies||allergies.toLowerCase()==='none'||allergies.toLowerCase()==='none known')return;
+  const allergyTerms=allergies.toLowerCase().split(/[,;\/\s]+/).filter(t=>t.length>2);
+  const flagged=(v.prescriptions||[]).filter(rx=>{
+    if(!rx.name)return false;
+    const nameLC=(rx.name+' '+(rx.drugClass||'')).toLowerCase();
+    return allergyTerms.some(t=>nameLC.includes(t));
+  });
+  let el=document.getElementById('allergy-alert-banner');
+  if(!el){
+    el=document.createElement('div');
+    el.id='allergy-alert-banner';
+    const medList=document.getElementById('med-orders-list');
+    if(medList&&medList.parentNode)medList.parentNode.insertBefore(el,medList);
+  }
+  if(!flagged.length){el.style.display='none';return;}
+  el.style.cssText='display:block;background:#fef9c3;border:2px solid #fbbf24;border-radius:7px;padding:10px 14px;margin-bottom:8px;font-size:13px;';
+  el.innerHTML=`<b>⚠️ Allergy Alert</b> — Patient recorded: <b style="color:#b45309;">${allergies}</b><br>
+    Possible conflict with: ${flagged.map(r=>`<b>${r.name}</b>`).join(', ')}<br>
+    <span style="font-size:11px;color:#92400e;">Review before prescribing. Doctor may proceed with caution.</span>`;
+}
+
+// ── updateOrderSummary (adapted from b9) ──
+function updateOrderSummary(v){
+  if(!v)v=visits.find(x=>x.id===activeVid);if(!v)return;
+  const body=gid('order-sum-body');if(!body)return;
+  let total=v.consultFee||0, html='';
+  if(v.consultFee)html+=`<div class="osum-row"><span><span class="tag tc">CONSULT</span> Consultation Fee</span><span>$${v.consultFee.toFixed(2)}</span></div>`;
+  (v.labs||[]).filter(l=>l.name).forEach(l=>{
+    html+=`<div class="osum-row"><span><span class="tag tl">LAB</span> ${l.name}${l.done?' ✓':''}</span><span>$${l.price.toFixed(2)}</span></div>`;
+    total+=l.price;
+  });
+  (v.procedures||[]).filter(p=>p.name).forEach(p=>{
+    html+=`<div class="osum-row"><span><span class="tag tp">PROC</span> ${p.name}${p.completed?' ✓':''}</span><span>$${(p.price||0).toFixed(2)}</span></div>`;
+    total+=p.price||0;
+  });
+  (v.radiology||[]).filter(r=>r.name).forEach(r=>{
+    html+=`<div class="osum-row"><span><span class="tag tr2">RAD</span> ${r.name}${r.done?' ✓':''}</span><span>$${r.price.toFixed(2)}</span></div>`;
+    total+=r.price;
+  });
+  (v.prescriptions||[]).filter(r=>r.name).forEach(r=>{
+    const lt=(r.price||0)*(r.qty||1);
+    html+=`<div class="osum-row"><span><span class="tag tm">RX</span> ${r.name} ${r.strength||''} ${formBadge(r.formulation||'')} × ${r.qty||1}</span><span>$${lt.toFixed(2)}</span></div>`;
+    total+=lt;
+  });
+  if(v.discount)html+=`<div class="osum-row" style="color:var(--a);"><span>Discount (${v.discountReason||''})</span><span>-$${v.discount.toFixed(2)}</span></div>`;
+  html+=`<div class="osum-total"><span>TOTAL</span><span>$${Math.max(0,total-(v.discount||0)).toFixed(2)}</span></div>`;
+  body.innerHTML=html||'<div class="emp" style="padding:8px;">No orders yet.</div>';
+}
+
+// ── formBadge (adapted from b9) ──
+function formBadge(f){
+  const map={Tablet:'f-tab',Capsule:'f-cap',Syrup:'f-syr',Suspension:'f-syr','Injection (IV)':'f-inj','Injection (IM)':'f-inj','Injection (SC)':'f-inj','IV Fluid':'f-inj',Inhaler:'f-inh',Cream:'f-cre',Ointment:'f-cre',Drops:'f-oth',Powder:'f-oth'};
+  const cls=map[f]||'f-oth';
+  return`<span class="formulation-badge ${cls}">${f}</span>`;
+}
+
+// ── endVisit (adapted from b9) ──
+async function endVisit(){
+  const v=visits.find(x=>x.id===activeVid);if(!v)return;
+  if(!confirm('Discharge '+v.name+'? This will mark the visit as completed.'))return;
+  saveClinical();
+  v.status='DISCHARGED';
+  if(!v.cleared.includes('Doctor'))v.cleared.push('Doctor');
+  if(!isDemoMode()&&v.sbId){
+    await sb.from('visits').update({status:'discharged',discharge_date:new Date().toISOString()}).eq('id',v.sbId);
+  }
+  speak('');
+  toast(v.name+' discharged.','success');
+  auditLog('UPDATE','visits',v.sbId||v.id,{action:'Discharged'});
+  closeConsForm();renderCons();
+}function endVisit(){
+  const v=visits.find(x=>x.id===activeVid);if(!v)return;
+  saveClinical();v.status='DISCHARGED';
+  auditLog('UPDATE','visits',v.sbId||v.id,{action:'Discharged'});speak(`Patient ${v.name} has been discharged. Thank you for visiting Tali Medicals International.`);
+  // (Supabase saves handled per-operation)_showQueueList();renderCons();
+  alert(`${v.name} discharged.`);
+}
+
+// ── saveClinical (adapted from b9) ──
+function saveClinical(){
+  const v=visits.find(x=>x.id===activeVid);if(!v)return;
+  v.clinical=v.clinical||{};
+  // Save all clinical fields
+  const fields=['hPC','hHPC','hPMH','hLMP','hGP','hOG','hFSH','hDrug','hAllergy',
+    'cDiffDx','cFinalDx','cNotes','cRecommendations','hPEGeneral','hPEHead',
+    'hPEChest','hPECVS','hPEAbdomen','hPECNS','hPEExtremities','hPESkin','hPEOther'];
+  fields.forEach(fid=>{const el=gid(fid);if(el)v.clinical[fid]=el.value;});
+  const rd=gid('c-return-date');if(rd)v.clinical.returnDate=rd.value;
+  const rn=gid('c-return-note');if(rn)v.clinical.returnNote=rn.value;
+  // Run allergy check
+  checkAllergyAlert(v);
+  toast('📝 Clinical notes saved.','success');
+}function saveClinical(){
+  const v=visits.find(x=>x.id===activeVid);if(!v)return;
+  v.clinical=v.clinical||{};
+  v.clinical.pc=document.getElementById('hPC').value;v.clinical.hpc=document.getElementById('hHPC').value;
+  v.clinical.pmh=document.getElementById('hPMH').value;v.clinical.lmp=document.getElementById('hLMP').value;
+  v.clinical.gravPara=document.getElementById('hGP').value;v.clinical.obsGyn=document.getElementById('hOG').value;
+  v.clinical.fsh=document.getElementById('hFSH').value;v.clinical.drugHx=document.getElementById('hDrug').value;
+  v.clinical.allergies=document.getElementById('hAllergy').value;v.clinical.diffDx=document.getElementById('cDiffDx').value;
+  v.clinical.finalDx=document.getElementById('cFinalDx').value;v.clinical.notes=document.getElementById('cNotes').value;
+  v.clinical.recommendations=document.getElementById('cRecommendations').value;
+  v.clinical.returnDate=document.getElementById('c-return-date')?.value||'';
+  v.clinical.returnNote=document.getElementById('c-return-note')?.value||'';
+  v.clinical.peGeneral=document.getElementById('hPEGeneral').value;v.clinical.peHead=document.getElementById('hPEHead').value;
+  v.clinical.peChest=document.getElementById('hPEChest').value;v.clinical.peCVS=document.getElementById('hPECVS').value;
+  v.clinical.peAbdomen=document.getElementById('hPEAbdomen').value;v.clinical.peCNS=document.getElementById('hPECNS').value;
+  v.clinical.peExtremities=document.getElementById('hPEExtremities').value;v.clinical.peSkin=document.getElementById('hPESkin').value;
+  v.clinical.peOther=document.getElementById('hPEOther').value;
+  if(!v.cleared.includes('Doctor'))v.cleared.push('Doctor');
+  auditLog('UPDATE','visits',v.sbId||v.id,{action:'Clinical notes saved'});// (Supabase saves handled per-operation)
+}
+
+// ── buildVitalsTrendChart (adapted from b9) ──
+function buildVitalsTrendChart(patId){
+  const wrap=document.getElementById('vitals-trend-wrap');
+  const lbl=document.getElementById('vitals-trend-label');
+  if(!wrap)return;
+  const pvs=visits.filter(v=>v.patId===patId&&v.vitals).slice(-8);
+  if(pvs.length<2){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  if(lbl)lbl.textContent=pvs.length+' visits plotted';
+  const labels=pvs.map(v=>v.date);
+  const sysBP=pvs.map(v=>{const bp=(v.vitals.bp||'').split('/');return bp[0]?parseInt(bp[0]):null;});
+  const diaBP=pvs.map(v=>{const bp=(v.vitals.bp||'').split('/');return bp[1]?parseInt(bp[1]):null;});
+  const temp=pvs.map(v=>v.vitals.temp?parseFloat(v.vitals.temp):null);
+  const weight=pvs.map(v=>v.vitals.weight?parseFloat(v.vitals.weight):null);
+  const pulse=pvs.map(v=>v.vitals.pulse?parseFloat(v.vitals.pulse):null);
+  const ctx=document.getElementById('vitals-trend-chart');
+  if(!ctx)return;
+  if(charts['vitals-trend'])charts['vitals-trend'].destroy();
+  charts['vitals-trend']=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Systolic BP',data:sysBP,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.08)',tension:.3,spanGaps:true,pointRadius:4},
+        {label:'Diastolic BP',data:diaBP,borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.08)',tension:.3,spanGaps:true,pointRadius:4},
+        {label:'Pulse',data:pulse,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.08)',tension:.3,spanGaps:true,pointRadius:4},
+        {label:'Temp (°C)',data:temp,borderColor:'#0ea5e9',backgroundColor:'rgba(14,165,233,.08)',tension:.3,spanGaps:true,pointRadius:4,yAxisID:'y2'},
+        {label:'Weight (kg)',data:weight,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.08)',tension:.3,spanGaps:true,pointRadius:4,yAxisID:'y2'},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}},
+      scales:{
+        y:{title:{display:true,text:'BP / Pulse',font:{size:10}}},
+        y2:{position:'right',title:{display:true,text:'Temp / Weight',font:{size:10}},grid:{drawOnChartArea:false}}
+      }
+    }
+  });
+}
+
+// ── renderDirRecords (adapted from b9) ──
+function renderDirRecords(){
+  const mode=gv('dir-rec-mode')||'visits';
+  const term=(gv('dir-rec-search')||'').toLowerCase();
+  const head=gid('dir-rec-head');
+  const body=gid('dir-rec-table');
+  if(!head||!body)return;
+  if(mode==='visits'){
+    head.innerHTML='<tr><th>Patient</th><th>Date</th><th>Status</th><th>Type</th><th>Billing</th><th>Action</th></tr>';
+    const rows=visits.filter(v=>!term||v.name.toLowerCase().includes(term));
+    body.innerHTML=rows.slice(0,50).map(v=>`<tr>
+      <td><b>${v.name}</b></td>
+      <td>${v.date}</td>
+      <td><span class="badge bgr" style="font-size:10px;">${v.status.replace(/_/g,' ')}</span></td>
+      <td><span class="consult-type-badge ct-${(v.consultType||'gen').toLowerCase().split('_')[0]}">${v.consultType||'GEN'}</span></td>
+      <td>${payBadge(v)}</td>
+      <td><div style="display:flex;gap:3px;">
+        <button class="bsm bp" onclick="showSection('doctor');openCons('${v.id}')">Open</button>
+        <button class="bsm bd2" onclick="adminDeleteVisit('${v.id}')">🗑</button>
+      </div></td>
+    </tr>`).join('')||'<tr><td colspan="6" class="emp">No records</td></tr>';
+  } else {
+    head.innerHTML='<tr><th>Patient</th><th>Age/Sex</th><th>Phone</th><th>Visits</th><th>Action</th></tr>';
+    const rows=patients.filter(p=>!term||p.name.toLowerCase().includes(term));
+    body.innerHTML=rows.slice(0,50).map(p=>{
+      const pv=visits.filter(v=>v.patId===p.id).length;
+      return`<tr>
+        <td><b>${p.name}</b></td>
+        <td>${p.ageVal} ${p.ageUnit||'y'} / ${p.gender}</td>
+        <td>${p.phone||'—'}</td>
+        <td>${pv}</td>
+        <td><button class="bsm bd2" onclick="adminDeletePatient('${p.id}')">🗑 Delete</button></td>
+      </tr>`;
+    }).join('')||'<tr><td colspan="5" class="emp">No records</td></tr>';
+  }
+}
+async function adminDeleteVisit(vid){
+  if(!confirm('Delete this visit record? Cannot be undone.'))return;
+  visits=visits.filter(v=>v.id!==vid);
+  if(!isDemoMode()){
+    await sb.from('visits').delete().eq('id',vid).catch(()=>{});
+  }
+  renderDirRecords();toast('Visit deleted.','success');
+}
+
+// ── printPharmReceipt (adapted from b9) ──
+function printPharmReceipt(vid){
+  const v=visits.find(x=>x.id===vid);if(!v)return;
+  const p=patients.find(x=>x.id===v.patId);
+  const rxAll=(v.prescriptions||[]).filter(r=>r.name);
+  const rxDone=rxAll.filter(r=>r.dispensed);
+  const _lg=typeof _LOGO_B64!=='undefined'?_LOGO_B64:'';
+  gid('pra-sub').innerText='';
+  gid('pra-con').innerHTML=printHeader('PHARMACY DISPENSING RECEIPT')+`
+    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:6px;padding:9px 14px;margin-bottom:12px;font-size:13px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+        <div><b>Patient:</b> ${v.name}</div>
+        <div><b>Date:</b> ${v.date}</div>
+        <div><b>Age:</b> ${p?p.ageVal+' '+p.ageUnit:'—'}</div>
+        <div><b>Gender:</b> ${p?p.gender:'—'}</div>
+        <div><b>Visit ID:</b> ${v.id}</div>
+        <div><b>Dispensed by:</b> ${rxDone[0]?.dispensedBy||currentUser?.name||'—'}</div>
+      </div>
+    </div>
+    <table class="pit" style="margin-bottom:12px;">
+      <tr><th>#</th><th>Medication</th><th>Strength</th><th>Form</th><th>Qty</th><th>Freq</th><th>Duration</th><th>Status</th></tr>
+      ${rxAll.map((r,i)=>`<tr style="${r.dispensed?'':'background:#fef9c3;'}">
+        <td>${i+1}</td>
+        <td><b>${r.name}</b>${r.patientInstructions?`<br><span style="font-size:10px;color:#1e40af;">📋 ${r.patientInstructions}</span>`:''}</td>
+        <td>${r.strength||'—'}</td>
+        <td>${r.formulation||'—'}</td>
+        <td><b>${r.qty}</b></td>
+        <td>${r.instructions||'—'}</td>
+        <td>${r.duration||'—'}</td>
+        <td style="font-weight:700;color:${r.dispensed?'#065f46':'#92400e'};">${r.dispensed?'✅ Dispensed':'⏳ Pending'}</td>
+      </tr>`).join('')}
+    </table>
+    <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:6px;padding:9px 14px;margin-bottom:12px;font-size:12px;">
+      <b>⚠ Patient Instructions:</b>
+      <ul style="margin:6px 0 0 16px;line-height:1.9;">
+        <li>Take all medications as prescribed — complete the full course.</li>
+        <li>Do not share medications with others.</li>
+        <li>Store in a cool, dry place away from sunlight.</li>
+        <li>Report any adverse reactions to the clinic immediately.</li>
+        <li>Keep all medications out of reach of children.</li>
+      </ul>
+    </div>
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px 14px;font-size:12px;margin-bottom:10px;">
+      <b>Return Date:</b> ${(v.clinical||{}).returnDate||'As advised by doctor'}
+      ${(v.clinical||{}).returnNote?` &nbsp;—&nbsp; ${v.clinical.returnNote}`:''}
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:20px;gap:20px;">
+      <div style="flex:1;text-align:center;">
+        <div style="border-top:1.5px solid #334155;padding-top:6px;margin-top:30px;">&nbsp;</div>
+        <div style="font-size:11px;color:#64748b;">Pharmacist Signature &amp; Date</div>
+      </div>
+      <div style="flex:1;text-align:center;">
+        <div style="border-top:1.5px solid #334155;padding-top:6px;margin-top:30px;">&nbsp;</div>
+        <div style="font-size:11px;color:#64748b;">Patient / Guardian Signature</div>
+      </div>
+    </div>
+  `+printFooter();
+  doPrint();
+}
+
+// ── printRadResults (adapted from b9) ──
+function printRadResults(id){
+  const v=visits.find(x=>x.id===id);if(!v)return;
+  const p=patients.find(x=>x.id===v.patId);
+  const done=(v.radiology||[]).filter(r=>r.done);
+  gid('pra-con').innerHTML=
+    printHeader('RADIOLOGY / IMAGING REPORT')+
+    `<p style="font-size:12px;margin-bottom:10px;padding:7px;background:#f8fafc;border-radius:5px;">
+      <b>Patient:</b> ${v.name} &nbsp;|&nbsp;
+      <b>Age:</b> ${p?p.ageVal+' '+p.ageUnit:'—'} &nbsp;|&nbsp;
+      <b>Gender:</b> ${p?p.gender:'—'} &nbsp;|&nbsp;
+      <b>Date:</b> ${v.date}
+    </p>
+    ${done.length?done.map(r=>`
+      <div style="margin-bottom:12px;border:1px solid #e2e8f0;border-radius:6px;padding:10px;">
+        <h4 style="margin:0 0 6px 0;color:#1e3a8a;border-bottom:1px solid #e2e8f0;padding-bottom:4px;">${r.name}</h4>
+        <div style="white-space:pre-wrap;font-size:13px;line-height:1.7;">${r.result}</div>
+        <div style="font-size:10px;color:#64748b;margin-top:5px;">${r.resultTime} &nbsp;|&nbsp; ${r.resultBy}</div>
+      </div>`).join(''):'<p style="color:#64748b;">No completed radiology results.</p>'}
+    `+printFooter();
+  doPrint();
+}
+
+// ── _startAlertPolling (adapted from b9) ──
+function _startAlertPolling() {
+  if (_alertPollInterval) return;
+  // BroadcastChannel for same-device cross-tab alerts
+  try {
+    _alertBC = new BroadcastChannel('meditrack_alerts');
+    _alertBC.onmessage = (e) => {
+      if (e.data && e.data.msg) {
+        toast('🔔 ' + e.data.msg, 'info');
+        speak('');
+      }
+    };
+  } catch(e) {}
+  // Poll Supabase staff_messages for @alert tagged messages every 15s
+  _alertPollInterval = setInterval(async () => {
+    if (!currentUser || !currentHospital || isDemoMode()) return;
+    try {
+      const since = new Date(Date.now() - 20000).toISOString();
+      const { data } = await sb.from('staff_messages')
+        .select('*').eq('hospital_id', currentHospital)
+        .gte('created_at', since)
+        .neq('from_user_id', currentUser.auth_uid || currentUser.id)
+        .order('created_at', { ascending: false }).limit(5);
+      (data || []).forEach(msg => {
+        const key = 'alert_seen_' + msg.id;
+        if (!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, '1');
+          toast('💬 ' + (msg.from_name || 'Staff') + ': ' + msg.message_text, 'info');
+          speak('');
+        }
+      });
+    } catch(e) {}
+  }, 15000);
+}
+
+// ── _broadcastAlertAll (adapted from b9) ──
+async function _broadcastAlertAll(msg) {
+  // Broadcast via BroadcastChannel (same device)
+  try { if(_alertBC) _alertBC.postMessage({msg}); } catch(e) {}
+  // Also save to Supabase so other devices see it
+  if (!isDemoMode() && currentHospital) {
+    await sb.from('staff_messages').insert({
+      hospital_id: currentHospital,
+      from_user_id: currentUser?.auth_uid || currentUser?.id,
+      from_name: currentUser?.name || 'System',
+      to_user_id: 'all', to_name: 'All Staff',
+      message_text: '🔔 ALERT: ' + msg,
+    }).catch(()=>{});
+  }
+  toast('🔔 Alert sent: ' + msg, 'success');
+}
+
+// ── openAdmit (adapted from b9) ──
+function openAdmit(){document.getElementById('admitWard').value='';document.getElementById('admitNotes').value='';oModal('admit-modal');}
+
+// ── confAdmit (adapted from b9) ──
+// ── confAdmit ──
+async function confAdmit(){
+  const v=visits.find(x=>x.id===activeVid);if(!v)return;
+  const ward=document.getElementById('admitWard')?.value;
+  if(!ward){toast('Enter ward/bed number.','error');return;}
+  const notes=document.getElementById('admitNotes')?.value;
+  const diag=document.getElementById('admitDiag')?.value;
+  v.status='ADMITTED';v.ward=ward;v.admitNotes=notes;
+  if(!v.cleared.includes('Admitted'))v.cleared.push('Admitted');
+  if(!isDemoMode()&&v.sbId){
+    await sb.from('visits').update({status:'admitted',ward,bed_number:ward,admission_date:new Date().toISOString()}).eq('id',v.sbId);
+  }
+  cModal('admit-modal');renderCons();speak('');
+  toast(v.name+' admitted to '+ward,'success');
+  auditLog('UPDATE','visits',v.sbId||v.id,{action:'Admitted',ward,diag});
+}function confAdmit(){
+  const v=visits.find(x=>x.id===activeVid);if(!v)return;
+  saveClinical();v.status='ADMITTED';v.admitted=true;v.admissionWard=document.getElementById('admitWard').value;
+  auditLog('UPDATE','visits',v.sbId||v.id,{action:'Admitted'});
+  speak(`Patient ${v.name} has been admitted to ${v.admissionWard}.`);
+  // (Supabase saves handled per-operation)cModal('admit-modal');_showQueueList();renderCons();
+  alert(`${v.name} admitted.`);
+}
+
+// ── startVisitFromFollowup (adapted from b9) ──
+function startVisitFromFollowup(patId,eName){
+  const name=dec(eName);
+  if(confirm(`Start a new visit for ${name}?`))startVisit(patId,eName);
+}
+
+// ── exportCSV (adapted from b9) ──
+function exportCSV(){
+  const rows=[['Patient','PatNum','Age','Gender','Phone','Date','Type','Status','Diagnosis','Labs','Rx','Total','Paid','Balance']];
+  visits.forEach(v=>{
+    const p=patients.find(x=>x.id===v.patId);
+    const tot=totalBill(v);
+    rows.push([
+      v.name, p?.patNum||'', p?p.ageVal+' '+p.ageUnit:'', p?.gender||'',
+      p?.phone||'', v.date, v.consultType||'GENERAL', v.status.replace(/_/g,' '),
+      v.clinical?.cFinalDx||'', (v.labs||[]).filter(l=>l.name).map(l=>l.name).join('; '),
+      (v.prescriptions||[]).filter(r=>r.name).map(r=>r.name+' ×'+r.qty).join('; '),
+      tot.toFixed(2), v.totalPaid.toFixed(2), (tot-v.totalPaid).toFixed(2)
+    ]);
+  });
+  const csv=rows.map(r=>r.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='meditrack_export_'+today()+'.csv';
+  a.click();
+  toast('✅ Data exported.','success');
+}
+
+// ── printDischargeSummary (adapted from b9) ──
+function printDischargeSummary(vid){
+  const vId=vid||activeVid;
+  const v=visits.find(x=>x.id===vId);if(!v)return;
+  const p=patients.find(x=>x.id===v.patId);
+  const cl=v.clinical||{};
+  const isDraft=v.status!=='DISCHARGED';
+  const rxList=(v.prescriptions||[]).filter(r=>r.name);
+  const doctor=staffList.find(s=>s.sections&&s.sections.includes('doctor')&&v.cleared&&v.cleared.includes('Doctor'))||
+               staffList.find(s=>s.role&&s.role.toLowerCase().includes('doctor'))||{name:'Attending Physician'};
+  gid('pra-sub').innerText='';
+  gid('pra-con').innerHTML=printHeader(isDraft?'DISCHARGE SUMMARY (DRAFT)':'DISCHARGE SUMMARY')+`
+    ${isDraft?`<div style="background:#fef9c3;border:1.5px solid #fbbf24;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;font-weight:700;color:#92400e;">⚠ DRAFT — Visit not yet discharged. Summary reflects current state.</div>`:''}
+    <div style="margin-bottom:14px;background:#f8fafc;border-radius:6px;padding:10px 14px;font-size:13px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+        <div><b>Patient:</b> ${v.name}</div>
+        <div><b>Date of Visit:</b> ${v.date}</div>
+        <div><b>Age:</b> ${p?p.ageVal+' '+p.ageUnit:'—'}</div>
+        <div><b>Gender:</b> ${p?p.gender:'—'}</div>
+        <div><b>Phone:</b> ${p?p.phone||'—':'—'}</div>
+        <div><b>Discharge Date:</b> ${isDraft?'(Pending)':new Date().toLocaleDateString()}</div>
+      </div>
+    </div>
+    ${cl.finalDx?`
+    <div style="margin-bottom:14px;background:#eff6ff;border-left:4px solid #1e3a8a;border-radius:5px;padding:10px 14px;">
+      <div style="font-weight:700;font-size:12px;color:var(--mu);text-transform:uppercase;margin-bottom:4px;">Diagnosis</div>
+      <div style="font-size:15px;font-weight:700;color:#1e3a8a;">${cl.finalDx}</div>
+      ${cl.notes?`<div style="font-size:13px;margin-top:6px;color:#334155;">${cl.notes}</div>`:''}
+    </div>`:''}
+    ${rxList.length?`
+    <div style="margin-bottom:14px;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:6px;padding:5px 10px;background:#f0fdf4;border-left:4px solid #10b981;">💊 MEDICATIONS TO TAKE HOME</div>
+      <table class="pit">
+        <tr><th>Medication</th><th>Strength</th><th>Form</th><th>Qty</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr>
+        ${rxList.map(r=>`<tr><td><b>${r.name}</b></td><td>${r.strength||'—'}</td><td>${r.formulation||'—'}</td><td>${r.qty}</td><td>${r.instructions||'—'}</td><td>${r.duration||'—'}</td><td>${r.patientInstructions||'—'}</td></tr>`).join('')}
+      </table>
+    </div>`:'<div style="margin-bottom:14px;font-size:13px;color:#64748b;">No take-home medications prescribed.</div>'}
+    <div style="margin-bottom:14px;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:6px;padding:5px 10px;background:#eff6ff;border-left:4px solid #3b82f6;">📋 FOLLOW-UP INSTRUCTIONS</div>
+      <div style="font-size:13px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:5px;min-height:50px;">
+        ${cl.recommendations||cl.notes||'No specific follow-up instructions recorded.'}
+      </div>
+    </div>
+    ${(v.procedures||[]).filter(p=>p.name).length?`
+    <div style="margin-bottom:14px;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:6px;padding:5px 10px;background:#ede9fe;border-left:4px solid #7c3aed;">🔪 PROCEDURES PERFORMED</div>
+      <table class="pit">
+        <tr><th>Procedure</th><th>Status</th><th>Performed By</th><th>Time</th><th>Observations</th></tr>
+        ${(v.procedures).filter(p=>p.name).map(p=>`<tr>
+          <td>${p.name}</td>
+          <td style="font-weight:700;">${p.completed?'✅ Done':'⏳ Pending'}</td>
+          <td>${p.completedBy||'—'}</td>
+          <td>${p.completedTime||'—'}</td>
+          <td>${p.notes||'—'}</td>
+        </tr>`).join('')}
+      </table>
+    </div>`:''}
+    ${cl.returnDate?`
+    <div style="margin-bottom:14px;background:#fef9c3;border:1.5px solid #fbbf24;border-radius:6px;padding:10px 14px;font-size:13px;">
+      <b>📅 Return Date:</b> ${cl.returnDate}
+      ${cl.returnNote?`<br><b>Note:</b> ${cl.returnNote}`:''}
+    </div>`:''}
+    <div style="margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:13px;">
+      <div>
+        <div style="border-top:1.5px solid #334155;padding-top:6px;margin-top:30px;">
+          <b>${doctor.name}</b><br>
+          <span style="color:#64748b;">${doctor.role||'Doctor'}</span><br>
+          <span style="color:#64748b;">Tali Medicals International</span>
+        </div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Signature &amp; Date</div>
+      </div>
+      <div>
+        <div style="border-top:1.5px solid #334155;padding-top:6px;margin-top:30px;">
+          &nbsp;
+        </div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Patient / Guardian Signature</div>
+      </div>
+    </div>
+  `+printFooter();
+  doPrint();
+}
+
 // ══════════════════════════════════════════════
 // BOOT / INIT  
 // ══════════════════════════════════════════════
@@ -4267,6 +4815,7 @@ async function sbq(queryFn) {
         <button class="voice-badge" id="voice-badge" onclick="toggleVoice()" title="Voice alerts">🔊</button>
         <button class="voice-badge" id="dark-mode-btn" onclick="toggleDarkMode()" title="Dark mode">🌙</button>
         <span id="sb-status" class="sb-status">●  Live</span>
+      <span id="sb-time" style="font-size:10px;color:rgba(255,255,255,.4);"></span>
       </div>
       <button onclick="doLogout()" class="sb-logout">🔓 Logout</button>
     </div>
@@ -4279,6 +4828,9 @@ async function sbq(queryFn) {
 
   <!-- ══════════ DIRECTOR DASHBOARD ══════════ -->
   <section id="sec-director">
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px;">
+      <button class="bo bsm" onclick="exportCSV()">⬇️ Export All Data (CSV)</button>
+    </div>
     <!-- 8 KPI cards -->
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px;" id="dash-kpis">
       <div class="sc" style="background:linear-gradient(135deg,#0d9488,#0f766e)"><div class="sc-label">Today Revenue</div><div class="sc-value" id="d-rev">$0</div><div class="sc-icon">💰</div></div>
@@ -4449,12 +5001,37 @@ async function sbq(queryFn) {
       <div id="reg-feedback" style="display:none;margin-top:10px;padding:10px 14px;
         border-radius:8px;font-weight:700;font-size:14px;text-align:center;"></div>
     </div>
+    <!-- Director Records Management Panel -->
+    <div class="card" style="margin-top:16px;" id="dir-records-panel" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <h4 style="color:var(--d);margin:0;">🗑️ Records Management <span style="font-size:11px;font-weight:400;color:var(--mu);">(Director / Admin Only)</span></h4>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <select id="dir-rec-mode" onchange="renderDirRecords()" style="font-size:12px;padding:4px 8px;border-radius:5px;border:1px solid var(--bd);">
+            <option value="visits">📋 Visits</option>
+            <option value="patients">👤 Patients</option>
+          </select>
+          <input id="dir-rec-search" type="text" placeholder="Search..." oninput="renderDirRecords()" style="font-size:12px;padding:4px 8px;border-radius:5px;border:1px solid var(--bd);width:160px;">
+          <button onclick="renderDirRecords()" style="background:var(--p);color:#fff;border:none;padding:4px 10px;border-radius:5px;font-size:12px;cursor:pointer;">🔄 Load</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="pit">
+          <thead id="dir-rec-head">
+            <tr><th>Name</th><th>Date</th><th>Status</th><th>Type</th><th>Billing</th><th>Action</th></tr>
+          </thead>
+          <tbody id="dir-rec-table">
+            <tr><td colspan="6" class="emp">Click "Load" to view records</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
     <!-- Patient search / list -->
     <div class="card">
       <h4 style="margin-bottom:8px;">Today's Patients &amp; All Records</h4>
       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
         <input id="patSearch" placeholder="Search by name, phone, number…" onkeyup="renderPatients()" style="flex:1;min-width:200px;margin:0;">
         <button class="bp bsm" onclick="renderPatients()">🔍 Search</button>
+        <span id="pat-count-badge" style="background:var(--p);color:#fff;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;"></span>
       </div>
       <table id="table-pats"></table>
     </div>
@@ -4698,6 +5275,10 @@ async function sbq(queryFn) {
         <!-- Actions -->
         <div class="ab" id="cons-actions">
           <button onclick="saveConsultation()" class="bp">💾 Save &amp; Close Consultation</button>
+          <button onclick="saveClinical()" class="ba" style="background:var(--s);">📝 Save Notes Only</button>
+          <button onclick="endVisit()" class="ba">✅ Discharge Patient</button>
+          <button onclick="openAdmit()" class="bpu">🛏️ Admit to Ward</button>
+          <button onclick="if(activeVid)printDischargeSummary(activeVid)" class="bo bsm" style="border-color:#10b981;color:#10b981;">📋 Discharge Summary</button>
           <button onclick="closeConsForm()" style="background:#e2e8f0;color:#475569;">Cancel</button>
         </div>
       </div><!-- end cons-form -->
@@ -4800,6 +5381,7 @@ async function sbq(queryFn) {
       <div id="rad-tests-entry"></div>
       <div class="ab">
         <button onclick="updateRad()" class="bpu">📤 Release Radiology Results</button>
+        <button onclick="printRadResults(activeVid)" class="bo bsm" style="border-color:var(--pu);color:var(--pu);">🖨️ Print Report</button>
         <button onclick="document.getElementById('rad-entry').style.display='none'" style="background:#e2e8f0;color:#475569;">Cancel</button>
       </div>
     </div>
@@ -4986,7 +5568,10 @@ async function sbq(queryFn) {
         <div class="chat-msgs" id="chat-messages"><div class="emp" style="padding:20px;">No messages yet. Say hello! 👋</div></div>
         <div class="chat-input-row">
           <textarea id="chat-input" placeholder="Type message… (Enter to send, Shift+Enter for newline)" style="flex:1;min-height:42px;max-height:100px;resize:none;margin:0;font-size:13px;" onkeydown="chatKeyDown(event)"></textarea>
-          <button onclick="sendChat()" class="bp" style="align-self:flex-end;">Send ▶</button>
+          <div style="display:flex;flex-direction:column;gap:4px;align-self:flex-end;">
+            <button onclick="sendChat()" class="bp">Send ▶</button>
+            <button onclick="sendAlert()" class="bd2" title="Send bell alert to all staff">🔔 Alert</button>
+          </div>
         </div>
       </div>
     </div>
@@ -5536,7 +6121,41 @@ function doRegister() {
     });
 }
 
+
+function sendAlert() {
+  const msg = prompt('Alert message to all staff (will ring bell on all devices):');
+  if (!msg) return;
+  _broadcastAlertAll(msg);
+  speak('');
+}
+
+
+// Live clock in sidebar
+setInterval(() => {
+  const el = document.getElementById('sb-time');
+  if (el) el.textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}, 1000);
+
 </script>
+
+
+<!-- ADMIT PATIENT MODAL (from b9) -->
+<div id="admit-modal" class="mo">
+  <div class="mb" style="max-width:480px;">
+    <button class="mc" onclick="cModal('admit-modal')">✕</button>
+    <h3 style="color:var(--pu);margin-bottom:11px;">🛏️ Admit Patient</h3>
+    <label>Ward / Bed Number</label>
+    <input id="admitWard" placeholder="e.g. Ward A, Bed 3">
+    <label>Admission Diagnosis</label>
+    <input id="admitDiag" placeholder="Working diagnosis for admission">
+    <label>Admission Notes</label>
+    <textarea id="admitNotes" rows="3" placeholder="Special instructions, isolation, diet..."></textarea>
+    <div class="ab">
+      <button onclick="confAdmit()" class="bpu">🛏️ Confirm Admission</button>
+      <button onclick="cModal('admit-modal')" style="background:#e2e8f0;color:#475569;">Cancel</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

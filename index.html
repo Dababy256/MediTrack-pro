@@ -874,6 +874,26 @@ function payBadge(v) {
   const cls = st === 'PAID' ? 'bpd' : st === 'PARTIAL' ? 'bpa' : 'bp2';
   return `<span class="badge ${cls}">${st}</span>`;
 }
+
+// Status icon — matches ClinicPlus visual language
+function statusIcon(v) {
+  if (!v) return '';
+  const s = v.status || '';
+  if (s === 'DISCHARGED') return '<span title="Discharged" style="color:#059669;font-size:14px;">🟢</span>';
+  if (s === 'ADMITTED')   return '<span title="Admitted" style="color:#7c3aed;font-size:14px;">🛏️</span>';
+  if (s === 'WITH_DOCTOR')return '<span title="With Doctor" style="color:#0891b2;font-size:14px;">👨‍⚕️</span>';
+  if (s.includes('WAITING')) return '<span title="Waiting" style="color:#d97706;font-size:14px;">⏳</span>';
+  if (s === 'BILLING')    return '<span title="Billing" style="color:#6366f1;font-size:14px;">💳</span>';
+  return '<span style="color:#94a3b8;font-size:14px;">ℹ️</span>';
+}
+// Patient-level status icon based on their latest visit
+function patientStatusIcon(p) {
+  const pv = visits.filter(v => v.patId === p.id);
+  if (!pv.length) return '<span style="color:#cbd5e1;font-size:14px;" title="No visits">○</span>';
+  const v = pv[0];
+  return statusIcon(v);
+}
+
 function billStatus(v) {
   if (!v) return 'PENDING';
   const tot = totalBill(v);
@@ -1210,7 +1230,7 @@ function showSection(id) {
   // Render section content
   const renders = {
     director: renderDash,
-    reception: () => { renderPatients(); renderFollowups(); },
+    reception: () => { renderPatients(); renderFollowups(); renderActiveVisits(); },
     nurse: () => { renderTriage(); renderTreatList(); },
     doctor: renderCons,
     billing: renderBilling,
@@ -1484,36 +1504,69 @@ async function createVisitForPatient(patId,name,ct,payer,note) {
 }
 
 function renderPatients() {
-  const term=(gid('patSearch')?.value||'').toLowerCase();
+  const term = (gid('patSearch')?.value||'').toLowerCase();
   const todayStr = new Date().toLocaleDateString();
-  let h=`<tr><th>Name</th><th>No.</th><th>Age/Sex</th><th>Phone</th><th>Last Visit</th><th>Pay</th><th>Stage</th><th>Actions</th></tr>`;
-  const f=patients.filter(p=>p.name.toLowerCase().includes(term)||( p.phone||'').includes(term)||(p.patNum||'').toLowerCase().includes(term)).slice(0,50);
-  if(!f.length){h+='<tr><td colspan="9" class="emp">No patients found</td></tr>';}
-  f.forEach(p=>{
-    const pv=visits.filter(v=>v.patId===p.id);
-    const last=pv.length?pv[0]:null;
-    const chips=last?last.cleared.map(d=>`<span class="dc">${d}</span>`).join(''):'';
-    const st=last?`<span class="badge bgr" style="font-size:10px;">${last.status.replace(/_/g,' ')}</span>`:'-';
-    const ctBadge=last?`<span class="consult-type-badge ct-${(last.consultType||'gen').toLowerCase().split('_')[0]}">${last.consultType||'GEN'}</span>`:'';
-    const isToday=last&&last.date===new Date().toLocaleDateString();
-    h+=`<tr style="${isToday?'background:#f0fdf9;border-left:3px solid var(--a);':''}">
-      <td><b>${p.name}</b>${p.bloodGroup?`<br><span style="font-size:10px;color:var(--mu);">${p.bloodGroup}</span>`:''}</td>
-      <td><code style="background:var(--lt);padding:1px 5px;border-radius:4px;font-size:11px;font-weight:700;">${p.patNum||'—'}</code></td>
-      <td>${p.ageVal}${(p.ageUnit||"y")[0]}/${p.gender[0]}</td>
-      <td>${p.phone||'—'}</td>
-      <td>${last?last.date+' '+ctBadge:'No visits'}</td>
-      <td>${last?payBadge(last):'—'}</td>
-      <td>${chips||'<span style="color:#94a3b8;font-size:11px;">—</span>'}</td>
-      <td><div style="display:flex;gap:3px;flex-wrap:wrap;">
-        <button class="bsm bo" onclick="startVisit('${p.id}','${enc(p.name)}')">+ Visit</button>
-        <button class="bsm" style="background:#e2e8f0;color:#475569;" onclick="editPat('${p.id}')">✏️</button>
-        <button class="bsm" style="background:var(--s);color:#fff;" onclick="openChart('${p.id}')">Chart</button>
-      </div></td>
+  const f = patients.filter(p =>
+    p.name.toLowerCase().includes(term) ||
+    (p.phone||'').includes(term) ||
+    (p.patNum||'').toLowerCase().includes(term)
+  ).slice(0, 100);
+
+  let h = `<tr>
+    <th style="width:28px;"></th>
+    <th>Name / ID</th>
+    <th>Age / Sex</th>
+    <th>Contact</th>
+    <th>Visits</th>
+    <th>Status</th>
+    <th>Pay</th>
+    <th>Actions</th>
+  </tr>`;
+
+  if (!f.length) {
+    h += `<tr><td colspan="8" class="emp" style="padding:24px;">
+      No patients found. Register a new patient above.
+    </td></tr>`;
+  }
+
+  f.forEach(p => {
+    const pv = visits.filter(v => v.patId === p.id);
+    const last = pv.length ? pv[0] : null;
+    const isToday = last && last.date === todayStr;
+    const icon = patientStatusIcon(p);
+    const ctBadge = last
+      ? `<span class="consult-type-badge ct-${(last.consultType||'gen').toLowerCase().split('_')[0]}">${last.consultType||'GEN'}</span>`
+      : '';
+    const statusLabel = last
+      ? `<span class="badge bgr" style="font-size:10px;">${last.status.replace(/_/g,' ')}</span>`
+      : '<span style="color:#94a3b8;font-size:11px;">—</span>';
+
+    h += `<tr style="${isToday ? 'background:#f0fdf9;border-left:3px solid var(--a);' : ''}">
+      <td style="text-align:center;">${icon}</td>
+      <td>
+        <div style="font-weight:700;font-size:13px;">${p.name}</div>
+        <code style="background:var(--lt);padding:1px 5px;border-radius:4px;font-size:10px;font-weight:700;color:var(--p);">${p.patNum||'—'}</code>
+        ${p.bloodGroup ? `<span style="font-size:10px;color:var(--mu);margin-left:4px;">${p.bloodGroup}</span>` : ''}
+      </td>
+      <td style="font-size:12px;">${p.ageVal}${(p.ageUnit||'y')[0]} / ${p.gender}</td>
+      <td style="font-size:12px;">${p.phone||'—'}</td>
+      <td style="font-size:12px;">${pv.length} visit${pv.length!==1?'s':''}${isToday?` <span style="color:var(--a);font-size:10px;font-weight:700;">●TODAY</span>`:''}</td>
+      <td>${statusLabel} ${ctBadge}</td>
+      <td>${last ? payBadge(last) : '—'}</td>
+      <td>
+        <div style="display:flex;gap:3px;flex-wrap:wrap;">
+          <button class="bsm bp" onclick="startVisit('${p.id}','${enc(p.name)}')">+ Visit</button>
+          <button class="bsm bo" onclick="editPat('${p.id}')">✏️</button>
+          <button class="bsm" style="background:var(--s);color:#fff;" onclick="openChart('${p.id}')">📋</button>
+        </div>
+      </td>
     </tr>`;
   });
-  const tbl=gid('table-pats');if(tbl)tbl.innerHTML=h;
-  const badge=gid('pat-count-badge');
-  if(badge)badge.textContent=f.length+' patient'+(f.length!==1?'s':'');
+
+  const tbl = gid('table-pats');
+  if (tbl) tbl.innerHTML = h;
+  const badge = gid('pat-count-badge');
+  if (badge) badge.textContent = f.length + ' patient' + (f.length!==1?'s':'');
 }
 
 async function renderFollowups() {
@@ -1603,22 +1656,75 @@ function swNurse(tab,btn){
   if(tab==='procedures')renderProcPatients();
 }
 
-function renderTriage(){
-  const q=visits.filter(v=>v.status==='WAITING_TRIAGE');
-  let h=`<tr><th>Patient</th><th>No.</th><th>Age/Sex</th><th>Type</th><th>Date</th><th>Pay</th><th>Action</th></tr>`;
-  if(!q.length)h+=`<tr><td colspan="7" class="emp">No patients waiting for triage</td></tr>`;
-  q.forEach(v=>{
-    const p=patients.find(x=>x.id===v.patId);
-    const ctCls={GENERAL:'ct-gen',LAB_ONLY:'ct-lab',RADIOLOGY:'ct-rad',DENTAL:'ct-spc',ENT:'ct-spc',OTHER_SPECIAL:'ct-spc'}[v.consultType]||'ct-gen';
-    h+=`<tr><td><b>${v.name}</b></td>
-      <td><code style="font-size:10px;background:var(--lt);padding:1px 5px;border-radius:4px;">${p?.patNum||'—'}</code></td>
-      <td>${p?p.ageVal+p.ageUnit[0]+'/'+p.gender:'—'}</td>
-      <td><span class="consult-type-badge ${ctCls}">${v.consultType||'GEN'}</span></td>
-      <td>${v.date}</td><td>${payBadge(v)}</td>
-      <td><button onclick="openTriage('${v.id}')" class="bp bsm">🌡️ Record Vitals</button></td></tr>`;
+function renderTriage() {
+  const q = visits.filter(v => v.status === 'WAITING_TRIAGE');
+  const tbl = gid('triage-table');
+  if (!tbl) return;
+
+  // Summary bar
+  const sumEl = gid('triage-summary');
+  if (sumEl) {
+    const withNurse = visits.filter(v => v.status === 'WITH_NURSE').length;
+    const waitingDoc = visits.filter(v => v.status === 'WAITING_CONSULTATION').length;
+    sumEl.innerHTML = `
+      <div class="sc" style="background:linear-gradient(135deg,#d97706,#b45309);min-height:60px;">
+        <div class="sc-label">Awaiting Triage</div>
+        <div class="sc-value" style="font-size:22px;">${q.length}</div>
+      </div>
+      <div class="sc" style="background:linear-gradient(135deg,#0891b2,#0e7490);min-height:60px;">
+        <div class="sc-label">With Nurse</div>
+        <div class="sc-value" style="font-size:22px;">${withNurse}</div>
+      </div>
+      <div class="sc" style="background:linear-gradient(135deg,#059669,#047857);min-height:60px;">
+        <div class="sc-label">Waiting Doctor</div>
+        <div class="sc-value" style="font-size:22px;">${waitingDoc}</div>
+      </div>`;
+  }
+
+  if (!q.length) {
+    tbl.innerHTML = `<tr><th>Date</th><th>Patient ID</th><th>Name</th><th>Contact</th><th>Gender</th><th>Type</th><th>Triage Actions</th></tr>
+      <tr><td colspan="7" class="emp" style="padding:24px;">No patients waiting for triage</td></tr>`;
+    renderTreatList();
+    return;
+  }
+
+  let h = `<tr>
+    <th>Date / Time</th>
+    <th>Patient ID</th>
+    <th>Name</th>
+    <th>Contact</th>
+    <th>Age / Sex</th>
+    <th>Type</th>
+    <th>Triage Actions</th>
+  </tr>`;
+
+  q.forEach(v => {
+    const p = patients.find(x => x.id === v.patId) || {};
+    const icon = statusIcon(v);
+    h += `<tr>
+      <td style="font-size:12px;">${v.date}<br><span style="color:var(--mu);font-size:10px;">${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></td>
+      <td><code style="background:var(--lt);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;color:var(--p);">${p.patNum||v.id.slice(-6)}</code></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          ${icon}
+          <div>
+            <div style="font-weight:700;">${v.name}</div>
+            <div style="font-size:10px;color:var(--mu);">${v.consultType||'GENERAL'}</div>
+          </div>
+        </div>
+      </td>
+      <td style="font-size:12px;">${p.phone||'—'}</td>
+      <td style="font-size:12px;">${p.ageVal||'?'}${(p.ageUnit||'y')[0]}/${(p.gender||'?')[0]}</td>
+      <td><span class="consult-type-badge ct-${(v.consultType||'gen').toLowerCase().split('_')[0]}">${v.consultType||'GEN'}</span></td>
+      <td>
+        <button class="bsm bp" onclick="openTriage('${v.id}')">✏️ Triage</button>
+        <button class="bsm bo" onclick="startVisit('${v.patId}','${enc(v.name)}')">+ Re-route</button>
+      </td>
+    </tr>`;
   });
-  gid('table-triage').innerHTML=h;
-  gid('nurse-vitals-trend-wrap').style.display='none';
+
+  tbl.innerHTML = h;
+  renderTreatList();
 }
 
 function openTriage(id){
@@ -2378,31 +2484,7 @@ function exportBillingCSV(){
 // LAB SECTION
 // ══════════════════════════════════════════════
 function swLab(tab,btn){labTab=tab;document.querySelectorAll('#sec-lab .st').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLab();}
-function renderLab(){
-  gid('lab-summary-panel').style.display=labTab==='summary'?'block':'none';
-  gid('lab-entry').style.display='none';
-  if(labTab==='summary'){buildLabSummary();return;}
-  let q;
-  if(labTab==='pending')q=visits.filter(v=>(v.labs||[]).some(l=>l.name&&!l.done));
-  else if(labTab==='completed')q=visits.filter(v=>(v.labs||[]).some(l=>l.done));
-  else q=visits.filter(v=>(v.labs||[]).some(l=>l.name));
-  let h=`<tr><th>Patient</th><th>Date</th><th>Type</th><th>Pay</th><th>Tests</th><th>Status</th><th>Actions</th></tr>`;
-  if(!q.length)h+=`<tr><td colspan="7" class="emp">No records</td></tr>`;
-  q.forEach(v=>{
-    const labs=v.labs||[];const pending=labs.filter(l=>l.name&&!l.done);const done=labs.filter(l=>l.done);
-    const testsHtml=labs.filter(l=>l.name).map(l=>`<span class="badge ${l.done?'bpd':'bwn'}" style="font-size:10px;margin:1px;">${l.name}${l.done?' ✓':''}</span>`).join(' ');
-    h+=`<tr><td><b>${v.name}</b></td><td>${v.date}</td>
-      <td><span class="consult-type-badge ct-${(v.consultType||'gen').toLowerCase().split('_')[0]}">${v.consultType||'GEN'}</span></td>
-      <td>${payBadge(v)}</td><td style="font-size:12px;">${testsHtml}</td>
-      <td>${pending.length?`<span class="badge bwn">${pending.length} Pending</span>`:`<span class="badge bpd">All Done</span>`}</td>
-      <td><div style="display:flex;gap:3px;flex-wrap:wrap;">
-        ${pending.length?`<button class="bsm bp" onclick="openLab('${v.id}')">Enter Results</button>`:''}
-        ${done.length?`<button class="bsm bo" onclick="printAllLabs('${v.id}')">🖨 Print</button>`:''}
-        <button class="bsm" style="background:var(--s);color:#fff;" onclick="openChart('${v.id}')">Chart</button>
-      </div></td></tr>`;
-  });
-  gid('table-lab').innerHTML=h;
-}
+
 function openLab(id){
   activeVid=id;
   const v=visits.find(x=>x.id===id);
@@ -2458,27 +2540,7 @@ function buildLabSummary(){
 // PHARMACY
 // ══════════════════════════════════════════════
 function swPharm(tab,btn){pharmTab=tab;document.querySelectorAll('#sec-pharmacy .st').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPharm();}
-function renderPharm(){
-  const isPending=pharmTab==='pending';
-  const q=visits.filter(v=>isPending?(v.prescriptions||[]).some(r=>r.name&&!r.dispensed):(v.prescriptions||[]).some(r=>r.dispensed));
-  let h=`<tr><th>Patient</th><th>Date</th><th>Type</th><th>Pay</th><th>Prescriptions</th><th>Status</th><th>Actions</th></tr>`;
-  if(!q.length)h+=`<tr><td colspan="7" class="emp">No records</td></tr>`;
-  q.forEach(v=>{
-    const rxs=v.prescriptions||[];
-    const pending=rxs.filter(r=>r.name&&!r.dispensed);const dispensed=rxs.filter(r=>r.dispensed);
-    const rxHtml=rxs.filter(r=>r.name).map(r=>`<span class="badge ${r.dispensed?'bpd':'bwn'}" style="font-size:10px;margin:1px;">${r.name} ×${r.qty||1}${r.dispensed?'✓':''}</span>`).join(' ');
-    h+=`<tr><td><b>${v.name}</b></td><td>${v.date}</td>
-      <td><span class="consult-type-badge ct-${(v.consultType||'gen').toLowerCase().split('_')[0]}">${v.consultType||'GEN'}</span></td>
-      <td>${payBadge(v)}</td><td style="font-size:12px;">${rxHtml}</td>
-      <td>${pending.length?`<span class="badge bwn">${pending.length} Pending</span>`:`<span class="badge bpd">All Dispensed</span>`}</td>
-      <td><div style="display:flex;gap:3px;flex-wrap:wrap;">
-        ${pending.length?`<button class="bsm bp" onclick="dispenseRx('${v.id}')">💊 All</button>`:''}
-        <button class="bsm bo" onclick="printRxLabel('${v.id}')">🏷️ Label</button>
-        <button class="bsm bo" onclick="printPharmReceipt('${v.id}')">🧾 Receipt</button>
-      </div></td></tr>`;
-  });
-  gid('table-pharm').innerHTML=h;
-}
+
 async function dispenseRx(vid){
   const v=visits.find(x=>x.id===vid);if(!v)return;
   const pending=(v.prescriptions||[]).filter(r=>r.name&&!r.dispensed);
@@ -4746,6 +4808,557 @@ function printDischargeSummary(vid){
   doPrint();
 }
 
+
+// ══════════════════════════════════════════════
+// LAB — 3-STEP WORKFLOW (ClinicPlus style)
+// ══════════════════════════════════════════════
+let _labTab = 'pick';
+
+function setLabTab(tab, btn) {
+  _labTab = tab;
+  ['pick','enter','review','results','summary'].forEach(t => {
+    const panel = gid('lab-'+t+'-panel');
+    if (panel) panel.style.display = t===tab ? 'block' : 'none';
+    const bt = gid('lab-tab-'+t);
+    if (bt) bt.classList.toggle('active', t===tab);
+  });
+  if (tab==='pick')    renderLabPick();
+  if (tab==='enter')   renderLabEnter();
+  if (tab==='review')  renderLabReview();
+  if (tab==='results') renderLabResults();
+  if (tab==='summary') buildLabSummary();
+}
+
+// Generate sample ID — 6 char alphanumeric
+function genSampleId() {
+  return Math.random().toString(36).substr(2,6).toUpperCase();
+}
+
+// STEP 1: PICK SAMPLE — shows unsampled pending tests
+function renderLabPick() {
+  const term = (gid('lab-pick-search')?.value||'').toLowerCase();
+  const el = gid('lab-pick-table'); if (!el) return;
+  const pending = visits.filter(v =>
+    (v.labs||[]).some(l => l.name && !l.sampleId)
+  ).filter(v => !term || v.name.toLowerCase().includes(term));
+
+  if (!pending.length) {
+    el.innerHTML = '<div class="emp" style="padding:24px;text-align:center;">No samples pending pickup</div>';
+    return;
+  }
+
+  let html = '';
+  pending.forEach(v => {
+    const p = patients.find(x => x.id === v.patId) || {};
+    const unsampled = (v.labs||[]).filter(l => l.name && !l.sampleId);
+    html += `<div class="card" style="margin-bottom:10px;padding:14px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px;margin-bottom:10px;font-size:13px;">
+        <div><b>Patient ID:</b> <span style="color:var(--p);font-weight:700;">${p.patNum||'—'}</span></div>
+        <div><b>Name:</b> <span style="font-weight:700;">${v.name}</span></div>
+        <div><b>Age:</b> ${p.ageVal||'?'}${(p.ageUnit||'y')[0]} / ${p.gender||'?'}</div>
+        <div><b>Visit Date:</b> ${v.date}</div>
+      </div>
+      <table style="width:100%;font-size:13px;">
+        <tr style="background:var(--lt);">
+          <th style="padding:6px 8px;">S/N</th>
+          <th style="padding:6px 8px;">Service Name</th>
+          <th style="padding:6px 8px;">Instructions</th>
+          <th style="padding:6px 8px;">Ordered By</th>
+          <th style="padding:6px 8px;">Action</th>
+        </tr>
+        ${unsampled.map((l,i) => `<tr>
+          <td style="padding:6px 8px;">${i+1}</td>
+          <td style="padding:6px 8px;font-weight:600;">${l.name}</td>
+          <td style="padding:6px 8px;color:var(--mu);">—</td>
+          <td style="padding:6px 8px;">
+            <span style="background:#dbeafe;color:#1e40af;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700;">
+              By: ${currentUser?.name||'Doctor'}
+            </span>
+          </td>
+          <td style="padding:6px 8px;">
+            <button class="bsm" style="background:#0d9488;color:#fff;" onclick="pickSample('${v.id}','${l.id||l.name}')">+ Pick Sample</button>
+          </td>
+        </tr>`).join('')}
+      </table>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function pickSample(vid, lid) {
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  const l = (v.labs||[]).find(x => (x.id||x.name) === lid); if (!l) return;
+  l.sampleId = genSampleId();
+  l.samplePickedAt = new Date().toISOString();
+  l.samplePickedBy = currentUser?.name;
+  toast('🧪 Sample picked — ID: ' + l.sampleId, 'success');
+  speak('');
+  renderLabPick();
+  // Update Supabase
+  if (!isDemoMode() && v.sbId) {
+    sb.from('lab_tests').update({status:'sampled'}).eq('visit_id', v.sbId).eq('test_name', l.name).catch(()=>{});
+  }
+}
+
+// STEP 2: ENTER RESULTS — sampled but no result
+function renderLabEnter() {
+  const term = (gid('lab-enter-search')?.value||'').toLowerCase();
+  const el = gid('lab-enter-table'); if (!el) return;
+  const sampled = visits.filter(v =>
+    (v.labs||[]).some(l => l.sampleId && !l.result)
+  ).filter(v => !term || v.name.toLowerCase().includes(term));
+
+  if (!sampled.length) {
+    el.innerHTML = '<div class="emp" style="padding:24px;text-align:center;">No samples awaiting result entry</div>';
+    gid('lab-entry').style.display = 'none';
+    return;
+  }
+
+  // Count badge
+  const countBadge = sampled.reduce((a,v) => a + (v.labs||[]).filter(l => l.sampleId && !l.result).length, 0);
+  const tabBtn = gid('lab-tab-enter');
+  if (tabBtn) tabBtn.textContent = `📝 Enter Results (${countBadge})`;
+
+  let html = '';
+  sampled.forEach(v => {
+    const p = patients.find(x => x.id === v.patId) || {};
+    const pending = (v.labs||[]).filter(l => l.sampleId && !l.result);
+    html += `<div class="card" style="margin-bottom:10px;padding:14px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px;margin-bottom:10px;font-size:13px;">
+        <div><b>Patient ID:</b> <span style="color:var(--p);font-weight:700;">${p.patNum||'—'}</span></div>
+        <div><b>Name:</b> <span style="font-weight:700;">${v.name}</span></div>
+        <div><b>Age:</b> ${p.ageVal||'?'}${(p.ageUnit||'y')[0]} / ${p.gender||'?'}</div>
+        <div><b>Visit Date:</b> ${v.date}</div>
+      </div>
+      <table style="width:100%;font-size:13px;">
+        <tr style="background:var(--lt);">
+          <th style="padding:6px 8px;">S/N</th>
+          <th style="padding:6px 8px;">Test Name</th>
+          <th style="padding:6px 8px;">Sample ID</th>
+          <th style="padding:6px 8px;">Collected</th>
+          <th style="padding:6px 8px;">Action</th>
+        </tr>
+        ${pending.map((l,i) => `<tr>
+          <td style="padding:6px 8px;">${i+1}</td>
+          <td style="padding:6px 8px;font-weight:600;">${l.name}</td>
+          <td style="padding:6px 8px;">
+            <code style="background:#dbeafe;color:#1e40af;padding:2px 7px;border-radius:6px;font-weight:700;">${l.sampleId}</code>
+          </td>
+          <td style="padding:6px 8px;font-size:11px;color:var(--mu);">${l.samplePickedAt ? new Date(l.samplePickedAt).toLocaleString() : '—'}</td>
+          <td style="padding:6px 8px;">
+            <button class="bsm bp" onclick="openLabEntry('${v.id}','${l.id||l.name}')">+ Add Results</button>
+          </td>
+        </tr>`).join('')}
+      </table>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function openLabEntry(vid, lid) {
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  const l = (v.labs||[]).find(x => (x.id||x.name) === lid); if (!l) return;
+  gid('lab-entry-vid').value = vid;
+  gid('lab-entry-lid').value = lid;
+  gid('lab-entry-name').value = l.name;
+  gid('lab-entry-sid').value = l.sampleId || '—';
+  gid('lab-result-text').value = l.result || '';
+  gid('lab-ref-range').value = l.refRange || '';
+  gid('lab-entry').style.display = 'block';
+  gid('lab-entry').scrollIntoView({behavior:'smooth'});
+}
+
+// STEP 3: REVIEW — results entered, awaiting doctor review/release
+function renderLabReview() {
+  const el = gid('lab-review-table'); if (!el) return;
+  const ready = visits.filter(v =>
+    (v.labs||[]).some(l => l.result && !l.released)
+  );
+
+  if (!ready.length) {
+    el.innerHTML = '<div class="emp" style="padding:24px;text-align:center;">No results awaiting review</div>';
+    return;
+  }
+
+  let html = '';
+  ready.forEach(v => {
+    const p = patients.find(x => x.id === v.patId) || {};
+    const toReview = (v.labs||[]).filter(l => l.result && !l.released);
+    html += `<div class="card" style="margin-bottom:10px;padding:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div>
+          <span style="font-weight:700;">${v.name}</span>
+          <code style="background:var(--lt);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;color:var(--p);margin-left:6px;">${p.patNum||'—'}</code>
+        </div>
+        <button class="bsm bpu" onclick="releaseAllResults('${v.id}')">📤 Release All</button>
+      </div>
+      <table style="width:100%;font-size:13px;">
+        <tr style="background:var(--lt);">
+          <th style="padding:6px 8px;">Test</th>
+          <th style="padding:6px 8px;">Sample ID</th>
+          <th style="padding:6px 8px;">Result</th>
+          <th style="padding:6px 8px;">Reference</th>
+          <th style="padding:6px 8px;">Action</th>
+        </tr>
+        ${toReview.map(l => `<tr>
+          <td style="padding:6px 8px;font-weight:600;">${l.name}</td>
+          <td style="padding:6px 8px;"><code style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-weight:700;">${l.sampleId||'—'}</code></td>
+          <td style="padding:6px 8px;">${l.result}</td>
+          <td style="padding:6px 8px;color:var(--mu);font-size:11px;">${l.refRange||'—'}</td>
+          <td style="padding:6px 8px;">
+            <button class="bsm bpd" onclick="releaseOneResult('${v.id}','${l.id||l.name}')">✅ Mark Complete</button>
+            <button class="bsm bp" onclick="printLabResults('${v.id}')">🖨️</button>
+          </td>
+        </tr>`).join('')}
+      </table>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+async function releaseAllResults(vid) {
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  (v.labs||[]).filter(l => l.result && !l.released).forEach(l => {
+    l.released = true;
+    l.releasedBy = currentUser?.name;
+    l.releasedAt = new Date().toISOString();
+  });
+  if (!v.cleared.includes('Lab')) v.cleared.push('Lab');
+  v.status = 'LAB_READY';
+  if (!isDemoMode() && v.sbId) {
+    await sb.from('visits').update({status:'lab_ready'}).eq('id',v.sbId).catch(()=>{});
+    await sb.from('lab_tests').update({status:'completed'}).eq('visit_id',v.sbId).catch(()=>{});
+  }
+  toast('✅ All results released for ' + v.name, 'success');
+  speak(''); renderLabReview();
+}
+
+async function releaseOneResult(vid, lid) {
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  const l = (v.labs||[]).find(x => (x.id||x.name) === lid); if (!l) return;
+  l.released = true; l.releasedBy = currentUser?.name;
+  const allDone = (v.labs||[]).filter(x=>x.name).every(x=>x.released);
+  if (allDone) { if (!v.cleared.includes('Lab')) v.cleared.push('Lab'); v.status='LAB_READY'; }
+  toast('✅ Result marked complete', 'success');
+  renderLabReview();
+}
+
+// STEP 4: VIEW ALL RESULTS
+function renderLabResults() {
+  const term = (gid('lab-results-search')?.value||'').toLowerCase();
+  const el = gid('lab-results-table'); if (!el) return;
+  const withResults = visits.filter(v =>
+    (v.labs||[]).some(l => l.result)
+  ).filter(v => !term || v.name.toLowerCase().includes(term));
+
+  if (!withResults.length) {
+    el.innerHTML = '<div class="emp" style="padding:24px;text-align:center;">No lab results yet</div>';
+    return;
+  }
+
+  let html = '';
+  withResults.forEach(v => {
+    const p = patients.find(x => x.id === v.patId) || {};
+    const hasResults = (v.labs||[]).filter(l => l.result);
+    html += `<div class="card" style="margin-bottom:10px;padding:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div>
+          <span style="font-weight:700;">${v.name}</span>
+          <code style="background:var(--lt);padding:1px 6px;border-radius:4px;font-size:11px;color:var(--p);margin-left:6px;">${p.patNum||'—'}</code>
+          <span style="font-size:11px;color:var(--mu);margin-left:6px;">${p.ageVal||'?'}${(p.ageUnit||'y')[0]} / ${p.gender||'?'}</span>
+          <span style="font-size:11px;color:var(--mu);margin-left:6px;">Visit: ${v.date}</span>
+        </div>
+        <button class="bsm bp" onclick="printLabResults('${v.id}')">🖨️ Print All Results</button>
+      </div>
+      <table style="width:100%;font-size:13px;">
+        <tr style="background:var(--lt);">
+          <th style="padding:6px 8px;">Test Name</th>
+          <th style="padding:6px 8px;">Sample ID</th>
+          <th style="padding:6px 8px;">Result Preview</th>
+          <th style="padding:6px 8px;">Performed</th>
+          <th style="padding:6px 8px;">Status</th>
+        </tr>
+        ${hasResults.map(l => `<tr>
+          <td style="padding:6px 8px;font-weight:600;">${l.name}</td>
+          <td style="padding:6px 8px;"><code style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-weight:700;">${l.sampleId||'N/A'}</code></td>
+          <td style="padding:6px 8px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">${l.result}</td>
+          <td style="padding:6px 8px;font-size:11px;color:var(--mu);">${l.releasedAt ? new Date(l.releasedAt).toLocaleString() : '—'}</td>
+          <td style="padding:6px 8px;">${l.released ? '<span class="badge bpd">✅ Released</span>' : '<span class="badge bpa">⏳ Pending</span>'}</td>
+        </tr>`).join('')}
+      </table>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+// Override renderLab to use new 3-step system
+function renderLab() {
+  setLabTab(_labTab || 'pick', gid('lab-tab-pick'));
+}
+
+
+// ══════════════════════════════════════════════
+// PHARMACY — 3-panel workflow (ClinicPlus style)
+// ══════════════════════════════════════════════
+let _pharmTab = 'pending';
+
+function setPharmTab(tab, btn) {
+  _pharmTab = tab;
+  ['pending','incomplete','dispensed'].forEach(t => {
+    const panel = gid('pharm-'+t+'-panel');
+    if (panel) panel.style.display = t===tab ? 'block' : 'none';
+    const bt = gid('pharm-tab-'+t);
+    if (bt) bt.classList.toggle('active', t===tab);
+  });
+  if (tab==='pending')    renderPharmPending();
+  if (tab==='incomplete') renderPharmIncomplete();
+  if (tab==='dispensed')  renderPharmDispensed();
+}
+
+function renderPharmPending() {
+  const term = (gid('pharm-search')?.value||'').toLowerCase();
+  const el = gid('pharm-pending-table'); if (!el) return;
+  const q = visits.filter(v =>
+    (v.prescriptions||[]).some(r => r.name && !r.dispensed)
+  ).filter(v => !term || v.name.toLowerCase().includes(term));
+
+  if (!q.length) {
+    el.innerHTML = '<div class="emp" style="padding:24px;text-align:center;">No pending prescriptions</div>';
+    return;
+  }
+
+  let html = '';
+  q.forEach(v => {
+    const p = patients.find(x => x.id === v.patId) || {};
+    const pending = (v.prescriptions||[]).filter(r => r.name && !r.dispensed);
+    html += `<div class="card" style="margin-bottom:10px;padding:14px;border-left:4px solid var(--p);">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div>
+          <span style="font-weight:700;font-size:14px;">${v.name}</span>
+          <code style="background:var(--lt);padding:1px 6px;border-radius:4px;font-size:11px;color:var(--p);margin-left:6px;">${p.patNum||'—'}</code>
+          <span style="font-size:11px;color:var(--mu);margin-left:6px;">${p.ageVal||'?'}${(p.ageUnit||'y')[0]} / ${p.gender||'?'}</span>
+          <span style="font-size:11px;color:var(--mu);margin-left:6px;">${v.date}</span>
+        </div>
+        <div style="display:flex;gap:5px;">
+          <button class="bsm bp" onclick="dispenseRx('${v.id}')">💊 Dispense All</button>
+          <button class="bsm bo" onclick="printPharmReceipt('${v.id}')">🧾 Receipt</button>
+          <button class="bsm bo" onclick="printRxLabel('${v.id}')">🏷️ Label</button>
+        </div>
+      </div>
+      <table style="width:100%;font-size:13px;">
+        <tr style="background:var(--lt);">
+          <th style="padding:6px 8px;">S/N</th>
+          <th style="padding:6px 8px;">Medication</th>
+          <th style="padding:6px 8px;">Form</th>
+          <th style="padding:6px 8px;">Qty</th>
+          <th style="padding:6px 8px;">Unit Price</th>
+          <th style="padding:6px 8px;">Total</th>
+          <th style="padding:6px 8px;">Action</th>
+        </tr>
+        ${pending.map((r,i) => `<tr>
+          <td style="padding:6px 8px;">${i+1}</td>
+          <td style="padding:6px 8px;font-weight:600;">${r.name} ${r.strength||''} ${formBadge(r.formulation||'')}</td>
+          <td style="padding:6px 8px;font-size:11px;color:var(--mu);">${r.formulation||'—'}</td>
+          <td style="padding:6px 8px;font-weight:700;">${r.qty||1}</td>
+          <td style="padding:6px 8px;">$${(r.price||0).toFixed(2)}</td>
+          <td style="padding:6px 8px;font-weight:700;">$${((r.price||0)*(r.qty||1)).toFixed(2)}</td>
+          <td style="padding:6px 8px;">
+            <button class="bsm" style="background:#0d9488;color:#fff;" onclick="dispenseOne('${v.id}','${r.id||r.name}')">Dispense</button>
+          </td>
+        </tr>`).join('')}
+      </table>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+// Incomplete Doses — ClinicPlus "Pending Incomplete Prescriptions"
+function renderPharmIncomplete() {
+  const el = gid('pharm-incomplete-table'); if (!el) return;
+  // Visits where SOME but not ALL prescriptions dispensed
+  const incomplete = visits.filter(v => {
+    const rx = (v.prescriptions||[]).filter(r => r.name);
+    return rx.length > 0 && rx.some(r => r.dispensed) && rx.some(r => !r.dispensed);
+  });
+
+  if (!incomplete.length) {
+    el.innerHTML = '<div class="emp" style="padding:24px;text-align:center;">No incomplete doses — all prescriptions fully dispensed ✅</div>';
+    return;
+  }
+
+  // Badge count on tab
+  const tabBtn = gid('pharm-tab-incomplete');
+  if (tabBtn) tabBtn.textContent = '⚠️ Incomplete Doses (' + incomplete.length + ')';
+
+  let html = '';
+  incomplete.forEach(v => {
+    const p = patients.find(x => x.id === v.patId) || {};
+    const undispensed = (v.prescriptions||[]).filter(r => r.name && !r.dispensed);
+    html += `<div class="card" style="margin-bottom:10px;padding:14px;border-left:4px solid var(--w);">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div>
+          <span style="font-weight:700;font-size:14px;">${v.name}</span>
+          <code style="background:var(--lt);padding:1px 6px;border-radius:4px;font-size:11px;color:var(--p);margin-left:6px;">${p.patNum||'—'}</code>
+          <span style="font-size:11px;color:var(--mu);margin-left:6px;">${p.ageVal||'?'}${(p.ageUnit||'y')[0]} / ${p.gender||'?'}</span>
+          <span style="font-size:11px;color:var(--w);margin-left:6px;font-weight:700;">${undispensed.length} item(s) pending</span>
+        </div>
+        <div style="display:flex;gap:5px;">
+          <button class="bsm bp" onclick="dispenseRx('${v.id}')">💊 Complete All</button>
+          <button class="bsm bd2" onclick="closeIncompleteDose('${v.id}')">✕ Close Visit</button>
+        </div>
+      </div>
+      <table style="width:100%;font-size:13px;">
+        <tr style="background:#fef9c3;">
+          <th style="padding:6px 8px;">Medication</th>
+          <th style="padding:6px 8px;">Qty</th>
+          <th style="padding:6px 8px;">Unit Price</th>
+          <th style="padding:6px 8px;">Total</th>
+          <th style="padding:6px 8px;">Action</th>
+        </tr>
+        ${undispensed.map((r,i) => `<tr>
+          <td style="padding:6px 8px;font-weight:600;">${r.name} ${r.strength||''} ${formBadge(r.formulation||'')}</td>
+          <td style="padding:6px 8px;">${r.qty||1}</td>
+          <td style="padding:6px 8px;">$${(r.price||0).toFixed(2)}</td>
+          <td style="padding:6px 8px;font-weight:700;">$${((r.price||0)*(r.qty||1)).toFixed(2)}</td>
+          <td style="padding:6px 8px;">
+            <button class="bsm" style="background:#0d9488;color:#fff;" onclick="dispenseOne('${v.id}','${r.id||r.name}');renderPharmIncomplete();">Dispense</button>
+          </td>
+        </tr>`).join('')}
+      </table>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function closeIncompleteDose(vid) {
+  if (!confirm('Close this visit and mark remaining prescriptions as unable to dispense?')) return;
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  (v.prescriptions||[]).filter(r => !r.dispensed && r.name).forEach(r => {
+    r.dispensed = true; r.dispensedBy = 'Closed - not dispensed';
+  });
+  toast('Visit closed.', 'success');
+  renderPharmIncomplete();
+}
+
+function renderPharmDispensed() {
+  const el = gid('pharm-dispensed-table'); if (!el) return;
+  const q = visits.filter(v => (v.prescriptions||[]).some(r => r.name && r.dispensed));
+  if (!q.length) {
+    el.innerHTML = '<div class="emp" style="padding:24px;text-align:center;">No dispensed prescriptions yet</div>';
+    return;
+  }
+  let html = `<table style="width:100%;font-size:13px;">
+    <tr style="background:var(--lt);">
+      <th style="padding:6px 8px;">Patient</th><th>Medication</th><th>Qty</th>
+      <th>Dispensed By</th><th>Time</th><th>Action</th>
+    </tr>`;
+  q.forEach(v => {
+    const dispensed = (v.prescriptions||[]).filter(r => r.name && r.dispensed);
+    dispensed.forEach(r => {
+      html += `<tr>
+        <td style="padding:6px 8px;font-weight:600;">${v.name}</td>
+        <td style="padding:6px 8px;">${r.name} ${r.strength||''} ${formBadge(r.formulation||'')}</td>
+        <td style="padding:6px 8px;">${r.qty||1}</td>
+        <td style="padding:6px 8px;font-size:11px;">${r.dispensedBy||'—'}</td>
+        <td style="padding:6px 8px;font-size:11px;">${r.dispensedTime||'—'}</td>
+        <td style="padding:6px 8px;">
+          <button class="bsm bo" onclick="printPharmReceipt('${v.id}')">🧾</button>
+        </td>
+      </tr>`;
+    });
+  });
+  html += '</table>';
+  el.innerHTML = html;
+}
+
+// Override renderPharm to use new 3-panel system
+function renderPharm() {
+  setPharmTab(_pharmTab || 'pending', gid('pharm-tab-pending'));
+}
+
+
+// ══════════════════════════════════════════════
+// ACTIVE VISITS — ClinicPlus style live queue
+// ══════════════════════════════════════════════
+function renderActiveVisits() {
+  const el = gid('active-visits-table'); if (!el) return;
+  const active = visits.filter(v => v.status !== 'DISCHARGED' && v.status !== 'DECEASED');
+  const term = (gid('active-visits-search')?.value||'').toLowerCase();
+  const filtered = active.filter(v => !term || v.name.toLowerCase().includes(term));
+
+  if (!filtered.length) {
+    el.innerHTML = '<tr><td colspan="7" class="emp" style="padding:24px;">No active visits today</td></tr>';
+    return;
+  }
+  const badge = gid('active-visits-count');
+  if (badge) badge.textContent = filtered.length;
+
+  const statusColors = {
+    'WAITING_TRIAGE':'#d97706','WAITING_LAB':'#0891b2','WAITING_RAD':'#7c3aed',
+    'WITH_DOCTOR':'#0d9488','WITH_NURSE':'#059669','BILLING':'#6366f1',
+    'ADMITTED':'#7c3aed','LAB_READY':'#0891b2','WAITING_CONSULTATION':'#d97706'
+  };
+
+  let h = `<tr>
+    <th>S/N</th><th>Date</th><th>Patient ID</th>
+    <th>Name</th><th>Age</th><th>Gender</th><th>Actions</th>
+  </tr>`;
+
+  filtered.forEach((v, i) => {
+    const p = patients.find(x => x.id === v.patId) || {};
+    const sc = statusColors[v.status] || '#6b7280';
+    const icon = statusIcon(v);
+    h += `<tr>
+      <td style="padding:7px 10px;font-weight:700;color:var(--mu);">${i+1}.</td>
+      <td style="padding:7px 10px;font-size:12px;">${v.date}</td>
+      <td style="padding:7px 10px;">
+        <a style="color:var(--p);font-weight:700;font-size:13px;cursor:pointer;text-decoration:none;"
+           onclick="showSection('doctor');openCons('${v.id}')">${p.patNum||'—'}</a>
+      </td>
+      <td style="padding:7px 10px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          ${icon}
+          <div>
+            <div style="font-weight:700;">${v.name}</div>
+            <span style="background:${sc}20;color:${sc};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;">${v.status.replace(/_/g,' ')}</span>
+          </div>
+        </div>
+      </td>
+      <td style="padding:7px 10px;font-size:12px;">${p.ageVal||'?'}${(p.ageUnit||'y')[0]}</td>
+      <td style="padding:7px 10px;font-size:12px;">${p.gender||'—'}</td>
+      <td style="padding:7px 10px;">
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button class="bsm bp" onclick="showSection('doctor');openCons('${v.id}')" title="Open Consultation">
+            📋 Services
+          </button>
+          <button class="bsm" style="background:#6366f1;color:#fff;" onclick="showPatientProfile('${v.patId}')" title="Patient Profile">
+            👤 Profile
+          </button>
+          <button class="bsm bd2" onclick="closeActiveVisit('${v.id}')" title="Close Visit">
+            ✕ Close
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  });
+  el.innerHTML = h;
+}
+
+async function closeActiveVisit(vid) {
+  if (!confirm('Close this visit?')) return;
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  v.status = 'DISCHARGED';
+  if (!isDemoMode() && v.sbId) {
+    await sb.from('visits').update({status:'discharged'}).eq('id',v.sbId).catch(()=>{});
+  }
+  toast('Visit closed.', 'success');
+  renderActiveVisits();
+}
+
+function showPatientProfile(patId) {
+  openChart(patId);
+}
+
 // ══════════════════════════════════════════════
 // BOOT / INIT  
 // ══════════════════════════════════════════════
@@ -5025,9 +5638,24 @@ function printDischargeSummary(vid){
         </table>
       </div>
     </div>
-    <!-- Patient search / list -->
+    <!-- Active Visits panel -->
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+        <h4 style="margin:0;color:var(--p);">⚡ Active Outpatients
+          <span id="active-visits-count" style="background:var(--d);color:#fff;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:700;margin-left:6px;"></span>
+        </h4>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input id="active-visits-search" placeholder="Search..." oninput="renderActiveVisits()" style="width:160px;margin:0;font-size:12px;padding:5px 8px;">
+          <button class="bo bsm" onclick="renderActiveVisits()">🔄</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="active-visits-table" style="font-size:13px;"></table>
+      </div>
+    </div>
+    <!-- All Patients search / list -->
     <div class="card">
-      <h4 style="margin-bottom:8px;">Today's Patients &amp; All Records</h4>
+      <h4 style="margin-bottom:8px;">👥 All Patients &amp; Records</h4>
       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
         <input id="patSearch" placeholder="Search by name, phone, number…" onkeyup="renderPatients()" style="flex:1;min-width:200px;margin:0;">
         <button class="bp bsm" onclick="renderPatients()">🔍 Search</button>
@@ -5039,16 +5667,22 @@ function printDischargeSummary(vid){
 
   <!-- ══════════ NURSE ══════════ -->
   <section id="sec-nurse">
-    <div class="stabs">
-      <button class="st active" onclick="swNurse('triage',this)">🩺 Triage Queue</button>
-      <button class="st" onclick="swNurse('treatment',this)">💉 Treatment Chart</button>
-      <button class="st" onclick="swNurse('procedures',this)">🔪 Procedures</button>
-      <button class="st" onclick="swNurse('reg',this)">➕ Register Patient</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <h3 style="margin:0;">🩺 Patient Triage Section</h3>
+      <div style="display:flex;gap:6px;">
+        <button class="bo bsm" onclick="renderTriage()">🔄 Refresh</button>
+      </div>
     </div>
-
-    <!-- TRIAGE QUEUE -->
-    <div id="nurse-triage">
-      <div class="card"><h4 style="margin-bottom:8px;">Patients Awaiting Triage</h4><table id="table-triage"></table></div>
+    <!-- Summary cards -->
+    <div id="triage-summary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px;"></div>
+    <!-- Triage queue table -->
+    <div class="card" style="padding:10px;margin-bottom:14px;">
+      <h4 style="margin-bottom:8px;color:var(--p);">📋 Patients Awaiting Triage</h4>
+      <div style="overflow-x:auto;">
+        <table id="triage-table"></table>
+      </div>
+    </div>
+    <div class="card"><h4 style="margin-bottom:8px;">Patients Awaiting Triage</h4><table id="table-triage"></table></div>
       <div id="triage-form" class="card" style="display:none;">
         <h4 id="triage-target" style="color:var(--p);margin-bottom:9px;"></h4>
         <div class="g">
@@ -5336,36 +5970,113 @@ function printDischargeSummary(vid){
 
   <!-- ══════════ LAB ══════════ -->
   <section id="sec-lab">
-    <div class="stabs">
-      <button class="st active" onclick="swLab('pending',this)">🔬 Pending</button>
-      <button class="st" onclick="swLab('completed',this)">✅ Completed</button>
-      <button class="st" onclick="swLab('history',this)">📋 All History</button>
-      <button class="st" onclick="swLab('summary',this)">📊 Summary</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <h3 style="margin:0;">🔬 Laboratory Section</h3>
+      <button class="bo bsm" onclick="renderLab()">🔄 Refresh</button>
     </div>
-    <div class="card"><table id="table-lab"></table></div>
-    <div id="lab-entry" class="card" style="display:none;">
-      <h4 id="lab-hdr" style="color:var(--p);margin-bottom:9px;"></h4>
-      <div id="lab-tests-entry"></div>
-      <div class="ab">
-        <button onclick="updateLab()" class="bp">📤 Release Results to Doctor</button>
-        <button onclick="document.getElementById('lab-entry').style.display='none'" style="background:#e2e8f0;color:#475569;">Cancel</button>
+    <!-- 3-step workflow tabs matching ClinicPlus -->
+    <div class="stabs" style="margin-bottom:12px;">
+      <button class="st active" id="lab-tab-pick"    onclick="setLabTab('pick',this)">🧪 Pick Sample</button>
+      <button class="st"        id="lab-tab-enter"   onclick="setLabTab('enter',this)">📝 Enter Results</button>
+      <button class="st"        id="lab-tab-review"  onclick="setLabTab('review',this)">✅ Review Results</button>
+      <button class="st"        id="lab-tab-results" onclick="setLabTab('results',this)">📊 Lab Results</button>
+      <button class="st"        id="lab-tab-summary" onclick="setLabTab('summary',this)">📈 Summary</button>
+    </div>
+    <!-- Summary panel -->
+    <div id="lab-summary-panel" style="display:none;"></div>
+    <!-- Pick sample panel -->
+    <div id="lab-pick-panel">
+      <div class="card" style="padding:10px;">
+        <h4 style="margin-bottom:10px;color:var(--p);">🧪 Sample Picking — Pending Tests</h4>
+        <input id="lab-pick-search" placeholder="Search by patient name..." oninput="renderLabPick()" style="max-width:320px;margin-bottom:10px;">
+        <div id="lab-pick-table"></div>
       </div>
     </div>
-    <div id="lab-summary-panel" style="display:none;">
+    <!-- Enter results panel -->
+    <div id="lab-enter-panel" style="display:none;">
+      <div class="card" style="padding:10px;">
+        <h4 style="margin-bottom:10px;color:var(--p);">📝 Pending Result Entry</h4>
+        <input id="lab-enter-search" placeholder="Search by patient name..." oninput="renderLabEnter()" style="max-width:320px;margin-bottom:10px;">
+        <div id="lab-enter-table"></div>
+      </div>
+    </div>
+    <!-- Review results panel -->
+    <div id="lab-review-panel" style="display:none;">
+      <div class="card" style="padding:10px;">
+        <h4 style="margin-bottom:10px;color:var(--p);">✅ Review & Release Results</h4>
+        <div id="lab-review-table"></div>
+      </div>
+    </div>
+    <!-- All results panel -->
+    <div id="lab-results-panel" style="display:none;">
+      <div class="card" style="padding:10px;">
+        <h4 style="margin-bottom:10px;color:var(--p);">📊 Laboratory Results</h4>
+        <input id="lab-results-search" placeholder="Search by patient name..." oninput="renderLabResults()" style="max-width:320px;margin-bottom:10px;">
+        <div id="lab-results-table"></div>
+      </div>
+    </div>
+    <!-- Result entry form (shared) -->
+    <div id="lab-entry" style="display:none;" class="card">
+      <h4 style="margin-bottom:8px;color:var(--p);">Enter Lab Result</h4>
+      <input type="hidden" id="lab-entry-vid">
+      <input type="hidden" id="lab-entry-lid">
       <div class="g2">
-        <div class="card"><h4 style="margin-bottom:8px;font-size:13px;">📊 Lab Test Statistics (This Month)</h4><table id="lab-stats-table"></table></div>
-        <div class="card"><h4 style="margin-bottom:8px;font-size:13px;">🏆 Most Requested Tests</h4><div class="chart-box"><canvas id="ch-lab-stats"></canvas></div></div>
+        <div><label>Test Name</label><input id="lab-entry-name" readonly style="background:var(--lt);"></div>
+        <div><label>Sample ID</label><input id="lab-entry-sid" readonly style="background:var(--lt);font-family:monospace;font-weight:700;color:var(--p);"></div>
+      </div>
+      <label>Result</label>
+      <textarea id="lab-result-text" rows="4" placeholder="Enter result details..."></textarea>
+      <div class="g2">
+        <div><label>Reference Range</label><input id="lab-ref-range" placeholder="e.g. 4.0-10.0 × 10⁹/L"></div>
+        <div><label>Status</label>
+          <select id="lab-result-status">
+            <option value="completed">Completed</option>
+            <option value="critical">Critical Value</option>
+            <option value="pending">Still Pending</option>
+          </select>
+        </div>
+      </div>
+      <div class="ab">
+        <button onclick="saveLabResult()" class="bpu">💾 Save & Mark Complete</button>
+        <button onclick="gid('lab-entry').style.display='none'" style="background:#e2e8f0;color:#475569;">Cancel</button>
       </div>
     </div>
   </section>
 
   <!-- ══════════ PHARMACY ══════════ -->
   <section id="sec-pharmacy">
-    <div class="stabs">
-      <button class="st active" onclick="swPharm('pending',this)">💊 Pending Dispense</button>
-      <button class="st" onclick="swPharm('dispensed',this)">✅ Dispensed History</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <h3 style="margin:0;">💊 Pharmacy Section</h3>
+      <button class="bo bsm" onclick="renderPharm()">🔄 Refresh</button>
     </div>
-    <div class="card"><table id="table-pharm"></table></div>
+    <div class="stabs" style="margin-bottom:12px;">
+      <button class="st active" id="pharm-tab-pending"     onclick="setPharmTab('pending',this)">💊 Dispense Prescriptions</button>
+      <button class="st"        id="pharm-tab-incomplete"  onclick="setPharmTab('incomplete',this)">⚠️ Incomplete Doses</button>
+      <button class="st"        id="pharm-tab-dispensed"   onclick="setPharmTab('dispensed',this)">✅ Dispensed</button>
+    </div>
+    <!-- Pending dispense -->
+    <div id="pharm-pending-panel">
+      <div class="card" style="padding:10px;">
+        <h4 style="margin-bottom:8px;color:var(--p);">💊 Pending Prescriptions</h4>
+        <input id="pharm-search" placeholder="Search patient..." oninput="renderPharmPending()" style="max-width:320px;margin-bottom:10px;">
+        <div id="pharm-pending-table"></div>
+      </div>
+    </div>
+    <!-- Incomplete doses — ClinicPlus Pending Incomplete Prescriptions -->
+    <div id="pharm-incomplete-panel" style="display:none;">
+      <div class="card" style="padding:10px;">
+        <h4 style="margin-bottom:8px;color:var(--d);">⚠️ Pending Incomplete Prescriptions</h4>
+        <p style="font-size:12px;color:var(--mu);margin-bottom:10px;">Patients with partially dispensed prescriptions that need follow-up</p>
+        <div id="pharm-incomplete-table"></div>
+      </div>
+    </div>
+    <!-- Dispensed history -->
+    <div id="pharm-dispensed-panel" style="display:none;">
+      <div class="card" style="padding:10px;">
+        <h4 style="margin-bottom:8px;color:var(--a);">✅ Dispensed Prescriptions</h4>
+        <div id="pharm-dispensed-table"></div>
+      </div>
+    </div>
   </section>
 
   <!-- ══════════ RADIOLOGY ══════════ -->

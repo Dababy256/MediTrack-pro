@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MediTrack Pro | Hospital Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
 <link rel="manifest" id="mt-manifest">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -44,59 +45,135 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
    ROOT VARIABLES
 ══════════════════════════════════════════ */
 :root{
-  /* MediTrack Pro — Teal/Green health identity */
-  --p:#0d9488;        /* Primary: teal-600 */
-  --p2:#0f766e;       /* Primary dark */
-  --s:#14b8a6;        /* Secondary: teal-400 */
-  --a:#16a34a;        /* Accent: green-600 */
-  --d:#dc2626;        /* Danger: red-600 */
-  --w:#d97706;        /* Warning: amber */
-  --pu:#7c3aed;       /* Purple */
-  --or:#ea580c;       /* Orange */
-  --bg:#f0fdf9;       /* Background: teal tint */
-  --tx:#0d1f1e;       /* Text: deep teal-black */
-  --bd:#99f6e4;       /* Border: teal-200 */
-  --mu:#6b7280;       /* Muted */
-  --lt:#ccfbf1;       /* Light: teal-100 */
-  --card:#ffffff;
-  --sidebar-from:#134e4a;  /* sidebar gradient top: teal-900 */
-  --sidebar-to:#0d9488;    /* sidebar gradient bottom: teal-600 */
+  /* Primary brand */
+  --p:#0f766e;          /* deep teal — calm, professional */
+  --p2:#115e59;         /* hover */
+  --p-light:#5eead4;    /* badges */
+  /* Sidebar gradient */
+  --sb-1:#1e293b;       /* slate-900 */
+  --sb-2:#0f766e;       /* teal-700 */
+  /* Surfaces */
+  --bg:#f8fafc;         /* page background */
+  --card:#ffffff;       /* card */
+  --lt:#f1f5f9;         /* light surface */
+  --bd:#e2e8f0;         /* borders */
+  /* Semantic */
+  --d:#dc2626;          /* danger / critical */
+  --d2:#fee2e2;         /* danger bg */
+  --w:#d97706;          /* warning */
+  --w2:#fef3c7;         /* warning bg */
+  --a:#059669;          /* success / accent */
+  --a2:#d1fae5;         /* success bg */
+  --i:#0891b2;          /* info / pending */
+  --i2:#cffafe;         /* info bg */
+  --pu:#7c3aed;         /* purple — special */
+  --pu2:#ede9fe;        /* purple bg */
+  /* Text */
+  --tx:#0f172a;         /* slate-900 */
+  --mu:#64748b;         /* slate-500 */
+  --mu-l:#94a3b8;       /* slate-400 */
+  /* Stage colours (for kanban) */
+  --s:#3b82f6;          /* blue (legacy alias) */
+  /* Spacing scale */
+  --sp:4px;
+  --sp-lg:8px;
+  --sp-xl:16px;
+}
+.dark{
+  --bg:#0a0e1a;--card:#0f172a;--lt:#1e293b;--bd:#334155;
+  --tx:#f1f5f9;--mu:#94a3b8;--mu-l:#64748b;
+  --d2:#3f1212;--w2:#3a2a07;--a2:#0a3320;--i2:#0d2a3a;--pu2:#221540;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);font-size:14px;-webkit-font-smoothing:antialiased;}
+body{margin:0;background:var(--bg);color:var(--tx);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  font-size:13px;line-height:1.45;font-weight:400;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
 
 /* ── SIDEBAR LAYOUT ── */
-#sidebar{
-  width:210px;min-width:210px;
-  background:linear-gradient(180deg,var(--sidebar-from) 0%,var(--sidebar-to) 100%);
-  display:flex;flex-direction:column;
-  position:fixed;top:0;left:0;bottom:0;
-  z-index:200;overflow-y:auto;overflow-x:hidden;
-  box-shadow:3px 0 12px rgba(0,0,0,.18);
-  transition:transform .25s ease;
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:248px;
+    background:linear-gradient(180deg,var(--sb-1) 0%,var(--sb-2) 100%);
+    color:#fff;overflow-y:auto;overflow-x:hidden;
+    z-index:100;display:flex;flex-direction:column;
+    transition:transform .25s ease;
+    box-shadow:2px 0 12px rgba(0,0,0,.08);
+    scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent;
 }
+#sidebar::-webkit-scrollbar{width:6px;}
+#sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px;}
 .sb-logo{padding:14px 14px 12px;border-bottom:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .sb-logo-icon{width:34px;height:34px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .sb-title{color:#fff;font-size:13px;font-weight:800;letter-spacing:.04em;line-height:1.3;}
 .sb-title span{font-weight:400;font-size:10px;opacity:.7;letter-spacing:.06em;}
 #dn{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
-.nb{background:rgba(255,255,255,.07);color:rgba(255,255,255,.82);font-size:12px;font-weight:600;padding:9px 13px;text-align:left;border-radius:6px;width:100%;display:block;transition:background .15s,color .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:none;cursor:pointer;}
-.nb:hover{background:rgba(255,255,255,.16);color:#fff;}
-.nb.active{background:rgba(255,255,255,.95);color:var(--p);box-shadow:0 2px 8px rgba(0,0,0,.2);font-weight:800;}
-.nav-sep{font-size:9px;font-weight:800;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;padding:10px 13px 3px;}
-.sb-footer{padding:12px 10px;border-top:1px solid rgba(255,255,255,.12);flex-shrink:0;}
+.nb{
+    background:transparent;color:rgba(255,255,255,.85);
+    font-size:13px;font-weight:500;
+    padding:9px 14px;text-align:left;border-radius:6px;
+    width:calc(100% - 16px);margin:1px 8px;
+    display:flex;align-items:center;gap:9px;
+    transition:background .15s,color .15s,padding-left .15s;
+    border:none;cursor:pointer;letter-spacing:-.01em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    min-width:0;
+    font-family:inherit;
+}
+.nb:hover{background:rgba(255,255,255,.08);color:#fff;padding-left:18px;}
+.nb.active{
+        background:rgba(255,255,255,.95);color:var(--p);
+        font-weight:700;
+        box-shadow:0 2px 8px rgba(0,0,0,.15);
+    }
+.nav-sep{
+        font-size:10px;font-weight:700;color:rgba(255,255,255,.45);
+        text-transform:uppercase;letter-spacing:.08em;
+        padding:14px 16px 4px;display:flex;align-items:center;gap:8px;
+        font-family:inherit;
+    }
+.sb-footer{
+        margin-top:auto;padding:12px 18px;
+        border-top:1px solid rgba(255,255,255,.08);
+        font-size:10px;color:rgba(255,255,255,.55);
+        display:flex;justify-content:space-between;align-items:center;
+    }
 .sb-footer-user{font-size:11px;color:rgba(255,255,255,.7);margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sb-footer-btns{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px;align-items:center;}
 .voice-badge{font-size:14px;cursor:pointer;padding:3px 7px;background:rgba(255,255,255,.12);border-radius:8px;border:none;color:#fff;}
 .sb-status{font-size:10px;color:rgba(255,255,255,.55);margin-bottom:6px;}
 .sb-logout{width:100%;background:rgba(255,255,255,.1);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.22);font-size:12px;padding:7px 8px;border-radius:5px;cursor:pointer;font-weight:600;transition:.15s;}
 .sb-logout:hover{background:rgba(255,255,255,.2);}
-#main-wrap{margin-left:210px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
-.con{padding:14px;max-width:none;margin:0;}
+#main-wrap{margin-left:248px;padding:0;min-height:100vh;
+    transition:margin-left .25s ease;}
+.con{
+        padding:24px;
+        max-width:1600px;
+        margin:0 auto;
+    }
 #sb-toggle{display:none;position:fixed;top:10px;left:10px;z-index:300;background:var(--p);color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:18px;cursor:pointer;}
 
 /* ── CARDS ── */
-.card{background:var(--card);padding:14px;border-radius:12px;border:1px solid var(--bd);box-shadow:0 2px 8px rgba(3,105,161,.07);margin-bottom:12px;}
+.card{
+        background:var(--card);
+        padding:16px;
+        border-radius:10px;
+        border:1px solid var(--bd);
+        box-shadow:0 1px 3px rgba(15,23,42,.04),0 1px 2px rgba(15,23,42,.06);
+        margin-bottom:14px;
+    }
+
+/* Tables — clean, zebra-striped, hover-able */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr,tr:has(th){background:var(--lt);}
+th{padding:10px 12px;text-align:left;font-weight:700;font-size:11px;
+   color:var(--mu);text-transform:uppercase;letter-spacing:.04em;
+   border-bottom:2px solid var(--bd);}
+td{padding:10px 12px;border-bottom:1px solid var(--bd);vertical-align:middle;}
+tbody tr:nth-child(even){background:#fafbfc;}
+tbody tr:hover{background:var(--lt);}
+tbody tr:last-child td{border-bottom:none;}
+.dark tbody tr:nth-child(even){background:#162032;}
+.dark tbody tr:hover{background:#1e293b;}
+
 
 /* ── APP WRAPPER ── */
 #app{display:none;}
@@ -104,7 +181,16 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 section{display:none;}section.active{display:block;}
 
 /* ── BUTTONS ── */
-button{padding:7px 12px;border:none;border-radius:7px;cursor:pointer;font-weight:600;font-size:13px;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+button{
+        padding:8px 14px;border:none;border-radius:6px;
+        cursor:pointer;font-weight:600;font-size:13px;
+        transition:all .15s ease;
+        -webkit-tap-highlight-color:transparent;
+        font-family:inherit;letter-spacing:-.005em;
+        line-height:1.3;
+    }
+    button:hover{transform:translateY(-1px);box-shadow:0 2px 6px rgba(15,23,42,.1);}
+    button:active{transform:translateY(0);}
 .bp{background:var(--p);color:#fff;border-radius:7px;}.bp:hover{background:var(--p2);}
 .ba{background:var(--a);color:#fff;border-radius:7px;}.ba:hover{background:#047857;}
 .bd2{background:var(--d);color:#fff;padding:3px 7px;font-size:11px;}
@@ -118,7 +204,11 @@ button{padding:7px 12px;border:none;border-radius:7px;cursor:pointer;font-weight
 /* ── FORMS ── */
 input,select,textarea{width:100%;padding:6px 8px;border:1.5px solid var(--bd);border-radius:5px;margin:2px 0;font-size:13px;font-family:inherit;}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--s);box-shadow:0 0 0 3px rgba(6,182,212,.15);}
-label{font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.03em;display:block;margin-top:7px;}
+label{
+        display:block;font-size:11px;font-weight:600;
+        color:var(--mu);margin-bottom:2px;
+        text-transform:uppercase;letter-spacing:.04em;
+    }
 
 /* ── GRIDS ── */
 .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:9px;}
@@ -131,7 +221,10 @@ table{width:100%;border-collapse:collapse;margin-top:4px;}
 th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--lt);vertical-align:top;}
 th{background:var(--lt);font-size:11px;color:var(--p);text-transform:uppercase;font-weight:800;letter-spacing:.04em;}
 tr:hover td{background:#f0f9ff;}
-.emp{text-align:center;color:#94a3b8;font-style:italic;font-size:13px;padding:18px!important;}
+.emp{
+        text-align:center;padding:32px 20px;color:var(--mu);
+        font-size:13px;font-weight:500;
+    }
 
 /* ── TABS ── */
 .stabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap;}
@@ -295,16 +388,31 @@ tr:hover td{background:#f0f9ff;}
 
 /* ── MOBILE ── */
 @media(max-width:768px){
-  #sidebar{transform:translateX(-100%);width:220px;}
-  #sidebar.sb-open{transform:translateX(0);}
-  #main-wrap{margin-left:0;}
-  #sb-toggle{display:block;}
-  .g4{grid-template-columns:1fr 1fr;}
-  .stabs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;}
-  .st{white-space:nowrap;flex-shrink:0;}
-  table{font-size:12px;}
-  th,td{padding:5px 6px;}
-  .g3{grid-template-columns:1fr 1fr;}
+    #sidebar{transform:translateX(-100%);width:280px;}
+    #sidebar.sb-open{transform:translateX(0);}
+    #main-wrap{margin-left:0!important;}
+    #sb-toggle{display:flex!important;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;font-size:18px;}
+    .top-header{padding:10px 16px;}
+    .top-header h1{font-size:15px;}
+    .con{padding:14px;}
+    .g3,.g4{grid-template-columns:1fr 1fr;}
+    .g2{grid-template-columns:1fr;}
+    .sc-value{font-size:22px!important;}
+    .card{padding:12px;}
+    .stabs{overflow-x:auto;flex-wrap:nowrap;}
+    .st{white-space:nowrap;flex-shrink:0;font-size:12px;padding:7px 12px;}
+    table{font-size:12px;}
+    th,td{padding:7px 8px;}
+    #user-chip{padding:4px 8px;}
+    #user-name{font-size:11px;}
+    #user-role{font-size:9px;}
+}
+@media(max-width:480px){
+    .g4,.g3{grid-template-columns:1fr 1fr;}
+    .sc{padding:10px 12px!important;min-height:78px!important;}
+    .sc-value{font-size:18px!important;}
+    .sc-label{font-size:10px!important;}
+    .pat-avatar{width:32px;height:32px;font-size:12px;}
 }
 
 /* ── PRINT ── */
@@ -362,6 +470,81 @@ html.dark tr:hover td{background:#1a2840;}
 /* Allergy alert banner */
 #allergy-alert-banner{display:none;background:#fef9c3;border:2px solid #fbbf24;border-radius:7px;
   padding:10px 14px;margin-bottom:8px;font-size:13px;}
+
+/* Patient avatar — initials in colored circle */
+.pat-avatar{
+    width:36px;height:36px;border-radius:50%;
+    background:linear-gradient(135deg,var(--p),var(--p2));
+    color:#fff;display:inline-flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:13px;letter-spacing:.02em;
+    box-shadow:0 2px 4px rgba(15,118,110,.25);
+    flex-shrink:0;
+}
+.pat-avatar-sm{width:28px;height:28px;font-size:11px;}
+.pat-avatar-lg{width:48px;height:48px;font-size:16px;}
+
+/* Top header / breadcrumb */
+.top-header{
+    background:var(--card);border-bottom:1px solid var(--bd);
+    padding:14px 24px;display:flex;justify-content:space-between;
+    align-items:center;flex-wrap:wrap;gap:12px;
+    position:sticky;top:0;z-index:50;
+    box-shadow:0 1px 3px rgba(15,23,42,.04);
+}
+.top-header h1{margin:0;font-size:18px;font-weight:800;color:var(--tx);letter-spacing:-.02em;}
+.top-header .breadcrumb{font-size:11px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+
+/* Empty states */
+.empty-state{
+    text-align:center;padding:48px 20px;color:var(--mu);
+}
+.empty-state .es-icon{font-size:42px;opacity:.4;margin-bottom:8px;}
+.empty-state .es-title{font-size:15px;font-weight:700;color:var(--tx);margin-bottom:4px;}
+.empty-state .es-msg{font-size:12px;color:var(--mu);}
+
+/* Status pills - unified */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
+    border-radius:20px;font-size:11px;font-weight:700;
+    white-space:nowrap;letter-spacing:.01em;}
+.pill-success{background:var(--a2);color:var(--a);}
+.pill-danger{background:var(--d2);color:var(--d);}
+.pill-warning{background:var(--w2);color:var(--w);}
+.pill-info{background:var(--i2);color:var(--i);}
+.pill-purple{background:var(--pu2);color:var(--pu);}
+.pill-neutral{background:var(--lt);color:var(--mu);}
+
+/* Critical lab value highlighting */
+.lab-critical{background:var(--d2)!important;color:var(--d)!important;font-weight:700;}
+.lab-normal{color:var(--a);}
+
+/* KPI cards - uniform polish */
+.sc{padding:16px 18px!important;min-height:96px!important;
+    border-radius:12px!important;transition:transform .15s;
+}
+.sc:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,23,42,.12);}
+
+/* Section heading */
+section > h3{
+    font-size:18px;font-weight:800;color:var(--tx);
+    letter-spacing:-.02em;margin:0 0 14px;
+    display:flex;align-items:center;gap:10px;
+}
+
+/* Tabs polish */
+.stabs{display:flex;gap:4px;border-bottom:2px solid var(--bd);
+    margin-bottom:14px;flex-wrap:wrap;
+}
+.st{background:transparent;color:var(--mu);
+    padding:9px 16px;border-radius:7px 7px 0 0;
+    font-weight:600;font-size:13px;border:none;
+    border-bottom:2px solid transparent;margin-bottom:-2px;
+    transition:all .15s;
+}
+.st:hover{color:var(--p);background:var(--lt);}
+.st.active{
+    color:var(--p);background:var(--card);
+    border-bottom-color:var(--p);font-weight:700;
+}
 </style>
 <script>
 
@@ -875,6 +1058,18 @@ function payBadge(v) {
   return `<span class="badge ${cls}">${st}</span>`;
 }
 
+
+// Patient avatar - initials from name
+function patAvatar(name, size) {
+  const initials = (name||'?').split(' ').map(s=>s[0]||'').join('').toUpperCase().substr(0,2);
+  const cls = size === 'sm' ? 'pat-avatar pat-avatar-sm' : size === 'lg' ? 'pat-avatar pat-avatar-lg' : 'pat-avatar';
+  // Generate stable color from name hash
+  const hash = (name||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  const hues = [180, 200, 160, 270, 220, 190, 240, 280];
+  const hue = hues[hash % hues.length];
+  return `<div class="${cls}" style="background:linear-gradient(135deg,hsl(${hue},65%,45%),hsl(${hue},70%,35%));">${initials}</div>`;
+}
+
 // Status icon — matches ClinicPlus visual language
 function statusIcon(v) {
   if (!v) return '';
@@ -980,6 +1175,7 @@ function login() {
     gid('voice-badge').textContent = voiceEnabled ? '🔊' : '🔇';
     renderNav();
     toast('Welcome, ' + d.name + '!', 'success');
+    updateUserChip();
     _startAlertPolling();
     // Load real Supabase data quietly in background after UI is visible
     setTimeout(() => {
@@ -1544,9 +1740,16 @@ function renderPatients() {
     h += `<tr style="${isToday ? 'background:#f0fdf9;border-left:3px solid var(--a);' : ''}">
       <td style="text-align:center;">${icon}</td>
       <td>
-        <div style="font-weight:700;font-size:13px;">${p.name}</div>
-        <code style="background:var(--lt);padding:1px 5px;border-radius:4px;font-size:10px;font-weight:700;color:var(--p);">${p.patNum||'—'}</code>
-        ${p.bloodGroup ? `<span style="font-size:10px;color:var(--mu);margin-left:4px;">${p.bloodGroup}</span>` : ''}
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${patAvatar(p.name)}
+          <div>
+            <div style="font-weight:700;font-size:13px;">${p.name}</div>
+            <div style="display:flex;gap:4px;align-items:center;margin-top:2px;">
+              <code style="background:var(--lt);padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;color:var(--p);">${p.patNum||'—'}</code>
+              ${p.bloodGroup ? `<span class="pill pill-danger" style="font-size:9px;padding:1px 6px;">${p.bloodGroup}</span>` : ''}
+            </div>
+          </div>
+        </div>
       </td>
       <td style="font-size:12px;">${p.ageVal}${(p.ageUnit||'y')[0]} / ${p.gender}</td>
       <td style="font-size:12px;">${p.phone||'—'}</td>
@@ -1705,11 +1908,11 @@ function renderTriage() {
       <td style="font-size:12px;">${v.date}<br><span style="color:var(--mu);font-size:10px;">${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></td>
       <td><code style="background:var(--lt);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;color:var(--p);">${p.patNum||v.id.slice(-6)}</code></td>
       <td>
-        <div style="display:flex;align-items:center;gap:6px;">
-          ${icon}
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${patAvatar(v.name, 'sm')}
           <div>
-            <div style="font-weight:700;">${v.name}</div>
-            <div style="font-size:10px;color:var(--mu);">${v.consultType||'GENERAL'}</div>
+            <div style="font-weight:700;font-size:13px;">${v.name}</div>
+            <div style="font-size:10px;color:var(--mu);">${v.consultType||'GENERAL'} ${icon}</div>
           </div>
         </div>
       </td>
@@ -5315,12 +5518,12 @@ function renderActiveVisits() {
         <a style="color:var(--p);font-weight:700;font-size:13px;cursor:pointer;text-decoration:none;"
            onclick="showSection('doctor');openCons('${v.id}')">${p.patNum||'—'}</a>
       </td>
-      <td style="padding:7px 10px;">
-        <div style="display:flex;align-items:center;gap:6px;">
-          ${icon}
+      <td style="padding:10px 12px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${patAvatar(v.name, 'sm')}
           <div>
-            <div style="font-weight:700;">${v.name}</div>
-            <span style="background:${sc}20;color:${sc};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;">${v.status.replace(/_/g,' ')}</span>
+            <div style="font-weight:700;font-size:13px;">${v.name}</div>
+            <span class="pill" style="background:${sc}15;color:${sc};margin-top:2px;">${icon} ${v.status.replace(/_/g,' ')}</span>
           </div>
         </div>
       </td>
@@ -5357,6 +5560,168 @@ async function closeActiveVisit(vid) {
 
 function showPatientProfile(patId) {
   openChart(patId);
+}
+
+
+// ══════════════════════════════════════════════
+// MISSING FUNCTIONS — fixes for broken buttons
+// ══════════════════════════════════════════════
+
+async function saveLabResult() {
+  const vid = gv('lab-entry-vid');
+  const lid = gv('lab-entry-lid');
+  const v = visits.find(x => x.id === vid); if (!v) return toast('Visit not found.', 'error');
+  const l = (v.labs||[]).find(x => (x.id||x.name) === lid); if (!l) return toast('Test not found.', 'error');
+  const result = gv('lab-result-text');
+  if (!result) return toast('Enter result text first.', 'error');
+  l.result = result;
+  l.refRange = gv('lab-ref-range');
+  const stat = gv('lab-result-status');
+  l.isCritical = stat === 'critical';
+  l.resultedAt = new Date().toISOString();
+  l.resultedBy = currentUser?.name;
+  if (!isDemoMode() && v.sbId) {
+    await sb.from('lab_tests').update({
+      result, reference_range: l.refRange,
+      is_critical: l.isCritical, status: 'completed',
+      result_by: currentUser?.name
+    }).eq('visit_id', v.sbId).eq('test_name', l.name).catch(()=>{});
+  }
+  gid('lab-entry').style.display = 'none';
+  toast('💾 Result saved' + (l.isCritical ? ' — CRITICAL VALUE FLAGGED' : ''), l.isCritical ? 'warning' : 'success');
+  speak('');
+  renderLabEnter();
+}
+
+async function markReadyForDoctor(vid, ev) {
+  if (ev) ev.stopPropagation();
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  v.status = 'WAITING_CONSULTATION';
+  if (!v.cleared.includes('Triage')) v.cleared.push('Triage');
+  if (!isDemoMode() && v.sbId) {
+    await sb.from('visits').update({status:'waiting_consultation', nurse_ready: true}).eq('id', v.sbId).catch(()=>{});
+  }
+  toast('✓ Marked ready for doctor', 'success');
+  renderFlow(); renderTriage(); renderCons();
+}
+
+function openConsult(vid) {
+  showSection('doctor');
+  setTimeout(() => openCons(vid), 100);
+}
+
+async function openDischarge(vid) {
+  if (!confirm('Discharge this patient?')) return;
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  v.status = 'DISCHARGED';
+  if (!isDemoMode() && v.sbId) {
+    await sb.from('visits').update({status:'discharged', discharge_date: new Date().toISOString()}).eq('id', v.sbId).catch(()=>{});
+  }
+  toast('✅ Patient discharged', 'success');
+  speak('');
+  renderFlow();
+}
+
+function updateFlowStage(vid) {
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  const stages = ['WAITING_TRIAGE','WITH_NURSE','WAITING_CONSULTATION','WITH_DOCTOR','WAITING_LAB','LAB_READY','BILLING','DISCHARGED'];
+  const idx = stages.indexOf(v.status);
+  const next = stages[(idx + 1) % stages.length];
+  v.status = next;
+  if (!isDemoMode() && v.sbId) {
+    sb.from('visits').update({status: next.toLowerCase()}).eq('id', v.sbId).catch(()=>{});
+  }
+  toast('Stage → ' + next.replace(/_/g,' '), 'success');
+  renderFlow();
+}
+
+// 6-7. Lab queue legacy
+async function markLabProcessing(lid) {
+  // Find which visit this lab belongs to
+  for (const v of visits) {
+    const l = (v.labs||[]).find(x => (x.id||x.name) === lid);
+    if (l) {
+      l.processing = true;
+      if (!isDemoMode() && v.sbId) {
+        await sb.from('lab_tests').update({status: 'processing'}).eq('visit_id', v.sbId).eq('test_name', l.name).catch(()=>{});
+      }
+      toast('Marked as processing', 'success');
+      renderLabEnter();
+      return;
+    }
+  }
+  toast('Test not found.', 'error');
+}
+
+function printLabSlip(lid) {
+  // Find visit with this lab
+  for (const v of visits) {
+    if ((v.labs||[]).find(x => (x.id||x.name) === lid)) {
+      printLabResults(v.id);
+      return;
+    }
+  }
+}
+
+// 8. printPrescriptionLabel — alias for printRxLabel
+function printPrescriptionLabel(vid) {
+  if (typeof printRxLabel === 'function') printRxLabel(vid);
+  else if (typeof printPharmReceipt === 'function') printPharmReceipt(vid);
+}
+
+
+// Update breadcrumb when section changes
+function updateBreadcrumb(sectionId) {
+  const labels = {
+    'reception':'Reception · Outpatients','nurse':'Nursing · Triage',
+    'doctor':'Doctor · Consultation','billing':'Billing','lab':'Laboratory',
+    'pharmacy':'Pharmacy','radiology':'Radiology','inventory':'Inventory',
+    'expenses':'Expenses','suppliers':'Suppliers','chat':'Staff Chat',
+    'protocols':'Protocols / SOPs','feedbacks':'Patient Feedback',
+    'admin':'Administration','flow':'Patient Flow',
+    'pharmacy-queue':'Pharmacy Queue','lab-queue':'Lab Queue',
+    'cashier':'Cashier','appointments':'Appointments','beds':'Bed Management',
+    'director':'Director Dashboard','checks':'Quick Checks'
+  };
+  const el = document.getElementById('breadcrumb');
+  if (el) el.textContent = labels[sectionId] || sectionId;
+}
+
+// Update user chip after login
+function updateUserChip() {
+  if (!currentUser) return;
+  const av = document.getElementById('user-avatar');
+  const nm = document.getElementById('user-name');
+  const rl = document.getElementById('user-role');
+  if (av) av.textContent = (currentUser.name||'?').split(' ').map(s=>s[0]||'').join('').toUpperCase().substr(0,2);
+  if (nm) nm.textContent = currentUser.name || 'User';
+  if (rl) rl.textContent = currentUser.role || '';
+}
+
+// Send alert to all staff (top header button)
+function alertAllStaff() {
+  const msg = prompt('🔔 Alert message to broadcast to all staff:');
+  if (!msg) return;
+  if (typeof _broadcastAlertAll === 'function') _broadcastAlertAll(msg);
+  else { toast('🔔 Alert: ' + msg, 'info'); speak(''); }
+}
+
+
+function logout() {
+  if (!confirm('Sign out of MediTrack Pro?')) return;
+  if (!isDemoMode() && sb && sb.auth) {
+    sb.auth.signOut().catch(()=>{});
+  }
+  // Clear session and reload
+  sessionStorage.clear();
+  // Don't clear localStorage — keep theme/preferences
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('lp').style.display = 'flex';
+  // Clear login fields
+  const lu = document.getElementById('lu'); if (lu) lu.value = '';
+  const lp2 = document.getElementById('lp2'); if (lp2) lp2.value = '';
+  toast('Signed out.', 'info');
 }
 
 // ══════════════════════════════════════════════
@@ -5437,6 +5802,27 @@ function showPatientProfile(patId) {
 
   <!-- CONTENT -->
   <div id="main-wrap">
+    <header class="top-header">
+    <div>
+      <div class="breadcrumb" id="breadcrumb">Dashboard</div>
+      <h1 id="hospital-name">iCURE Medical Centre</h1>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button class="bo bsm" onclick="alertAllStaff()" style="border-color:var(--w);color:var(--w);" title="Send alert to all staff">
+        🔔 Alert
+      </button>
+      <button class="bo bsm" onclick="toggleDarkMode()" id="dark-mode-btn" title="Dark mode">
+        🌙
+      </button>
+      <div id="user-chip" style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--lt);border-radius:30px;cursor:pointer;" onclick="logout()">
+        <div id="user-avatar" class="pat-avatar pat-avatar-sm" style="background:var(--p);">G</div>
+        <div style="font-size:12px;">
+          <div id="user-name" style="font-weight:700;color:var(--tx);line-height:1.1;">Loading...</div>
+          <div id="user-role" style="font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;">role</div>
+        </div>
+      </div>
+    </div>
+  </header>
   <div class="con">
 
   <!-- ══════════ DIRECTOR DASHBOARD ══════════ -->

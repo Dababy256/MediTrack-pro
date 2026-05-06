@@ -614,6 +614,70 @@ section > h3{
 #sidebar .nb.active {
     box-shadow: 0 2px 6px rgba(0,0,0,.15) !important;
 }
+
+/* Quick-fill buttons for clinical history & PE */
+.qf-bar {
+  display: flex; gap: 5px; flex-wrap: wrap;
+  margin-bottom: 8px; padding-bottom: 8px;
+  border-bottom: 1px dashed var(--bd);
+}
+.qf {
+  background: var(--lt);
+  color: var(--p);
+  border: 1px solid var(--bd);
+  padding: 5px 11px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.qf:hover {
+  background: var(--p);
+  color: #fff;
+  border-color: var(--p);
+  transform: none !important;
+  box-shadow: 0 2px 5px rgba(15,118,110,.25);
+}
+.qf-all {
+  background: linear-gradient(135deg, var(--a), #047857);
+  color: #fff;
+  border-color: var(--a);
+  font-weight: 700;
+  padding: 7px 14px;
+}
+.qf-all:hover {
+  background: linear-gradient(135deg, #047857, var(--a));
+  color: #fff;
+}
+/* PE row layout */
+.pe-row {
+  display: flex; gap: 6px; align-items: stretch;
+}
+.pe-row input {
+  flex: 1; margin: 0 !important;
+}
+.pe-norm {
+  background: var(--a2);
+  color: var(--a);
+  border: 1px solid var(--a);
+  border-radius: 7px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: all .12s;
+}
+.pe-norm:hover {
+  background: var(--a);
+  color: #fff;
+  transform: none !important;
+}
 </style>
 <script>
 
@@ -4688,19 +4752,148 @@ async function endVisit(){
 }
 
 // ── saveClinical (adapted from b9) ──
-function saveClinical(){
-  const v=visits.find(x=>x.id===activeVid);if(!v)return;
+async function saveClinical(){
+  const v=visits.find(x=>x.id===activeVid);
+  if(!v){toast('No active consultation.','error');return;}
   v.clinical=v.clinical||{};
-  // Save all clinical fields
+  // Save text fields
   const fields=['hPC','hHPC','hPMH','hLMP','hGP','hOG','hFSH','hDrug','hAllergy',
     'cDiffDx','cFinalDx','cNotes','cRecommendations','hPEGeneral','hPEHead',
     'hPEChest','hPECVS','hPEAbdomen','hPECNS','hPEExtremities','hPESkin','hPEOther'];
   fields.forEach(fid=>{const el=gid(fid);if(el)v.clinical[fid]=el.value;});
   const rd=gid('c-return-date');if(rd)v.clinical.returnDate=rd.value;
   const rn=gid('c-return-note');if(rn)v.clinical.returnNote=rn.value;
+  // ALSO save lab orders, radiology orders, prescriptions, procedures so pharmacy/lab can see them
+  if(typeof selectedLabTests !== 'undefined' && selectedLabTests.size > 0) {
+    v.labs = [...selectedLabTests].map(name => {
+      // Keep existing lab entries with results, only add new ones
+      const existing = (v.labs||[]).find(l => l.name === name);
+      if (existing) return existing;
+      const t = (window._labTests||LAB_TESTS||[]).find(x => x.name === name);
+      return {
+        id:'L-'+Date.now()+Math.random().toString(36).slice(2),
+        name, price: t?.price || 0,
+        done: false, sampleId: null, result: null, released: false
+      };
+    });
+  }
+  // Radiology orders
+  if(typeof radRows !== 'undefined') {
+    v.radiology = Object.values(radRows).filter(r => r && r.name);
+  }
+  // Prescriptions
+  v.prescriptions = [];
+  document.querySelectorAll('[id^="rx-row-"]').forEach(row => {
+    const id = row.id.split('-')[2];
+    const name = gid('rn-'+id)?.value || '';
+    if(!name) return;
+    const existing = (v.prescriptions||[]).find(p => p.name === name);
+    const strength = gid('rs-'+id)?.value || '';
+    const form = gid('rf-'+id)?.value || '';
+    const qty = parseInt(gid('rq-'+id)?.value || 1);
+    const instructions = gid('ri-'+id)?.value || '';
+    const drug = (inventory||[]).find(i => i.name === name);
+    const price = drug?.sellPrice || drug?.price || 0;
+    v.prescriptions.push({
+      id: existing?.id || 'Rx-'+Date.now()+Math.random().toString(36).slice(2),
+      name, strength, formulation: form, qty, price,
+      instructions, dosage: instructions,
+      dispensed: existing?.dispensed || false
+    });
+  });
+  // Procedures
+  if(typeof procRows !== 'undefined') {
+    v.procedures = procRows.filter(Boolean).map(p => ({
+      ...p, orderedBy: p.orderedBy || currentUser?.name,
+      orderedDate: p.orderedDate || new Date().toLocaleDateString()
+    }));
+  }
+  // Save to Supabase if not demo mode (lab orders show up in lab section now)
+  if(!isDemoMode() && v.sbId) {
+    const notes = JSON.stringify(v.clinical);
+    try {
+      // Update or insert consultation note
+      const {data: existingCons} = await sb.from('consultations').select('id').eq('visit_id', v.sbId).maybeSingle();
+      if(existingCons) {
+        await sb.from('consultations').update({
+          doctor_notes: notes,
+          final_diagnosis: v.clinical.cFinalDx || null,
+          follow_up_date: v.clinical.returnDate || null,
+          soap_subjective: v.clinical.hPC || null,
+          soap_objective: v.clinical.cDiffDx || null,
+          soap_assessment: v.clinical.cFinalDx || null,
+          soap_plan: v.clinical.cNotes || null,
+        }).eq('id', existingCons.id);
+      } else {
+        await sb.from('consultations').insert({
+          visit_id: v.sbId, hospital_id: currentHospital,
+          doctor_name: currentUser?.name, doctor_notes: notes,
+          final_diagnosis: v.clinical.cFinalDx || null,
+          follow_up_date: v.clinical.returnDate || null,
+          soap_subjective: v.clinical.hPC || null,
+          soap_objective: v.clinical.cDiffDx || null,
+          soap_assessment: v.clinical.cFinalDx || null,
+          soap_plan: v.clinical.cNotes || null,
+        });
+      }
+      // Save lab orders (only new ones not yet in db)
+      for (const lab of (v.labs||[])) {
+        if(!lab.sbId) {
+          const {data: newLab} = await sb.from('lab_tests').insert({
+            visit_id: v.sbId, patient_id: v.patId, hospital_id: currentHospital,
+            test_name: lab.name, price: lab.price || 0, status: 'pending'
+          }).select().single().catch(()=>({data:null}));
+          if(newLab) lab.sbId = newLab.id;
+        }
+      }
+      // Save prescriptions (only new ones)
+      for (const rx of (v.prescriptions||[])) {
+        if(!rx.sbId) {
+          const {data: newRx} = await sb.from('prescriptions').insert({
+            visit_id: v.sbId, patient_id: v.patId, hospital_id: currentHospital,
+            drug_name: rx.name, strength: rx.strength, dosage_form: rx.formulation,
+            quantity: rx.qty, dosage: rx.instructions, frequency: rx.instructions,
+            dispensed: false, prescribed_by: currentUser?.name
+          }).select().single().catch(()=>({data:null}));
+          if(newRx) rx.sbId = newRx.id;
+        }
+      }
+      // Save radiology
+      for (const rad of (v.radiology||[])) {
+        if(!rad.sbId && rad.name) {
+          const {data: newRad} = await sb.from('radiology_requests').insert({
+            visit_id: v.sbId, patient_id: v.patId, hospital_id: currentHospital,
+            procedure_name: rad.name, price: rad.price || 0, status: 'pending'
+          }).select().single().catch(()=>({data:null}));
+          if(newRad) rad.sbId = newRad.id;
+        }
+      }
+      // Save procedures
+      for (const proc of (v.procedures||[])) {
+        if(!proc.sbId && proc.name) {
+          const {data: newProc} = await sb.from('nursing_procedures').insert({
+            visit_id: v.sbId, patient_id: v.patId, hospital_id: currentHospital,
+            procedure_name: proc.name, price: proc.price || 0,
+            ordered_by: currentUser?.name, completed: false
+          }).select().single().catch(()=>({data:null}));
+          if(newProc) proc.sbId = newProc.id;
+        }
+      }
+    } catch(err) {
+      console.warn('Save clinical Supabase err:', err.message);
+    }
+  }
+  // Update visit status if labs ordered
+  if((v.labs||[]).filter(l=>l.name).length > 0 && !v.cleared.includes('LabRequested')) {
+    v.cleared.push('LabRequested');
+  }
   // Run allergy check
-  checkAllergyAlert(v);
-  toast('📝 Clinical notes saved.','success');
+  if(typeof checkAllergyAlert === 'function') checkAllergyAlert(v);
+  toast('💾 Clinical notes & orders saved. Lab/Pharmacy can now see them.','success');
+  speak('');
+  // Refresh related sections
+  if(typeof renderLabPick === 'function') renderLabPick();
+  if(typeof renderPharmPending === 'function') renderPharmPending();
 }function saveClinical(){
   const v=visits.find(x=>x.id===activeVid);if(!v)return;
   v.clinical=v.clinical||{};
@@ -5793,6 +5986,52 @@ function logout() {
   toast('Signed out.', 'info');
 }
 
+
+// ── CONSULTATION QUICK-FILL HELPERS ──
+function qFill(id, text) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = text;
+  el.dispatchEvent(new Event('input', {bubbles: true}));
+}
+function qAppend(id, text) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = el.value ? (el.value.replace(/\.$/,'') + '. ' + text) : text;
+  el.dispatchEvent(new Event('input', {bubbles: true}));
+}
+function qClear(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = '';
+  el.focus();
+}
+function fillAllPENormal() {
+  const sets = {
+    'hPEGeneral': 'Alert, oriented to time/place/person, in no acute distress, well hydrated, well-nourished.',
+    'hPEHead': 'No lymphadenopathy. JVP not raised. No thyroid enlargement. Conjunctivae pink. Sclera anicteric.',
+    'hPEChest': 'Chest expansion symmetrical. Trachea central. Vesicular breath sounds. No crackles, wheezes or rhonchi. Resonant on percussion.',
+    'hPECVS': 'S1 + S2 audible. Regular rate and rhythm. No murmurs, gallops, or rubs. Peripheral pulses full and symmetrical.',
+    'hPEAbdomen': 'Abdomen soft, non-tender, non-distended. No organomegaly. Bowel sounds present. No masses palpable.',
+    'hPECNS': 'GCS 15/15. Pupils equal and reactive to light. Cranial nerves grossly intact. Power 5/5 all limbs. Normal tone and reflexes. No cerebellar signs.',
+    'hPEExtremities': 'No pedal oedema. Full range of motion all joints. No joint swelling, deformity, or tenderness. Peripheral pulses palpable.',
+    'hPESkin': 'No rash, jaundice, cyanosis or pallor. Skin warm and dry. No active lesions.'
+  };
+  Object.entries(sets).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  });
+  toast('🟢 All systems filled as Normal — review and edit any abnormal findings.', 'success');
+}
+function clearAllPE() {
+  if (!confirm('Clear all physical examination fields?')) return;
+  ['hPEGeneral','hPEHead','hPEChest','hPECVS','hPEAbdomen','hPECNS','hPEExtremities','hPESkin','hPEOther'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  toast('PE fields cleared.', 'info');
+}
+
 // ══════════════════════════════════════════════
 // BOOT / INIT  
 // ══════════════════════════════════════════════
@@ -6273,21 +6512,117 @@ function logout() {
         <!-- ── CLINICAL HISTORY (collapsible accordions) ── -->
         <p style="font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;margin-bottom:7px;">Clinical History &amp; Examination</p>
         <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PC)</span> <span class="abbr-full">Presenting Complaint</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hPC" rows="2" placeholder="Chief complaint in patient's own words, duration…"></textarea></div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(HPC)</span> <span class="abbr-full">History of Presenting Complaint</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hHPC" rows="3" placeholder="Onset, character, severity, duration, modifying factors, associated symptoms…"></textarea></div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PM/PSH)</span> <span class="abbr-full">Past Medical &amp; Surgical History</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hPMH" rows="3" placeholder="Known conditions, previous operations, hospitalisations, TB, HIV status…"></textarea></div></div>
-        <div class="cb" id="ogBlock" style="display:none;"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(O/G)</span> <span class="abbr-full">Obstetric &amp; Gynaecological History</span></span><span class="cr">▼</span></div><div class="cbody"><div class="g2"><div><label>LMP</label><input id="hLMP" type="date"></div><div><label>Gravida / Para</label><input id="hGP" placeholder="e.g. G3P2+1"></div></div><textarea id="hOG" rows="2" placeholder="Contraception, antenatal, delivery history…" style="margin-top:6px;"></textarea></div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span>👨‍👩‍👧 Family &amp; Social History</span><span class="cr">▼</span></div><div class="cbody"><textarea id="hFSH" rows="2" placeholder="Family diseases, alcohol, tobacco, occupation, housing…"></textarea></div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(DH/A)</span> <span class="abbr-full">Drug History &amp; Allergies</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hDrug" rows="2" placeholder="Current medications, doses, OTC, traditional…"></textarea><label>Known Allergies</label><input id="hAllergy" placeholder="e.g. Penicillin — rash. None known."></div></div>
+        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(HPC)</span> <span class="abbr-full">History of Presenting Complaint</span></span><span class="cr">▼</span></div><div class="cbody">
+          <div class="qf-bar">
+            <button type="button" class="qf" onclick="qFill('hHPC','SOCRATES: Site __, Onset __, Character __, Radiation __, Associated symptoms __, Timing __, Exacerbating/relieving __, Severity __/10.')">📋 SOCRATES template</button>
+            <button type="button" class="qf" onclick="qFill('hHPC','Sudden onset __ days/hours ago. Constant/intermittent. Aggravated by __. Relieved by __. No associated symptoms.')">📋 Generic</button>
+            <button type="button" class="qf" onclick="qClear('hHPC')">✕ Clear</button>
+          </div>
+          <textarea id="hHPC" rows="3" placeholder="Onset, character, severity, duration, modifying factors, associated symptoms…"></textarea>
+        </div></div>
+        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PM/PSH)</span> <span class="abbr-full">Past Medical &amp; Surgical History</span></span><span class="cr">▼</span></div><div class="cbody">
+          <div class="qf-bar">
+            <button type="button" class="qf" onclick="qFill('hPMH','No known chronic illness. No previous surgery. Not on regular medication.')">📋 Unremarkable</button>
+            <button type="button" class="qf" onclick="qFill('hPMH','HTN on amlodipine. No DM. No surgical history.')">+ HTN</button>
+            <button type="button" class="qf" onclick="qFill('hPMH','DM type 2 on metformin. Last HbA1c: __. No DM complications noted.')">+ DM</button>
+            <button type="button" class="qf" onclick="qFill('hPMH','HIV positive on ART. CD4: __. Last viral load: __.')">+ HIV</button>
+            <button type="button" class="qf" onclick="qFill('hPMH','Asthma — well controlled on Salbutamol PRN.')">+ Asthma</button>
+            <button type="button" class="qf" onclick="qClear('hPMH')">✕ Clear</button>
+          </div>
+          <textarea id="hPMH" rows="3" placeholder="Known conditions, previous operations, hospitalisations, TB, HIV status…"></textarea>
+        </div></div>
+        <div class="cb" id="ogBlock" style="display:none;"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(O/G)</span> <span class="abbr-full">Obstetric &amp; Gynaecological History</span></span><span class="cr">▼</span></div><div class="cbody">
+          <div class="g2"><div><label>LMP</label><input id="hLMP" type="date"></div><div><label>Gravida / Para</label><input id="hGP" placeholder="e.g. G3P2+1"></div></div>
+          <div class="qf-bar" style="margin-top:8px;">
+            <button type="button" class="qf" onclick="qFill('hOG','Regular menses, no contraception, no abnormal discharge or bleeding. No history of STI.')">📋 Unremarkable</button>
+            <button type="button" class="qf" onclick="qFill('hOG','On COC contraception. Regular menses. No abnormal bleeding.')">+ On OCP</button>
+            <button type="button" class="qf" onclick="qFill('hOG','Currently pregnant. EDD: __. Antenatal care at __. No complications so far.')">+ Pregnant</button>
+            <button type="button" class="qf" onclick="qClear('hOG')">✕ Clear</button>
+          </div>
+          <textarea id="hOG" rows="2" placeholder="Contraception, antenatal, delivery history…" style="margin-top:6px;"></textarea>
+        </div></div>
+        <div class="cb"><div class="ch" onclick="tClin(this)"><span>👨‍👩‍👧 Family &amp; Social History</span><span class="cr">▼</span></div><div class="cbody">
+          <div class="qf-bar">
+            <button type="button" class="qf" onclick="qFill('hFSH','No significant family history. Non-smoker. No alcohol. Married with __ children.')">📋 Unremarkable</button>
+            <button type="button" class="qf" onclick="qAppend('hFSH','Family history: HTN.')">+ HTN family</button>
+            <button type="button" class="qf" onclick="qAppend('hFSH','Family history: DM.')">+ DM family</button>
+            <button type="button" class="qf" onclick="qAppend('hFSH','Smoker — __ pack-years.')">+ Smoker</button>
+            <button type="button" class="qf" onclick="qAppend('hFSH','Alcohol — __ units/week.')">+ Alcohol</button>
+            <button type="button" class="qf" onclick="qClear('hFSH')">✕ Clear</button>
+          </div>
+          <textarea id="hFSH" rows="2" placeholder="Family diseases, alcohol, tobacco, occupation, housing…"></textarea>
+        </div></div>
+        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(DH/A)</span> <span class="abbr-full">Drug History &amp; Allergies</span></span><span class="cr">▼</span></div><div class="cbody">
+          <div class="qf-bar">
+            <button type="button" class="qf" onclick="qFill('hDrug','No current medications. No traditional medicine use.')">📋 No meds</button>
+            <button type="button" class="qf" onclick="qFill('hAllergy','None known.')">📋 NKDA</button>
+            <button type="button" class="qf" onclick="qFill('hAllergy','Penicillin — rash')">+ PCN allergy</button>
+          </div>
+          <textarea id="hDrug" rows="2" placeholder="Current medications, doses, OTC, traditional…"></textarea>
+          <label>Known Allergies</label><input id="hAllergy" placeholder="e.g. Penicillin — rash. None known.">
+        </div></div>
         <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PE)</span> <span class="abbr-full">Physical Examination</span></span><span class="cr">▼</span></div><div class="cbody">
+          <div style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" class="qf qf-all" onclick="fillAllPENormal()">🟢 All Systems Normal</button>
+            <button type="button" class="qf" style="background:#fee2e2;color:#991b1b;" onclick="clearAllPE()">✕ Clear All</button>
+          </div>
           <div class="g2">
-            <div><label>General Appearance</label><input id="hPEGeneral" placeholder="Alert, oriented, not in distress…"></div>
-            <div><label>Head &amp; Neck</label><input id="hPEHead" placeholder="No lymphadenopathy, JVP normal…"></div>
-            <div><label>Chest / Respiratory</label><input id="hPEChest" placeholder="Clear to auscultation bilaterally…"></div>
-            <div><label>Cardiovascular</label><input id="hPECVS" placeholder="Regular rate, no murmurs…"></div>
-            <div><label>Abdomen</label><input id="hPEAbdomen" placeholder="Soft, non-tender, no organomegaly…"></div>
-            <div><label>CNS / Neurological</label><input id="hPECNS" placeholder="GCS 15, pupils equal and reactive…"></div>
-            <div><label>Extremities / MSK</label><input id="hPEExtremities" placeholder="No oedema, full range of motion…"></div>
-            <div><label>Skin</label><input id="hPESkin" placeholder="No rash, jaundice, or cyanosis…"></div>
+            <div>
+              <label>General Appearance</label>
+              <div class="pe-row">
+                <input id="hPEGeneral" placeholder="Alert, oriented, not in distress…">
+                <button type="button" class="pe-norm" onclick="qFill('hPEGeneral','Alert, oriented to time/place/person, in no acute distress, well hydrated, well-nourished.')">Normal</button>
+              </div>
+            </div>
+            <div>
+              <label>Head &amp; Neck</label>
+              <div class="pe-row">
+                <input id="hPEHead" placeholder="No lymphadenopathy, JVP normal…">
+                <button type="button" class="pe-norm" onclick="qFill('hPEHead','No lymphadenopathy. JVP not raised. No thyroid enlargement. Conjunctivae pink. Sclera anicteric.')">Normal</button>
+              </div>
+            </div>
+            <div>
+              <label>Chest / Respiratory</label>
+              <div class="pe-row">
+                <input id="hPEChest" placeholder="Clear to auscultation bilaterally…">
+                <button type="button" class="pe-norm" onclick="qFill('hPEChest','Chest expansion symmetrical. Trachea central. Vesicular breath sounds. No crackles, wheezes or rhonchi. Resonant on percussion.')">Normal</button>
+              </div>
+            </div>
+            <div>
+              <label>Cardiovascular</label>
+              <div class="pe-row">
+                <input id="hPECVS" placeholder="Regular rate, no murmurs…">
+                <button type="button" class="pe-norm" onclick="qFill('hPECVS','S1 + S2 audible. Regular rate and rhythm. No murmurs, gallops, or rubs. Peripheral pulses full and symmetrical.')">Normal</button>
+              </div>
+            </div>
+            <div>
+              <label>Abdomen</label>
+              <div class="pe-row">
+                <input id="hPEAbdomen" placeholder="Soft, non-tender, no organomegaly…">
+                <button type="button" class="pe-norm" onclick="qFill('hPEAbdomen','Abdomen soft, non-tender, non-distended. No organomegaly. Bowel sounds present. No masses palpable.')">Normal</button>
+              </div>
+            </div>
+            <div>
+              <label>CNS / Neurological</label>
+              <div class="pe-row">
+                <input id="hPECNS" placeholder="GCS 15, pupils equal and reactive…">
+                <button type="button" class="pe-norm" onclick="qFill('hPECNS','GCS 15/15. Pupils equal and reactive to light. Cranial nerves grossly intact. Power 5/5 all limbs. Normal tone and reflexes. No cerebellar signs.')">Normal</button>
+              </div>
+            </div>
+            <div>
+              <label>Extremities / MSK</label>
+              <div class="pe-row">
+                <input id="hPEExtremities" placeholder="No oedema, full range of motion…">
+                <button type="button" class="pe-norm" onclick="qFill('hPEExtremities','No pedal oedema. Full range of motion all joints. No joint swelling, deformity, or tenderness. Peripheral pulses palpable.')">Normal</button>
+              </div>
+            </div>
+            <div>
+              <label>Skin</label>
+              <div class="pe-row">
+                <input id="hPESkin" placeholder="No rash, jaundice, or cyanosis…">
+                <button type="button" class="pe-norm" onclick="qFill('hPESkin','No rash, jaundice, cyanosis or pallor. Skin warm and dry. No active lesions.')">Normal</button>
+              </div>
+            </div>
           </div>
           <label>Other Examination Findings</label>
           <textarea id="hPEOther" rows="2" placeholder="Any additional examination findings…"></textarea>

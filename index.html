@@ -678,6 +678,159 @@ section > h3{
   color: #fff;
   transform: none !important;
 }
+
+/* ─── Consultation Tabs ─── */
+.cons-tabs {
+    display: flex; gap: 2px; flex-wrap: wrap;
+    background: var(--lt); padding: 4px;
+    border-radius: 9px; margin-bottom: 14px;
+    overflow-x: auto;
+}
+.ct-tab {
+    background: transparent; color: var(--mu);
+    padding: 9px 14px; border: none; border-radius: 7px;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+    transition: all .15s;
+    font-family: inherit;
+}
+.ct-tab:hover {
+    background: rgba(15,118,110,.08); color: var(--p);
+    transform: none !important; box-shadow: none !important;
+}
+.ct-tab.active {
+    background: var(--card); color: var(--p);
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(15,23,42,.08);
+}
+.ct-panel { animation: ct-fade .2s; }
+@keyframes ct-fade { from {opacity:0;transform:translateY(4px);} to {opacity:1;transform:translateY(0);} }
+
+/* Timeline */
+.tl-item {
+    display: flex; gap: 12px; padding: 10px 0;
+    border-bottom: 1px solid var(--bd);
+}
+.tl-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--p); flex-shrink: 0; margin-top: 6px;
+    box-shadow: 0 0 0 3px var(--p-light);
+}
+.tl-content { flex: 1; }
+.tl-time { font-size: 11px; color: var(--mu); margin-bottom: 2px; }
+.tl-action { font-weight: 600; font-size: 13px; color: var(--tx); }
+.tl-by { font-size: 11px; color: var(--mu); margin-top: 2px; }
+
+/* Collapsible nav group */
+.nav-sep-clickable {
+  cursor: pointer;
+  user-select: none;
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+}
+.nav-sep-clickable:hover {
+  color: rgba(255,255,255,.85) !important;
+}
+
+/* Consultation form tabs */
+.cf-tabs {
+  display: flex; gap: 1px;
+  background: var(--lt);
+  padding: 0 16px;
+  border-bottom: 1px solid var(--bd);
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+.cft {
+  background: transparent;
+  color: var(--mu);
+  padding: 12px 16px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.cft:hover {
+  color: var(--p);
+  background: rgba(15,118,110,.05);
+  transform: none !important;
+  box-shadow: none !important;
+}
+.cft.active {
+  color: var(--p);
+  border-bottom-color: var(--p);
+  background: var(--card);
+  font-weight: 700;
+}
+.cf-pan {
+  animation: cfFadeIn .2s;
+}
+@keyframes cfFadeIn {
+  from {opacity: 0; transform: translateY(4px);}
+  to {opacity: 1; transform: none;}
+}
+
+/* Notification dot for new lab/imaging results */
+.notif-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--d); margin-left: 4px;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .7; transform: scale(1.3); }
+}
+
+/* Consultation form tabs */
+.cf-tabs {
+  display: flex; flex-wrap: wrap;
+  background: var(--lt); border-bottom: 2px solid var(--bd);
+  padding: 0 12px; gap: 2px;
+  position: sticky; top: 0; z-index: 10;
+}
+.cft {
+  background: transparent;
+  color: var(--mu);
+  padding: 12px 18px;
+  font-weight: 600; font-size: 13px;
+  border: none; border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+  font-family: inherit; letter-spacing: -.005em;
+  white-space: nowrap;
+}
+.cft:hover {
+  color: var(--p); background: rgba(15,118,110,.06);
+  transform: none !important; box-shadow: none !important;
+}
+.cft.active {
+  color: var(--p); border-bottom-color: var(--p);
+  font-weight: 700; background: var(--card);
+}
+
+#allergy-alert-banner {
+  display: none;
+  background: var(--w2); border: 2px solid var(--w);
+  border-radius: 0; padding: 10px 18px;
+  font-weight: 700; font-size: 13px; color: var(--w);
+}
+#allergy-alert-banner.active { display: block; }
+
+/* Drug search results */
+.drug-item {
+  padding: 8px 12px; cursor: pointer;
+  border-bottom: 1px solid var(--bd);
+  font-size: 13px;
+}
+.drug-item:hover { background: var(--lt); }
+.drug-item:last-child { border-bottom: none; }
 </style>
 <script>
 
@@ -1496,43 +1649,65 @@ function doLogout() {
 // ── NAV ──
 function renderNav() {
   const secs = currentUser.isAdmin
-    ? ['director',...ALL_SECS,'feedbacks','admin']
-    : (currentUser.sections||[]);
+    ? ['director', ...ALL_SECS, 'feedbacks', 'admin']
+    : (currentUser.sections || []);
   const dn = gid('dn');
   if (!dn) return;
-  // Group nav items
+  // Group nav items - REMOVED Workstations (kept Appointments only); Finance is a dropdown
   const groups = [
-    {label:'Clinical', keys:['reception','nurse','doctor']},
+    {label:'Clinical', keys:['reception','nurse','doctor','appointments']},
     {label:'Departments', keys:['lab','pharmacy','radiology']},
-    {label:'Finance', keys:['billing','expenses','suppliers']},
+    {label:'Finance', keys:['billing','expenses','suppliers','cashier'], collapsible:true},
     {label:'Inventory', keys:['inventory']},
     {label:'Staff', keys:['chat','protocols','feedbacks']},
     {label:'Admin', keys:['admin','director']},
   ];
   let html = '';
-  // Add workstations group
-  groups.push({label:'Workstations', keys:['flow','pharmacy-queue','lab-queue','cashier','appointments','beds']});
   for (const g of groups) {
     const inGroup = g.keys.filter(k => secs.includes(k));
     if (!inGroup.length) continue;
-    html += `<div class="nav-sep">${g.label}</div>`;
-    inGroup.forEach(k => {
-      html += `<button id="btn-${k}" class="nb" onclick="showSection('${k}')">${SEC_ICONS[k]||'•'} ${SEC_LABELS[k]||k}</button>`;
-    });
+    if (g.collapsible) {
+      // Collapsible group (Finance)
+      const groupId = 'grp-' + g.label.toLowerCase();
+      const isOpen = localStorage.getItem('mt-grp-'+g.label) !== 'closed';
+      html += `<div class="nav-sep nav-sep-clickable" onclick="toggleNavGroup('${g.label}')">
+        <span style="display:flex;align-items:center;gap:6px;">${g.label}</span>
+        <span id="${groupId}-arrow" style="font-size:9px;transition:transform .15s;${isOpen?'transform:rotate(0deg)':'transform:rotate(-90deg)'}">▼</span>
+      </div>
+      <div id="${groupId}-items" style="display:${isOpen?'block':'none'};">`;
+      inGroup.forEach(k => {
+        html += `<button id="btn-${k}" class="nb" onclick="showSection('${k}')">${SEC_ICONS[k]||'•'} ${SEC_LABELS[k]||k}</button>`;
+      });
+      html += `</div>`;
+    } else {
+      html += `<div class="nav-sep">${g.label}</div>`;
+      inGroup.forEach(k => {
+        html += `<button id="btn-${k}" class="nb" onclick="showSection('${k}')">${SEC_ICONS[k]||'•'} ${SEC_LABELS[k]||k}</button>`;
+      });
+    }
   }
   dn.innerHTML = html;
-  // Show first section after a tick so all overrides complete
   const _firstSec = currentUser.isAdmin ? 'director' : (secs[0] || 'reception');
   setTimeout(() => {
     safeCall(initAdminView, 'initAdminView');
     safeCall(applyRolePermissions, 'applyRolePermissions');
     safeCall(loadFacilitySwitcher, 'loadFacilitySwitcher');
     showSection(_firstSec);
-    // Keyboard shortcut for global search
     document.addEventListener('keydown', e => {
       if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();const inp=gid('global-search-input');if(inp){inp.focus();inp.select();}}
     });
   }, 0);
+}
+
+function toggleNavGroup(label) {
+  const groupId = 'grp-' + label.toLowerCase();
+  const items = gid(groupId + '-items');
+  const arrow = gid(groupId + '-arrow');
+  if (!items) return;
+  const isOpen = items.style.display !== 'none';
+  items.style.display = isOpen ? 'none' : 'block';
+  if (arrow) arrow.style.transform = isOpen ? 'rotate(-90deg)' : 'rotate(0deg)';
+  localStorage.setItem('mt-grp-' + label, isOpen ? 'closed' : 'open');
 }
 
 function showSection(id) {
@@ -2156,19 +2331,98 @@ function switchNurseVitalChart(type,btn){
 }
 
 // ── TREATMENT CHART (MAR) ──
-function renderTreatList(){
-  const active=visits.filter(v=>!['DISCHARGED'].includes(v.status));
-  let h=`<tr><th>Patient</th><th>Status</th><th>Diagnosis</th><th>Pay</th><th>Action</th></tr>`;
-  if(!active.length)h+=`<tr><td colspan="5" class="emp">No active patients</td></tr>`;
-  active.forEach(v=>{
-    const dx=v.clinical?.finalDx||v.clinical?.cFinalDx||'—';
-    h+=`<tr><td><b>${v.name}</b></td>
-      <td><span class="badge bgr" style="font-size:10px;">${v.status.replace(/_/g,' ')}</span></td>
-      <td style="font-size:12px;">${dx}</td>
-      <td>${payBadge(v)}</td>
-      <td><button onclick="openTreat('${v.id}')" class="ba bsm">📋 Chart</button></td></tr>`;
+function renderTreatList() {
+  const el = gid('treat-list'); 
+  if (!el) return;
+  // Get all visits with prescriptions, in active states
+  const activeVisits = visits.filter(v => 
+    (v.prescriptions||[]).some(r=>r.name) && 
+    v.status !== 'DISCHARGED' && v.status !== 'DECEASED'
+  );
+  if (!activeVisits.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">💊</div><div class="es-title">No active medications</div><div class="es-msg">Patients with prescribed medications will appear here for nurse administration</div></div>';
+    return;
+  }
+  let html = `<div style="overflow-x:auto;"><table style="width:100%;font-size:13px;">
+    <tr>
+      <th>Patient</th>
+      <th>Drug Prescribed</th>
+      <th>Unit Prescribed</th>
+      <th>Administered</th>
+      <th>Remainder</th>
+      <th>Doctor's Instructions</th>
+      <th>Action</th>
+    </tr>`;
+  activeVisits.forEach(v => {
+    const p = patients.find(x => x.id === v.patId) || {};
+    const prescriptions = (v.prescriptions||[]).filter(r => r.name);
+    prescriptions.forEach((rx, i) => {
+      const prescribed = rx.qty || 1;
+      const administered = rx.administeredQty || 0;
+      const dispensed = rx.dispensedQty || 0;
+      const remainder = prescribed - administered;
+      const isFirstRow = i === 0;
+      const stat = administered >= prescribed ? 'pill-success' : (administered > 0 ? 'pill-info' : 'pill-warning');
+      const stext = administered >= prescribed ? '✅ Complete' : (administered > 0 ? '🔄 Ongoing' : '⏳ Not started');
+      html += `<tr ${isFirstRow ? 'style="border-top:2px solid var(--bd);"' : ''}>
+        ${isFirstRow ? `<td rowspan="${prescriptions.length}" style="vertical-align:top;background:var(--lt);">
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${patAvatar(v.name, 'sm')}
+            <div>
+              <div style="font-weight:700;">${v.name}</div>
+              <code style="background:#fff;padding:1px 6px;border-radius:4px;font-size:10px;color:var(--p);">${p.patNum||'—'}</code>
+            </div>
+          </div>
+          ${v.ward?`<div style="font-size:11px;color:var(--mu);margin-top:4px;">🛏️ ${v.ward}</div>`:''}
+        </td>` : ''}
+        <td>
+          <b>${rx.name}</b> ${rx.strength||''} ${typeof formBadge==='function'?formBadge(rx.formulation||''):''}<br>
+          <span class="pill ${stat}" style="font-size:9px;margin-top:2px;">${stext}</span>
+        </td>
+        <td style="text-align:center;font-weight:700;font-size:14px;">${prescribed}</td>
+        <td style="text-align:center;font-weight:700;color:var(--a);font-size:14px;">${administered}</td>
+        <td style="text-align:center;font-weight:700;color:${remainder>0?'var(--w)':'var(--a)'};font-size:14px;">${remainder}</td>
+        <td style="font-size:12px;max-width:280px;">
+          <div style="background:#fef9c3;padding:6px 10px;border-radius:6px;border-left:3px solid var(--w);">
+            ${rx.instructions||rx.dosage||'<i style="color:var(--mu)">No instructions</i>'}
+          </div>
+        </td>
+        <td>
+          ${remainder > 0 ? `<button class="bsm bp" onclick="administerDose('${v.id}','${rx.id||rx.name}')">+ Administer</button>` : '<span class="pill pill-success">✓ Done</span>'}
+        </td>
+      </tr>`;
+    });
   });
-  gid('table-treat-pats').innerHTML=h;
+  html += '</table></div>';
+  el.innerHTML = html;
+}
+
+// Nurse administers a dose
+function markAdministered(vid, rxId) {
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  const rx = (v.prescriptions||[]).find(r => r.id === rxId); if (!rx) return;
+  const qty = prompt('Quantity administered to ' + v.name + ':', String(rx.qty || 1));
+  if (qty === null) return;
+  const n = parseInt(qty);
+  if (isNaN(n) || n <= 0) { toast('Invalid quantity.', 'error'); return; }
+  rx.dispensedQty = (rx.dispensedQty || 0) + n;
+  rx.dispensed = (rx.dispensedQty >= rx.qty);
+  rx.partiallyDispensed = !rx.dispensed && rx.dispensedQty > 0;
+  rx.dispensedBy = currentUser?.name || 'Nurse';
+  rx.dispensedTime = new Date().toLocaleTimeString();
+  // Save to treatment_chart in Supabase
+  if (!isDemoMode() && v.sbId) {
+    sb.from('treatment_chart').insert({
+      visit_id: v.sbId, patient_id: v.patId, hospital_id: currentHospital,
+      drug_name: rx.name, dose: String(n), route: rx.formulation || 'PO',
+      administered_time: new Date().toISOString(),
+      administered_date: new Date().toISOString().split('T')[0],
+      nurse_name: currentUser?.name, notes: rx.instructions || ''
+    }).catch(()=>{});
+  }
+  toast('✓ Recorded: ' + rx.name + ' × ' + n + ' to ' + v.name, 'success');
+  speak('');
+  renderTreatList();
 }
 function openTreat(id){
   activeVid=id;
@@ -2335,8 +2589,10 @@ function renderCons(){
     const rc=(v.radiology||[]).length,rd=(v.radiology||[]).filter(r=>r.done).length;
     const rxc=(v.prescriptions||[]).length,rxd=(v.prescriptions||[]).filter(r=>r.dispensed).length;
     const hasVitals=!!v.vitals;
-    h+=`<tr>
-      <td><b>${v.name}</b></td>
+    const hasNewResults = v.status === 'LAB_READY' || v.status === 'RAD_READY';
+    const newBadge = hasNewResults ? '<span class="pill pill-warning" style="margin-left:5px;animation:pulse 1.5s infinite;">🔔 RESULTS</span>' : '';
+    h+=`<tr ${hasNewResults?'style="background:#fef9c3;"':''}>
+      <td><b>${v.name}</b>${newBadge}</td>
       <td><code style="font-size:10px;background:var(--lt);padding:1px 5px;border-radius:4px;">${p?.patNum||'—'}</code></td>
       <td><span class="consult-type-badge ${ctCls}">${v.consultType||'GEN'}</span></td>
       <td><span class="badge ${stCls}" style="font-size:10px;">${v.status.replace(/_/g,' ')}</span></td>
@@ -2458,15 +2714,27 @@ function openCons(id){
   // Show form
   gid('cons-form').style.display='block';
   gid('cons-form').scrollIntoView({behavior:'smooth'});
+  // Start on Overview tab and render header
+  setTimeout(() => { 
+    if(typeof cfTab === 'function') cfTab('overview'); 
+  }, 50);
   v.status='WITH_DOCTOR';
-  // Load order summary from visit object (b9 pattern)
-  setTimeout(()=>updateOrderSummary(v), 100);
+  // Default to Overview tab and populate it
+  setTimeout(()=>{
+    const firstTab = document.querySelector('.ct-tab');
+    if (firstTab) swCt('overview', firstTab);
+    if (typeof populateOverview === 'function') populateOverview();
+    if (typeof populateLabTab === 'function') populateLabTab();
+    if (typeof updateOrderSummary === 'function') updateOrderSummary(v);
+  }, 50);
   renderCons();
 }
 
 function closeConsForm(){
   gid('cons-form').style.display='none';
-  gid('drug-results').style.display='none';
+  const dr = gid('drug-results'); if(dr) dr.style.display='none';
+  // Clear allergy banner
+  const ab = gid('allergy-alert-banner'); if (ab) { ab.innerHTML=''; ab.style.display='none'; }
   renderCons();
 }
 
@@ -2486,24 +2754,127 @@ function toggleLabTest(nameEnc,price){
 }
 
 function addRxRow(prefill){
-  const id=medRowId++;
-  const drugs=window._labTests||[];
-  const dosaOpts=(DOSAGE_OPTS||[]);
-  medRows[id]=prefill||{name:'',strength:'',formulation:'',qty:1,price:0,instructions:'',dispensed:false};
-  const row=document.createElement('div');row.className='rx-row';row.id='rx-row-'+id;
-  row.style.cssText='grid-template-columns:2fr 1fr 1fr 0.7fr 1.5fr auto;';
-  row.innerHTML=`
-    <input id="rn-${id}" value="${medRows[id].name||''}" placeholder="Drug name" oninput="filterMeds()">
-    <input id="rs-${id}" value="${medRows[id].strength||''}" placeholder="Strength">
-    <select id="rf-${id}" style="margin:2px 0;">${['Tablet','Capsule','Syrup','Injection (IV)','Injection (IM)','IV Fluid','Cream','Inhaler','Drops','Other'].map(f=>`<option ${(medRows[id].formulation||'Tablet')===f?'selected':''}>${f}</option>`).join('')}</select>
-    <input type="number" id="rq-${id}" value="${medRows[id].qty||1}" min="1" placeholder="Qty" onchange="updateRxRow(${id})">
-    <select id="ri-${id}" style="margin:2px 0;">${(DOSAGE_OPTS||[]).map(d=>`<option ${(medRows[id].instructions||medRows[id].dosage||'')===d?'selected':''}>${d}</option>`).join('')}</select>
-    <button onclick="removeRxRow(${id})" class="bd2">✕</button>`;
+  const id = medRowId++;
+  const row = document.createElement('div');
+  row.className = 'rx-row';
+  row.id = 'rx-row-' + id;
+  row.style.cssText = 'display:grid;grid-template-columns:2.4fr 0.8fr 0.9fr 1.7fr auto;gap:6px;padding:8px 0;align-items:start;border-bottom:1px solid var(--bd);';
+  const data = prefill || {name:'',strength:'',formulation:'Tablet',qty:1,price:0,instructions:'',dispensed:false};
+  medRows[id] = data;
+  const statusBadge = data.dispensed
+    ? '<span class="pill pill-success" style="font-size:9px;">✅ DISPENSED</span>'
+    : (data.name ? '<span class="pill pill-warning" style="font-size:9px;">⏳ PENDING</span>' : '');
+  row.innerHTML = `
+    <div style="position:relative;display:flex;flex-direction:column;gap:3px;">
+      <input id="rn-${id}" value="${(data.name||'').replace(/"/g,'&quot;')}" placeholder="Search drug..." oninput="filterDrugForRow(${id})" autocomplete="off" style="margin:0;">
+      <div id="rn-results-${id}" class="drug-search-results" style="display:none;position:absolute;top:100%;left:0;width:100%;z-index:200;max-height:200px;overflow-y:auto;background:var(--card);border:1px solid var(--bd);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);"></div>
+      <div style="display:flex;gap:3px;">
+        <input id="rs-${id}" value="${data.strength||''}" placeholder="Strength" style="flex:1;margin:0;font-size:11px;" onchange="updateRxRow(${id})">
+        <select id="rf-${id}" style="flex:1;margin:0;font-size:11px;padding:5px 8px;" onchange="updateRxRow(${id})">${['Tablet','Capsule','Syrup','Injection (IV)','Injection (IM)','IV Fluid','Cream','Inhaler','Drops','Other'].map(f=>`<option ${(data.formulation||'Tablet')===f?'selected':''}>${f}</option>`).join('')}</select>
+      </div>
+      <div id="rx-status-${id}" style="font-size:10px;">${statusBadge}</div>
+    </div>
+    <input type="number" id="rq-${id}" value="${data.qty||1}" min="1" placeholder="Qty" onchange="updateRxRow(${id});updateRxTotal();" style="margin:0;text-align:center;font-weight:700;">
+    <input type="number" id="rp-${id}" value="${data.price||0}" min="0" step="0.01" placeholder="Unit $" onchange="updateRxRow(${id});updateRxTotal();" style="margin:0;text-align:right;">
+    <textarea id="ri-${id}" rows="2" placeholder="Instructions for nurse/patient (e.g. 1 tab BD x 5/7, take after food)" onchange="updateRxRow(${id})" style="margin:0;font-size:12px;resize:vertical;min-height:38px;">${data.instructions||data.dosage||''}</textarea>
+    <button onclick="removeRxRow(${id});updateRxTotal();" class="bd2" style="align-self:start;padding:6px 10px;">✕</button>`;
   gid('med-orders-list').appendChild(row);
-  renderOrderSummary();
+  if(typeof updateOrderSummary === 'function') {
+    const v = visits.find(x => x.id === activeVid);
+    if(v) updateOrderSummary(v);
+  }
+  setTimeout(updateRxTotal, 50);
 }
+
+// Search drug for a specific rx row
+function selectDrugForRow(rowId, name, price, strength, form) {
+  if (gid('rn-'+rowId)) gid('rn-'+rowId).value = name;
+  if (gid('rs-'+rowId) && strength) gid('rs-'+rowId).value = strength;
+  if (gid('rp-'+rowId)) gid('rp-'+rowId).value = price;
+  if (gid('rf-'+rowId) && form) {
+    const sel = gid('rf-'+rowId);
+    for (const opt of sel.options) { if (opt.value === form || opt.text === form) { sel.value = opt.value; break; } }
+  }
+  if (gid('rn-results-'+rowId)) gid('rn-results-'+rowId).style.display = 'none';
+  updateRxRow(rowId);
+  updateRxTotal();
+  // Allergy alert
+  const v = visits.find(x => x.id === activeVid);
+  if (v && typeof checkAllergyAlert === 'function') checkAllergyAlert(v);
+}
+
+// Search drugs from inventory while typing in a specific row
+function filterDrugForRow(rowId) {
+  const inp = gid('rn-' + rowId);
+  const list = gid('rn-results-' + rowId);
+  if (!inp || !list) return;
+  const term = inp.value.toLowerCase();
+  if (term.length < 2) { list.style.display = 'none'; return; }
+  const drugs = (inventory||[]).filter(i =>
+    i.name && i.name.toLowerCase().includes(term)
+  ).slice(0, 8);
+  if (!drugs.length) {
+    // Also check WHO_MEDS for drug catalog
+    const whoMatch = (window.WHO_MEDS||[]).filter(d => d.name.toLowerCase().includes(term)).slice(0,5);
+    if (whoMatch.length) {
+      list.innerHTML = whoMatch.map(d => `<div class="drug-item" onclick="selectRxDrug(${rowId},'${d.name.replace(/'/g,'\\\'')}','${d.strength||''}','${d.formulation||'Tablet'}',0)">${d.name} ${d.strength||''} <span style="color:var(--mu);font-size:11px;">${d.formulation||''}</span></div>`).join('');
+      list.style.display = 'block';
+    } else {
+      list.style.display = 'none';
+    }
+    return;
+  }
+  list.innerHTML = drugs.map(d => `<div class="drug-item" onclick="selectRxDrug(${rowId},'${d.name.replace(/'/g,'\\\'')}','${d.strength||''}','${d.formulation||'Tablet'}',${d.sellPrice||d.price||0})">${d.name} ${d.strength||''} <span style="color:var(--a);font-size:11px;font-weight:700;">$${(d.sellPrice||d.price||0).toFixed(2)} · stock: ${d.stock||0}</span></div>`).join('');
+  list.style.display = 'block';
+}
+
+function selectRxDrug(rowId, name, strength, formulation, price) {
+  const inp = gid('rn-' + rowId);
+  const list = gid('rn-results-' + rowId);
+  const priceInp = gid('rp-' + rowId);
+  if (inp) inp.value = name;
+  if (priceInp) priceInp.value = price;
+  if (list) list.style.display = 'none';
+  if (medRows[rowId]) {
+    medRows[rowId].name = name;
+    medRows[rowId].strength = strength;
+    medRows[rowId].formulation = formulation;
+    medRows[rowId].price = price;
+  }
+  updateRxRow(rowId);
+  updateRxTotal();
+  // Allergy check
+  const v = visits.find(x => x.id === activeVid);
+  if (v && typeof checkAllergyAlert === 'function') checkAllergyAlert(v);
+}
+
+
+
+
 function removeRxRow(id){const r=gid('rx-row-'+id);if(r)r.remove();delete medRows[id];renderOrderSummary();}
-function updateRxRow(id){renderOrderSummary();}
+function updateRxRow(id) {
+  if (!medRows[id]) return;
+  medRows[id].name = gid('rn-'+id)?.value || '';
+  medRows[id].strength = gid('rs-'+id)?.value || '';
+  medRows[id].formulation = gid('rf-'+id)?.value || '';
+  medRows[id].qty = parseInt(gid('rq-'+id)?.value || 1);
+  medRows[id].price = parseFloat(gid('rp-'+id)?.value || 0);
+  medRows[id].instructions = gid('ri-'+id)?.value || '';
+  // Update status badge
+  const sb = gid('rx-status-'+id);
+  if (sb) {
+    if (medRows[id].name) {
+      sb.innerHTML = medRows[id].dispensed 
+        ? '<span class="pill pill-success" style="font-size:9px;">✓ DISPENSED</span>'
+        : '<span class="pill pill-warning" style="font-size:9px;">⏳ PENDING</span>';
+    } else sb.innerHTML = '';
+  }
+  // Update order summary
+  if(typeof updateOrderSummary === 'function') {
+    const v = visits.find(x => x.id === activeVid);
+    if(v) updateOrderSummary(v);
+  }
+}
 
 function filterMeds(){
   const q=(gid('med-search')?.value||'').toLowerCase();
@@ -2903,23 +3274,119 @@ async function dispenseRx(vid){
 // RADIOLOGY
 // ══════════════════════════════════════════════
 function swRad(tab,btn){radTab=tab;document.querySelectorAll('#sec-radiology .st').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderRad();}
-function renderRad(){
-  gid('rad-entry').style.display='none';
-  let q;
-  if(radTab==='pending')q=visits.filter(v=>(v.radiology||[]).some(r=>r.name&&!r.done));
-  else if(radTab==='completed')q=visits.filter(v=>(v.radiology||[]).some(r=>r.done));
-  else q=visits.filter(v=>(v.radiology||[]).some(r=>r.name));
-  let h=`<tr><th>Patient</th><th>Date</th><th>Procedures</th><th>Pay</th><th>Status</th><th>Actions</th></tr>`;
-  if(!q.length)h+=`<tr><td colspan="6" class="emp">No records</td></tr>`;
-  q.forEach(v=>{
-    const rads=v.radiology||[];const pending=rads.filter(r=>r.name&&!r.done);
-    const radHtml=rads.filter(r=>r.name).map(r=>`<span class="badge ${r.done?'bpd':'bwn'}" style="font-size:10px;margin:1px;">${r.name}${r.done?' ✓':''}</span>`).join(' ');
-    h+=`<tr><td><b>${v.name}</b></td><td>${v.date}</td><td style="font-size:12px;">${radHtml}</td>
-      <td>${payBadge(v)}</td>
-      <td>${pending.length?`<span class="badge bwn">${pending.length} Pending</span>`:`<span class="badge bpd">Done</span>`}</td>
-      <td>${pending.length?`<button class="bsm bpu" onclick="openRad('${v.id}')">Enter Report</button>`:''}</td></tr>`;
+function renderRad() {
+  const el = document.getElementById('table-rad');
+  if (!el) return;
+  const q = visits.filter(v => (v.radiology||[]).some(r => r.name && !r.released));
+  let html = '<tr><th>Patient</th><th>Procedure</th><th>Status</th><th>Actions</th></tr>';
+  if (!q.length) {
+    html += '<tr><td colspan="4" class="emp"><div class="empty-state"><div class="es-icon">🩻</div><div class="es-msg">No pending radiology orders</div></div></td></tr>';
+  }
+  q.forEach(v => {
+    const p = patients.find(x => x.id === v.patId) || {};
+    (v.radiology||[]).filter(r => r.name && !r.released).forEach(r => {
+      const status = r.result ? '👀 Awaiting Release' : '⏳ Pending Imaging';
+      const cls = r.result ? 'pill-info' : 'pill-warning';
+      html += '<tr>' +
+        '<td><b>' + v.name + '</b><br><code>' + (p.patNum||'') + '</code></td>' +
+        '<td><b>' + r.name + '</b><br><span style="font-size:11px;color:var(--mu);">$' + (r.price||0).toFixed(2) + '</span></td>' +
+        '<td><span class="pill ' + cls + '">' + status + '</span></td>' +
+        '<td><div style="display:flex;gap:3px;flex-wrap:wrap;">' +
+          '<button class="bsm bp" onclick="openRadReport(\'' + v.id + '\',\'' + (r.id||r.name) + '\')">📝 Write Report</button>' +
+          (r.result ? '<button class="bsm bpu" onclick="releaseRadResult(\'' + v.id + '\',\'' + (r.id||r.name) + '\')">📤 Release</button>' : '') +
+        '</div></td>' +
+        '</tr>';
+    });
   });
-  gid('table-rad').innerHTML=h;
+  el.innerHTML = html;
+}
+
+function openRadReport(vid, rid) {
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  const r = (v.radiology||[]).find(x => (x.id||x.name) === rid); if (!r) return;
+  // Show modal/form
+  const modal = document.getElementById('rad-report-modal') || (() => {
+    const m = document.createElement('div');
+    m.id = 'rad-report-modal';
+    m.className = 'mo';
+    m.innerHTML = '<div class="mb" style="max-width:680px;">' +
+      '<button class="mc" onclick="cModal(\'rad-report-modal\')">✕</button>' +
+      '<h3 style="color:var(--p);margin-bottom:11px;">📝 Imaging Report</h3>' +
+      '<div id="rad-rep-header" style="margin-bottom:10px;"></div>' +
+      '<input type="hidden" id="rad-rep-vid"><input type="hidden" id="rad-rep-rid">' +
+      '<label>Clinical Indication</label>' +
+      '<input id="rad-rep-indication" placeholder="Reason for imaging">' +
+      '<label>Technique</label>' +
+      '<input id="rad-rep-technique" placeholder="e.g. AP & lateral views, contrast enhanced">' +
+      '<label>Findings</label>' +
+      '<textarea id="rad-rep-findings" rows="6" placeholder="Detailed imaging findings..."></textarea>' +
+      '<label>Impression / Conclusion</label>' +
+      '<textarea id="rad-rep-impression" rows="3" placeholder="Diagnostic impression"></textarea>' +
+      '<label>Recommendations</label>' +
+      '<input id="rad-rep-recommend" placeholder="Further imaging or follow-up suggested">' +
+      '<div class="ab" style="margin-top:11px;">' +
+        '<button onclick="saveRadReport()" class="bp">💾 Save Report</button>' +
+        '<button onclick="cModal(\'rad-report-modal\')" style="background:#e2e8f0;color:#475569;">Cancel</button>' +
+      '</div></div>';
+    document.body.appendChild(m);
+    return m;
+  })();
+  document.getElementById('rad-rep-vid').value = vid;
+  document.getElementById('rad-rep-rid').value = rid;
+  document.getElementById('rad-rep-header').innerHTML = '<div style="background:var(--lt);padding:9px 12px;border-radius:7px;font-size:13px;"><b>' + v.name + '</b> · <b>' + r.name + '</b></div>';
+  document.getElementById('rad-rep-indication').value = r.indication || v.clinical?.cFinalDx || '';
+  document.getElementById('rad-rep-technique').value = r.technique || '';
+  document.getElementById('rad-rep-findings').value = r.findings || r.result || '';
+  document.getElementById('rad-rep-impression').value = r.impression || '';
+  document.getElementById('rad-rep-recommend').value = r.recommendation || '';
+  modal.style.display = 'flex';
+}
+
+async function saveRadReport() {
+  const vid = document.getElementById('rad-rep-vid').value;
+  const rid = document.getElementById('rad-rep-rid').value;
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  const r = (v.radiology||[]).find(x => (x.id||x.name) === rid); if (!r) return;
+  r.indication = document.getElementById('rad-rep-indication').value;
+  r.technique = document.getElementById('rad-rep-technique').value;
+  r.findings = document.getElementById('rad-rep-findings').value;
+  r.impression = document.getElementById('rad-rep-impression').value;
+  r.recommendation = document.getElementById('rad-rep-recommend').value;
+  r.result = r.findings + (r.impression ? '\n\nIMPRESSION: ' + r.impression : '');
+  r.reportedBy = currentUser?.name;
+  r.reportedAt = new Date().toISOString();
+  if (!isDemoMode() && v.sbId) {
+    await sb.from('radiology_requests').update({
+      result: r.result, status: 'awaiting_release', result_by: currentUser?.name
+    }).eq('visit_id', v.sbId).eq('procedure_name', r.name).catch(()=>{});
+  }
+  toast('💾 Imaging report saved. Click Release when ready.', 'success');
+  if (typeof cModal === 'function') cModal('rad-report-modal');
+  renderRad();
+}
+
+async function releaseRadResult(vid, rid) {
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  const r = (v.radiology||[]).find(x => (x.id||x.name) === rid); if (!r) return;
+  r.released = true;
+  r.releasedAt = new Date().toISOString();
+  r.releasedBy = currentUser?.name;
+  v.status = 'RAD_READY';
+  if (!v.cleared.includes('Radiology')) v.cleared.push('Radiology');
+  if (!isDemoMode() && v.sbId) {
+    await sb.from('radiology_requests').update({status: 'completed'}).eq('visit_id', v.sbId).eq('procedure_name', r.name).catch(()=>{});
+    await sb.from('visits').update({status: 'rad_ready'}).eq('id', v.sbId).catch(()=>{});
+    // Notify doctor
+    await sb.from('staff_messages').insert({
+      hospital_id: currentHospital,
+      from_user_id: currentUser?.id, from_name: currentUser?.name || 'Radiology',
+      to_user_id: 'doctor', to_name: 'Doctor',
+      message_text: '🔔 IMAGING REPORT READY for ' + v.name + ' — ' + r.name + ' released for review.'
+    }).catch(()=>{});
+  }
+  toast('✅ Imaging report released — doctor notified.', 'success');
+  speak('');
+  renderRad();
 }
 function openRad(id){
   activeVid=id;const v=visits.find(x=>x.id===id);
@@ -4647,17 +5114,60 @@ async function sbq(queryFn) {
 // ══════════════════════════════════════════════
 
 // ── dispenseOne (adapted from b9) ──
-async function dispenseOne(vid,rxId){
-  const v=visits.find(x=>x.id===vid);
-  const rx=(v.prescriptions||[]).find(r=>r.id===rxId);if(!rx)return;
-  const item=inventory.find(i=>i.name===rx.name);
-  if(!item||item.stock<rx.qty)return alert(`Insufficient stock: ${rx.name}. Stock: ${item?item.stock:0}, Need: ${rx.qty}`);
-  item.stock-=rx.qty;
-  item.history=item.history||[];item.history.push({type:'OUT',qty:rx.qty,reason:`Dispensed to ${v.name}`,date:v.date,by:currentUser.name});
-  rx.dispensed=true;rx.dispensedTime=new Date().toLocaleTimeString();rx.dispensedBy=currentUser.name;
-  auditLog('UPDATE','visits',v.sbId||v.id,{action:'Dispensed '+rx.name+' x'+(rx.qty||1)});
-  checkFullyDispensed(v);// (Supabase saves handled per-operation)renderPharm();
-  speak(`Medication dispensed for patient ${v.name}.`);
+async function dispenseOne(vid, rxId) {
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  const rx = (v.prescriptions||[]).find(r => r.id === rxId); if (!rx) return;
+  const item = (inventory||[]).find(i => i.name === rx.name);
+  const requested = rx.qty || 1;
+  const stockAvail = item ? item.stock : 0;
+  
+  // Prompt for quantity to dispense
+  const promptMsg = 'Dispense ' + rx.name + '\n\nPrescribed: ' + requested + '\nIn stock: ' + stockAvail + '\n\nQuantity to dispense:';
+  const qtyStr = prompt(promptMsg, String(Math.min(requested, stockAvail)));
+  if (qtyStr === null) return;
+  const dispQty = parseInt(qtyStr);
+  if (isNaN(dispQty) || dispQty <= 0) { toast('Invalid quantity.', 'error'); return; }
+  if (item && dispQty > stockAvail) {
+    if (!confirm('Only ' + stockAvail + ' in stock. Dispense that amount instead?')) return;
+    rx.dispensedQty = (rx.dispensedQty || 0) + stockAvail;
+    if (item) item.stock = 0;
+  } else {
+    rx.dispensedQty = (rx.dispensedQty || 0) + dispQty;
+    if (item) item.stock -= dispQty;
+  }
+  
+  rx.dispensed = (rx.dispensedQty >= requested);
+  rx.partiallyDispensed = (rx.dispensedQty > 0 && rx.dispensedQty < requested);
+  rx.dispensedTime = new Date().toLocaleTimeString();
+  rx.dispensedBy = currentUser?.name || 'Pharmacist';
+  rx.dispensedDate = new Date().toLocaleDateString();
+  
+  if (item) {
+    item.history = item.history || [];
+    item.history.push({type:'OUT', qty: dispQty, reason: 'Dispensed to ' + v.name, date: v.date, by: currentUser?.name});
+    if (!isDemoMode() && item.sbId) {
+      await sb.from('inventory').update({quantity: item.stock}).eq('id', item.sbId).catch(()=>{});
+    }
+  }
+  if (!isDemoMode() && v.sbId) {
+    await sb.from('prescriptions').update({
+      dispensed: rx.dispensed,
+      dispensed_by: currentUser?.name,
+      dispensed_at: new Date().toISOString()
+    }).eq('visit_id', v.sbId).eq('drug_name', rx.name).catch(()=>{});
+  }
+  
+  if (typeof auditLog === 'function') auditLog('UPDATE','prescriptions',v.sbId||v.id,{action:'Dispensed ' + rx.name + ' × ' + dispQty});
+  if (typeof checkFullyDispensed === 'function') checkFullyDispensed(v);
+  
+  const remaining = requested - rx.dispensedQty;
+  const msg = rx.dispensed 
+    ? '✓ Fully dispensed: ' + rx.name + ' × ' + rx.dispensedQty
+    : '⚠️ Partial: ' + rx.name + ' × ' + dispQty + ' (' + remaining + ' remaining)';
+  toast(msg, rx.dispensed ? 'success' : 'warning');
+  speak('');
+  if (typeof renderPharm === 'function') renderPharm();
+  if (typeof renderPharmIncomplete === 'function') renderPharmIncomplete();
 }
 
 // ── checkFullyDispensed (adapted from b9) ──
@@ -5281,7 +5791,7 @@ let _labTab = 'pick';
 
 function setLabTab(tab, btn) {
   _labTab = tab;
-  ['pick','enter','review','results','summary'].forEach(t => {
+  ['pick','enter','review','results','stats','consum'].forEach(t => {
     const panel = gid('lab-'+t+'-panel');
     if (panel) panel.style.display = t===tab ? 'block' : 'none';
     const bt = gid('lab-tab-'+t);
@@ -5291,7 +5801,8 @@ function setLabTab(tab, btn) {
   if (tab==='enter')   renderLabEnter();
   if (tab==='review')  renderLabReview();
   if (tab==='results') renderLabResults();
-  if (tab==='summary') buildLabSummary();
+  if (tab==='stats')   renderLabStats();
+  if (tab==='consum')    renderLabCons();
 }
 
 // Generate sample ID — 6 char alphanumeric
@@ -5493,18 +6004,38 @@ async function releaseAllResults(vid) {
   if (!isDemoMode() && v.sbId) {
     await sb.from('visits').update({status:'lab_ready'}).eq('id',v.sbId).catch(()=>{});
     await sb.from('lab_tests').update({status:'completed'}).eq('visit_id',v.sbId).catch(()=>{});
+    // Send notification to doctor via staff_messages
+    await sb.from('staff_messages').insert({
+      hospital_id: currentHospital,
+      from_user_id: currentUser?.id, from_name: currentUser?.name || 'Lab',
+      to_user_id: 'doctors', to_name: 'Doctors',
+      message_text: '🔬 LAB RESULTS RELEASED for ' + v.name + ' (' + v.id + '). Please review.'
+    }).catch(()=>{});
   }
-  toast('✅ All results released for ' + v.name, 'success');
-  speak(''); renderLabReview();
+  // Local notification (toast + bell ring)
+  toast('🔔 ✅ Lab results released for ' + v.name + '. Doctor notified.', 'success');
+  speak('');
+  // Cross-tab broadcast
+  if (typeof _broadcastAlertAll === 'function') _broadcastAlertAll('Lab results ready: ' + v.name);
+  renderLabReview();
 }
 
 async function releaseOneResult(vid, lid) {
   const v = visits.find(x => x.id === vid); if (!v) return;
   const l = (v.labs||[]).find(x => (x.id||x.name) === lid); if (!l) return;
-  l.released = true; l.releasedBy = currentUser?.name;
-  const allDone = (v.labs||[]).filter(x=>x.name).every(x=>x.released);
-  if (allDone) { if (!v.cleared.includes('Lab')) v.cleared.push('Lab'); v.status='LAB_READY'; }
-  toast('✅ Result marked complete', 'success');
+  l.released = true; l.releasedBy = currentUser?.name; l.releasedAt = new Date().toISOString();
+  const allDone = (v.labs||[]).filter(x => x.name).every(x => x.released);
+  if (allDone) { if (!v.cleared.includes('Lab')) v.cleared.push('Lab'); v.status = 'LAB_READY'; }
+  if (!isDemoMode() && v.sbId) {
+    await sb.from('staff_messages').insert({
+      hospital_id: currentHospital,
+      from_user_id: currentUser?.id, from_name: currentUser?.name || 'Lab',
+      to_user_id: 'doctors', to_name: 'Doctors',
+      message_text: '🔬 ' + l.name + ' result ready for ' + v.name
+    }).catch(()=>{});
+  }
+  toast('🔔 ✅ Result released — Doctor notified', 'success');
+  speak('');
   renderLabReview();
 }
 
@@ -5569,7 +6100,7 @@ let _pharmTab = 'pending';
 
 function setPharmTab(tab, btn) {
   _pharmTab = tab;
-  ['pending','incomplete','dispensed'].forEach(t => {
+  ['pending','incomplete','dispensed','stock','damages'].forEach(t => {
     const panel = gid('pharm-'+t+'-panel');
     if (panel) panel.style.display = t===tab ? 'block' : 'none';
     const bt = gid('pharm-tab-'+t);
@@ -5578,6 +6109,8 @@ function setPharmTab(tab, btn) {
   if (tab==='pending')    renderPharmPending();
   if (tab==='incomplete') renderPharmIncomplete();
   if (tab==='dispensed')  renderPharmDispensed();
+  if (tab==='stock')      renderPharmStock();
+  if (tab==='damages')    renderPharmDamages();
 }
 
 function renderPharmPending() {
@@ -6032,6 +6565,1107 @@ function clearAllPE() {
   toast('PE fields cleared.', 'info');
 }
 
+
+// ── CONSULTATION TAB SWITCHER ──
+function swCt(tab, btn) {
+  document.querySelectorAll('.ct-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ct-panel').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+  if (btn) btn.classList.add('active');
+  const panel = document.getElementById('ct-' + tab);
+  if (panel) { panel.classList.add('active'); panel.style.display = 'block'; }
+  // Populate the tab when shown
+  if (tab === 'overview') populateOverview();
+  else if (tab === 'timeline') populateTimeline();
+  else if (tab === 'triage') populateTriageInfo();
+  else if (tab === 'lab') populateLabTab();
+  else if (tab === 'docs') populateDocsTab();
+}
+
+function populateOverview() {
+  const v = visits.find(x => x.id === activeVid); if (!v) return;
+  const p = patients.find(x => x.id === v.patId) || {};
+  // Patient snapshot
+  const pe = document.getElementById('ovw-patient');
+  if (pe) pe.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:11px;">
+      ${typeof patAvatar === 'function' ? patAvatar(p.name, 'lg') : ''}
+      <div>
+        <div style="font-weight:800;font-size:15px;">${p.name||'—'}</div>
+        <div style="font-size:11px;color:var(--mu);">${p.patNum||'—'}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:13px;">
+      <div><b>Age:</b> ${p.ageVal||'?'} ${p.ageUnit||'yrs'}</div>
+      <div><b>Gender:</b> ${p.gender||'—'}</div>
+      <div><b>Phone:</b> ${p.phone||'—'}</div>
+      <div><b>Blood:</b> ${p.bloodGroup||'—'}</div>
+      <div style="grid-column:1/-1;"><b>Address:</b> ${p.address||'—'}</div>
+      <div style="grid-column:1/-1;"><b>Allergies:</b> <span style="color:${(v.clinical?.hAllergy||'').toLowerCase().includes('none')?'var(--a)':'var(--d)'};font-weight:700;">${v.clinical?.hAllergy||'Not recorded'}</span></div>
+    </div>`;
+  // Visit snapshot
+  const ve = document.getElementById('ovw-visit');
+  if (ve) ve.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:13px;">
+      <div><b>Date:</b> ${v.date||'—'}</div>
+      <div><b>Type:</b> ${v.consultType||'GENERAL'}</div>
+      <div><b>Status:</b> <span class="pill pill-info">${(v.status||'').replace(/_/g,' ')}</span></div>
+      <div><b>Payer:</b> ${v.payer||'cash'}</div>
+      <div style="grid-column:1/-1;"><b>Diagnosis:</b> ${v.clinical?.cFinalDx||'<i style="color:var(--mu);">Pending</i>'}</div>
+      <div style="grid-column:1/-1;"><b>Vitals:</b> ${v.vitals ? `BP ${v.vitals.bp||'—'}, T ${v.vitals.temp||'—'}°C, SpO2 ${v.vitals.spo2||'—'}%` : '<i style="color:var(--mu);">Not recorded</i>'}</div>
+    </div>
+    <hr class="dv">
+    <div style="font-size:12px;line-height:1.7;">
+      <b>Cleared:</b> ${(v.cleared||[]).map(c => `<span class="pill pill-success" style="margin-right:3px;">${c}</span>`).join('') || '<i>None</i>'}
+    </div>`;
+  // Past visits
+  const past = visits.filter(x => x.patId === v.patId && x.id !== v.id).slice(0, 10);
+  const pv = document.getElementById('ovw-past-visits');
+  if (pv) {
+    if (!past.length) {
+      pv.innerHTML = '<div class="empty-state"><div class="es-icon">📋</div><div class="es-msg">No prior visits for this patient</div></div>';
+    } else {
+      pv.innerHTML = `<table><tr><th>Date</th><th>Type</th><th>Diagnosis</th><th>Status</th><th>Action</th></tr>` +
+        past.map(x => `<tr>
+          <td>${x.date}</td>
+          <td>${x.consultType||'GEN'}</td>
+          <td>${x.clinical?.cFinalDx||'—'}</td>
+          <td><span class="pill pill-neutral">${(x.status||'').replace(/_/g,' ')}</span></td>
+          <td><button class="bsm bp" onclick="openCons('${x.id}')">View</button></td>
+        </tr>`).join('') + '</table>';
+    }
+  }
+}
+
+function populateTimeline() {
+  const v = visits.find(x => x.id === activeVid); if (!v) return;
+  const events = [];
+  // Build timeline from visit data
+  events.push({time: v.date + ' 08:00', action: 'Visit registered', by: 'Reception'});
+  if (v.vitals) events.push({time: v.date + ' 08:30', action: 'Vitals recorded — ' + (v.vitals.bp||'') + ' BP', by: v.vitals.recordedBy || 'Nurse'});
+  if (v.clinical && Object.keys(v.clinical).length > 0) events.push({time: v.date + ' 09:00', action: 'Clinical notes documented', by: v.clinical.doctorName || currentUser?.name || 'Doctor'});
+  (v.labs||[]).forEach(l => {
+    if (l.name) events.push({time: v.date + ' ' + (l.samplePickedAt ? new Date(l.samplePickedAt).toLocaleTimeString().slice(0,5) : '—'), action: 'Lab ordered: ' + l.name + (l.sampleId ? ' (Sample ID: ' + l.sampleId + ')' : ''), by: 'Doctor'});
+    if (l.released) events.push({time: l.releasedAt ? new Date(l.releasedAt).toLocaleString() : v.date, action: '✅ Lab result released: ' + l.name, by: l.releasedBy || 'Lab Tech'});
+  });
+  (v.prescriptions||[]).forEach(rx => {
+    if (rx.name) events.push({time: rx.rxDate || v.date, action: '💊 Prescribed: ' + rx.name + ' × ' + rx.qty, by: 'Doctor'});
+    if (rx.dispensed) events.push({time: rx.dispensedTime || v.date, action: '✓ Dispensed: ' + rx.name, by: rx.dispensedBy || 'Pharmacist'});
+  });
+  events.sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  const el = document.getElementById('visit-timeline');
+  if (el) {
+    if (!events.length) {
+      el.innerHTML = '<div class="empty-state"><div class="es-icon">⏱️</div><div class="es-msg">No events yet</div></div>';
+    } else {
+      el.innerHTML = events.map(e => `
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-content">
+            <div class="tl-time">${e.time}</div>
+            <div class="tl-action">${e.action}</div>
+            <div class="tl-by">— By: <b>${e.by}</b></div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+}
+
+function populateTriageInfo() {
+  const v = visits.find(x => x.id === activeVid); if (!v) return;
+  const el = document.getElementById('ct-vitals-display');
+  if (!el) return;
+  if (!v.vitals) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">🩺</div><div class="es-msg">Vitals not yet recorded</div></div>';
+    return;
+  }
+  const vt = v.vitals;
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:9px;">
+      ${vt.bp ? `<div class="sc" style="background:linear-gradient(135deg,#dc2626,#b91c1c);min-height:70px;"><div class="sc-label">Blood Pressure</div><div class="sc-value" style="font-size:18px;">${vt.bp}</div></div>` : ''}
+      ${vt.temp ? `<div class="sc" style="background:linear-gradient(135deg,#d97706,#b45309);min-height:70px;"><div class="sc-label">Temperature</div><div class="sc-value" style="font-size:18px;">${vt.temp}°C</div></div>` : ''}
+      ${vt.pulse ? `<div class="sc" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);min-height:70px;"><div class="sc-label">Pulse</div><div class="sc-value" style="font-size:18px;">${vt.pulse}/min</div></div>` : ''}
+      ${vt.spo2 ? `<div class="sc" style="background:linear-gradient(135deg,#0891b2,#0e7490);min-height:70px;"><div class="sc-label">SpO₂</div><div class="sc-value" style="font-size:18px;">${vt.spo2}%</div></div>` : ''}
+      ${vt.weight ? `<div class="sc" style="background:linear-gradient(135deg,#059669,#047857);min-height:70px;"><div class="sc-label">Weight</div><div class="sc-value" style="font-size:18px;">${vt.weight} kg</div></div>` : ''}
+      ${vt.height ? `<div class="sc" style="background:linear-gradient(135deg,#0d9488,#0f766e);min-height:70px;"><div class="sc-label">Height</div><div class="sc-value" style="font-size:18px;">${vt.height} cm</div></div>` : ''}
+      ${vt.rr ? `<div class="sc" style="background:linear-gradient(135deg,#6366f1,#4f46e5);min-height:70px;"><div class="sc-label">Resp. Rate</div><div class="sc-value" style="font-size:18px;">${vt.rr}/min</div></div>` : ''}
+    </div>
+    ${vt.notes ? `<div style="margin-top:11px;padding:9px;background:var(--lt);border-radius:7px;font-size:13px;"><b>Nurse Notes:</b> ${vt.notes}</div>` : ''}`;
+  // Trigger trend chart if function exists
+  if (typeof buildVitalsTrendChart === 'function') {
+    setTimeout(() => { try { buildVitalsTrendChart(v); } catch(e){} }, 100);
+  }
+}
+
+function populateLabTab() {
+  const v = visits.find(x => x.id === activeVid); if (!v) return;
+  const released = (v.labs||[]).filter(l => l.released && l.result);
+  const pending = (v.labs||[]).filter(l => l.name && !l.released);
+  const rel_el = document.getElementById('ct-lab-results-released');
+  const stat_el = document.getElementById('ct-lab-status');
+  if (rel_el) {
+    if (released.length === 0) {
+      rel_el.innerHTML = '';
+    } else {
+      rel_el.innerHTML = `<h5 style="color:var(--a);margin:0 0 8px;">✅ Released Results</h5>` +
+        `<table><tr><th>Test</th><th>Sample ID</th><th>Result</th><th>Reference</th><th>Released</th><th>Action</th></tr>` +
+        released.map(l => `<tr ${l.isCritical?'style="background:#fee2e2;"':''}>
+          <td><b>${l.name}</b>${l.isCritical?' <span class="pill pill-danger">⚠️ CRITICAL</span>':''}</td>
+          <td><code style="background:var(--lt);padding:1px 6px;border-radius:4px;font-weight:700;">${l.sampleId||'—'}</code></td>
+          <td>${l.result}</td>
+          <td style="font-size:11px;color:var(--mu);">${l.refRange||'—'}</td>
+          <td style="font-size:11px;">${l.releasedBy||'—'}</td>
+          <td><button class="bsm bo" onclick="printLabResults('${v.id}')">🖨️</button></td>
+        </tr>`).join('') + `</table>`;
+    }
+  }
+  if (stat_el) {
+    if (pending.length === 0) {
+      stat_el.innerHTML = released.length === 0 ? '<div class="empty-state"><div class="es-icon">🔬</div><div class="es-msg">No lab tests ordered</div></div>' : '';
+    } else {
+      stat_el.innerHTML = `<h5 style="color:var(--w);margin:0 0 8px;">⏳ Pending</h5>` +
+        `<table><tr><th>Test</th><th>Sample ID</th><th>Status</th><th>Ordered</th></tr>` +
+        pending.map(l => {
+          const status = !l.sampleId ? '⏳ Awaiting Sample' : l.result ? '👀 Under Review' : '🧪 Sample Collected';
+          const cls = !l.sampleId ? 'pill-warning' : l.result ? 'pill-info' : 'pill-purple';
+          return `<tr><td><b>${l.name}</b></td><td>${l.sampleId ? '<code>'+l.sampleId+'</code>' : '—'}</td><td><span class="pill ${cls}">${status}</span></td><td style="font-size:11px;">${v.date}</td></tr>`;
+        }).join('') + `</table>`;
+    }
+  }
+  // Build chips for additional ordering
+  if (typeof buildLabChips === 'function') buildLabChips();
+}
+
+function populateDocsTab() {
+  const el = document.getElementById('visit-docs-list');
+  if (el) el.innerHTML = '<div class="empty-state"><div class="es-icon">📎</div><div class="es-msg">Document upload coming soon — Supabase Storage integration pending</div></div>';
+}
+
+function uploadVisitDoc() {
+  toast('📎 Document upload — coming in next release.', 'info');
+}
+
+// Helper to add procedure from select dropdown
+function addProcedureFromSelect() {
+  const sel = document.getElementById('proc-order-select');
+  if (!sel || !sel.value) { toast('Select a procedure first.', 'error'); return; }
+  const opt = sel.options[sel.selectedIndex];
+  const price = parseFloat(opt.dataset.price || 0);
+  const name = sel.value;
+  if (typeof addProcFromData === 'function') addProcFromData({name, price, completed: false});
+  else if (typeof procRows !== 'undefined') procRows.push({name, price, completed: false});
+  sel.value = '';
+  if (typeof renderOrderSummary === 'function') renderOrderSummary();
+  toast('✓ Procedure added: ' + name, 'success');
+}
+
+
+// ══════════════════════════════════════════════
+// CONSULTATION FORM TABS (Overview/Clinical/Timeline/etc)
+// ══════════════════════════════════════════════
+function cfTab(tabName) {
+  document.querySelectorAll('.cft').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+  document.querySelectorAll('.cf-pan').forEach(p => p.style.display = p.dataset.pan === tabName ? 'block' : 'none');
+  // Render content for the tab
+  const v = visits.find(x => x.id === activeVid); if (!v) return;
+  if (tabName === 'overview')  renderConsOverview(v);
+  if (tabName === 'timeline')  renderConsTimeline(v);
+  if (tabName === 'triage')    renderConsTriage(v);
+  if (tabName === 'lab')       renderConsLabStatus(v);
+  if (tabName === 'services')  renderConsImagingStatus(v);
+  if (tabName === 'docs')      renderConsDocs(v);
+  if (tabName === 'rx')        updateRxTotal();
+}
+
+// Imaging vs Procedures sub-tab
+function cfSrvTab(t, btn) {
+  document.querySelectorAll('#cf-srv-imaging,#cf-srv-proc').forEach(p => p.style.display = 'none');
+  if (t === 'imaging') gid('cf-srv-imaging').style.display = 'block';
+  else gid('cf-srv-proc').style.display = 'block';
+  document.querySelectorAll('.cf-pan[data-pan="services"] .st').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+// Render Overview tab
+function renderConsOverview(v) {
+  const p = patients.find(x => x.id === v.patId) || {};
+  const cards = [
+    {l:'Patient',  val: v.name, c:'var(--p)'},
+    {l:'Age / Sex', val: (p.ageVal||'?')+(p.ageUnit?p.ageUnit[0]:'y')+' / '+(p.gender||'?'), c:'var(--i)'},
+    {l:'Visit Date', val: v.date, c:'var(--a)'},
+    {l:'Type', val: v.consultType||'GENERAL', c:'var(--pu)'},
+    {l:'Status', val: v.status.replace(/_/g,' '), c:'var(--w)'},
+    {l:'Payer', val: v.payer||'cash', c:'var(--mu)'},
+  ];
+  const cardsEl = gid('cons-overview-cards');
+  if (cardsEl) cardsEl.innerHTML = cards.map(c => `
+    <div style="background:${c.c};color:#fff;padding:14px 16px;border-radius:10px;">
+      <div style="font-size:10px;font-weight:700;opacity:.85;text-transform:uppercase;letter-spacing:.06em;">${c.l}</div>
+      <div style="font-size:18px;font-weight:800;margin-top:3px;">${c.val}</div>
+    </div>`).join('');
+  // Summary
+  const sum = gid('cons-overview-summary');
+  if (sum) {
+    const labs = (v.labs||[]).filter(l=>l.name);
+    const rx = (v.prescriptions||[]).filter(r=>r.name);
+    const rad = (v.radiology||[]).filter(r=>r.name);
+    const proc = (v.procedures||[]).filter(p=>p.name);
+    const cl = v.clinical || {};
+    sum.innerHTML = `
+      <p><b>Chief Complaint:</b> ${cl.hPC||'<i style="color:var(--mu)">Not yet recorded</i>'}</p>
+      <p><b>Working Diagnosis:</b> ${cl.cFinalDx||'<i style="color:var(--mu)">Pending</i>'}</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:12px;">
+        <div style="text-align:center;padding:10px;background:var(--lt);border-radius:7px;">
+          <div style="font-size:22px;font-weight:800;color:var(--p);">${labs.length}</div>
+          <div style="font-size:10px;color:var(--mu);text-transform:uppercase;font-weight:700;letter-spacing:.05em;">Lab Tests</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--lt);border-radius:7px;">
+          <div style="font-size:22px;font-weight:800;color:var(--p);">${rx.length}</div>
+          <div style="font-size:10px;color:var(--mu);text-transform:uppercase;font-weight:700;letter-spacing:.05em;">Medications</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--lt);border-radius:7px;">
+          <div style="font-size:22px;font-weight:800;color:var(--p);">${rad.length}</div>
+          <div style="font-size:10px;color:var(--mu);text-transform:uppercase;font-weight:700;letter-spacing:.05em;">Imaging</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--lt);border-radius:7px;">
+          <div style="font-size:22px;font-weight:800;color:var(--p);">${proc.length}</div>
+          <div style="font-size:10px;color:var(--mu);text-transform:uppercase;font-weight:700;letter-spacing:.05em;">Procedures</div>
+        </div>
+      </div>`;
+  }
+  // Update header
+  const av = gid('cons-pat-avatar');
+  if (av) av.innerHTML = patAvatar(v.name, 'lg');
+  const nm = gid('cons-pat-name');
+  if (nm) nm.textContent = v.name;
+  const meta = gid('cons-pat-meta');
+  if (meta) meta.textContent = (p.ageVal||'?')+(p.ageUnit?p.ageUnit[0]:'y')+' · '+(p.gender||'?')+' · '+(p.patNum||'—')+' · '+v.date;
+}
+
+// Render Timeline tab
+async function renderConsTimeline(v) {
+  const el = gid('cons-timeline-list'); if (!el) return;
+  let events = [];
+  // Local timeline events from visit
+  events.push({when: v.date, what: 'Visit registered', who: 'Reception', icon:'🏥'});
+  if (v.vitals) events.push({when: v.date, what: 'Triage / Vitals recorded', who: v.vitals.recordedBy||'Nurse', icon:'🌡️'});
+  (v.labs||[]).forEach(l => {
+    if (l.name) events.push({when: l.samplePickedAt||v.date, what: 'Lab ordered: ' + l.name, who: currentUser?.name||'Doctor', icon:'🔬'});
+    if (l.sampleId) events.push({when: l.samplePickedAt, what: 'Sample picked: ' + l.name + ' [' + l.sampleId + ']', who: l.samplePickedBy||'Lab', icon:'🧪'});
+    if (l.result) events.push({when: l.resultedAt, what: 'Result entered: ' + l.name, who: l.resultedBy||'Lab', icon:'📝'});
+    if (l.released) events.push({when: l.releasedAt, what: '✅ Result released: ' + l.name, who: l.releasedBy||'Lab', icon:'✅'});
+  });
+  (v.prescriptions||[]).forEach(r => {
+    if (r.name) events.push({when: v.date, what: 'Prescribed: ' + r.name + ' × ' + r.qty, who: currentUser?.name||'Doctor', icon:'💊'});
+    if (r.dispensed) events.push({when: r.dispensedTime, what: 'Dispensed: ' + r.name, who: r.dispensedBy||'Pharmacy', icon:'💊'});
+  });
+  // Try to load Supabase audit_log for this visit
+  if (!isDemoMode() && v.sbId) {
+    try {
+      const {data} = await sb.from('audit_log').select('*').eq('record_id', v.sbId).order('created_at', {ascending:false}).limit(50);
+      (data||[]).forEach(a => events.push({
+        when: a.created_at,
+        what: a.action + ' on ' + a.table_name,
+        who: a.user_name || 'System',
+        icon: '🗂️'
+      }));
+    } catch(e) {}
+  }
+  events.sort((a,b) => (b.when||'').localeCompare(a.when||''));
+  if (!events.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">⏱️</div><div class="es-title">No activity yet</div><div class="es-msg">Activity will appear here as the visit progresses</div></div>';
+    return;
+  }
+  el.innerHTML = events.map(e => `
+    <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--bd);">
+      <div style="font-size:18px;flex-shrink:0;">${e.icon}</div>
+      <div style="flex:1;">
+        <div style="font-size:11px;color:var(--mu);font-weight:600;">${e.when ? new Date(e.when).toLocaleString() : '—'}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--tx);margin-top:2px;">${e.what}</div>
+        <div style="font-size:11px;color:var(--mu);margin-top:2px;">— By: <b>${e.who}</b></div>
+      </div>
+    </div>`).join('');
+}
+
+// Render Triage Info tab
+function renderConsTriage(v) {
+  const el = gid('cons-triage-info'); if (!el) return;
+  const vit = v.vitals;
+  if (!vit) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">🌡️</div><div class="es-title">No vitals recorded yet</div><div class="es-msg">Send patient back to triage for vitals</div></div>';
+    return;
+  }
+  const items = [
+    {l:'Blood Pressure', v: vit.bp || '—', u: 'mmHg', icon:'❤️'},
+    {l:'Temperature',    v: vit.temp || '—', u: '°C', icon:'🌡️'},
+    {l:'Weight',         v: vit.weight || '—', u: 'kg', icon:'⚖️'},
+    {l:'Height',         v: vit.height || '—', u: 'cm', icon:'📏'},
+    {l:'BMI',            v: vit.bmi || '—', u: '', icon:'📊'},
+    {l:'Pulse',          v: vit.pulse || '—', u: 'bpm', icon:'💓'},
+    {l:'SpO₂',           v: vit.spo2 || '—', u: '%', icon:'🫁'},
+    {l:'Resp Rate',      v: vit.rr || '—', u: '/min', icon:'🌬️'},
+  ];
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;">
+    ${items.map(it => `<div style="background:var(--lt);padding:12px;border-radius:8px;text-align:center;">
+      <div style="font-size:20px;">${it.icon}</div>
+      <div style="font-size:18px;font-weight:800;color:var(--p);margin:4px 0;">${it.v}</div>
+      <div style="font-size:10px;color:var(--mu);text-transform:uppercase;font-weight:700;">${it.l} ${it.u}</div>
+    </div>`).join('')}
+  </div>
+  ${vit.notes ? `<div class="card" style="margin:12px 0 0;"><h5 style="font-size:11px;text-transform:uppercase;color:var(--mu);margin-bottom:6px;">NURSE NOTES</h5><div style="font-size:13px;">${vit.notes}</div></div>` : ''}`;
+}
+
+// Render Lab Status (with Pending/Review/Released indicators + Print)
+function renderConsLabStatus(v) {
+  const el = gid('cons-lab-status-list'); if (!el) return;
+  const labs = (v.labs||[]).filter(l => l.name);
+  if (!labs.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">🔬</div><div class="es-title">No tests ordered</div><div class="es-msg">Order tests above</div></div>';
+    return;
+  }
+  el.innerHTML = `<table style="width:100%;font-size:13px;">
+    <tr><th>Test</th><th>Sample ID</th><th>Status</th><th>Result Preview</th><th>Action</th></tr>
+    ${labs.map(l => {
+      let status = 'pill-warning', stext = '⏳ Pending';
+      if (l.released) { status = 'pill-success'; stext = '✅ Released'; }
+      else if (l.result) { status = 'pill-info'; stext = '📝 Review'; }
+      else if (l.sampleId) { status = 'pill-info'; stext = '🧪 Sampled'; }
+      const preview = l.result ? (l.result.length > 50 ? l.result.substr(0,50)+'…' : l.result) : '—';
+      return `<tr ${l.isCritical?'style="background:#fee2e2;"':''}>
+        <td><b>${l.name}</b>${l.isCritical?' <span class="pill pill-danger" style="font-size:9px;">CRITICAL</span>':''}</td>
+        <td><code style="background:var(--lt);padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;">${l.sampleId||'—'}</code></td>
+        <td><span class="pill ${status}">${stext}</span></td>
+        <td style="font-size:12px;color:${l.isCritical?'var(--d)':'var(--tx)'};font-weight:${l.isCritical?'700':'400'};">${preview}</td>
+        <td>${l.released ? `<button class="bsm bp" onclick="printLabResults('${v.id}')">🖨️ Print</button>` : '<span style="font-size:11px;color:var(--mu);">Awaiting</span>'}</td>
+      </tr>`;
+    }).join('')}
+  </table>`;
+}
+
+// Render Imaging Status (similar to lab but for radiology + report writer)
+function renderConsImagingStatus(v) {
+  const el = gid('cons-imaging-status-list'); if (!el) return;
+  const rads = (v.radiology||[]).filter(r => r.name);
+  if (!rads.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">🩻</div><div class="es-title">No imaging ordered</div><div class="es-msg">Order imaging studies above</div></div>';
+    return;
+  }
+  el.innerHTML = rads.map((r, i) => {
+    let status = 'pill-warning', stext = '⏳ Pending';
+    if (r.done) { status = 'pill-success'; stext = '✅ Reported'; }
+    return `<div class="card" style="margin:0 0 10px;${r.done?'border-left:4px solid var(--a);':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+        <div><b>${r.name}</b> <span class="pill ${status}">${stext}</span></div>
+        <div style="display:flex;gap:5px;">
+          ${r.done ? `<button class="bsm bp" onclick="printRadResults('${v.id}')">🖨️ Print Report</button>` : ''}
+          <button class="bsm bo" onclick="toggleImagingReport(${i})">${r.done?'Edit':'+ Write'} Report</button>
+        </div>
+      </div>
+      <div id="img-rep-${i}" style="display:${r.done?'block':'none'};">
+        <label>Imaging Report / Findings</label>
+        <textarea id="img-rep-text-${i}" rows="4" placeholder="Describe findings, impression, recommendations…">${r.result||''}</textarea>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button class="bsm bp" onclick="saveImagingReport(${i},'${v.id}')">💾 Save Report</button>
+          <button class="bsm bo" onclick="qFill('img-rep-text-${i}','Findings: __\nImpression: __\nRecommendation: __')">📋 Template</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleImagingReport(idx) {
+  const el = gid('img-rep-' + idx);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveImagingReport(idx, vid) {
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  const r = (v.radiology||[])[idx]; if (!r) return;
+  const text = gv('img-rep-text-' + idx);
+  if (!text) { toast('Enter report text first.', 'error'); return; }
+  r.result = text; r.done = true;
+  r.reportedBy = currentUser?.name; r.reportedAt = new Date().toISOString();
+  if (!isDemoMode() && v.sbId) {
+    if (r.sbId) {
+      await sb.from('radiology_requests').update({result: text, status: 'completed', result_by: currentUser?.name}).eq('id', r.sbId).catch(()=>{});
+    } else {
+      await sb.from('radiology_requests').insert({visit_id: v.sbId, patient_id: v.patId, hospital_id: currentHospital, procedure_name: r.name, result: text, status:'completed', result_by: currentUser?.name}).catch(()=>{});
+    }
+  }
+  // Notify doctor via staff_messages
+  if (!isDemoMode()) {
+    await sb.from('staff_messages').insert({
+      hospital_id: currentHospital,
+      from_user_id: currentUser?.id, from_name: currentUser?.name || 'Radiology',
+      to_user_id: 'doctors', to_name: 'Doctors',
+      message_text: '🩻 IMAGING REPORT READY: ' + r.name + ' for ' + v.name
+    }).catch(()=>{});
+  }
+  toast('💾 Imaging report saved. Doctor notified.', 'success');
+  speak('');
+  if (typeof _broadcastAlertAll === 'function') _broadcastAlertAll('Imaging ready: ' + v.name);
+  renderConsImagingStatus(v);
+}
+
+// Refresh labs from Supabase for this visit
+async function refreshLabsForVisit() {
+  const v = visits.find(x => x.id === activeVid); if (!v) return;
+  if (isDemoMode()) { renderConsLabStatus(v); toast('Refreshed (demo).', 'info'); return; }
+  if (!v.sbId) return;
+  try {
+    const {data} = await sb.from('lab_tests').select('*').eq('visit_id', v.sbId);
+    if (data) {
+      // Merge results back
+      v.labs = (v.labs||[]).map(l => {
+        const sb_l = data.find(d => d.test_name === l.name);
+        if (sb_l) {
+          l.result = sb_l.result;
+          l.refRange = sb_l.reference_range;
+          l.isCritical = sb_l.is_critical;
+          l.released = sb_l.status === 'completed';
+        }
+        return l;
+      });
+      renderConsLabStatus(v);
+      toast('Refreshed.', 'success');
+    }
+  } catch(e) { toast('Refresh failed: ' + e.message, 'error'); }
+}
+
+// Documents: store as base64 in v.documents
+async function uploadDocs() {
+  const v = visits.find(x => x.id === activeVid); if (!v) return;
+  const inp = gid('doc-upload'); if (!inp || !inp.files.length) {
+    toast('Choose files to upload.', 'error'); return;
+  }
+  v.documents = v.documents || [];
+  for (const file of inp.files) {
+    if (file.size > 10485760) { toast(file.name+' too large (>10MB)','error'); continue; }
+    const reader = new FileReader();
+    await new Promise(resolve => {
+      reader.onload = e => {
+        v.documents.push({
+          name: file.name, type: file.type, size: file.size,
+          data: e.target.result,
+          uploadedBy: currentUser?.name, uploadedAt: new Date().toISOString()
+        });
+        resolve();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  inp.value = '';
+  toast('📎 ' + (v.documents.length) + ' file(s) attached.', 'success');
+  renderConsDocs(v);
+}
+
+function renderConsDocs(v) {
+  const el = gid('cons-docs-list'); if (!el) return;
+  const docs = v.documents || [];
+  const cnt = gid('docs-count'); if (cnt) cnt.textContent = docs.length;
+  if (!docs.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">📁</div><div class="es-title">No files attached yet</div><div class="es-msg">Upload PDF reports, photos, lab printouts above</div></div>';
+    return;
+  }
+  el.innerHTML = docs.map((d, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--lt);border-radius:7px;margin-bottom:6px;">
+      <div style="font-size:24px;">${d.type.startsWith('image/')?'🖼️':d.type.includes('pdf')?'📄':'📎'}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.name}</div>
+        <div style="font-size:11px;color:var(--mu);">${(d.size/1024).toFixed(1)}KB · ${d.uploadedBy} · ${new Date(d.uploadedAt).toLocaleString()}</div>
+      </div>
+      <button class="bsm bp" onclick="window.open('${d.data}','_blank')">View</button>
+      <button class="bsm bd2" onclick="removeDoc(${i})">✕</button>
+    </div>`).join('');
+}
+
+function removeDoc(i) {
+  if (!confirm('Remove this file?')) return;
+  const v = visits.find(x => x.id === activeVid); if (!v) return;
+  (v.documents||[]).splice(i, 1);
+  renderConsDocs(v);
+}
+
+// Update Rx total line
+function updateRxTotal() {
+  const v = visits.find(x => x.id === activeVid); if (!v) return;
+  let total = 0;
+  document.querySelectorAll('[id^="rx-row-"]').forEach(row => {
+    const id = row.id.split('-')[2];
+    const qty = parseInt(gid('rq-'+id)?.value || 1);
+    const price = parseFloat(gid('rp-'+id)?.value || 0);
+    total += qty * price;
+  });
+  const tot = gid('rx-total-line');
+  if (tot) tot.textContent = 'Total: $' + total.toFixed(2);
+}
+
+
+// PHARMACY STOCK
+async function markItemDamage(itemId) {
+  const item = (inventory||[]).find(i => (i.id||i.name) === itemId);
+  if (!item) return;
+  const qStr = prompt(`Record damage: ${item.name}\n\nCurrent stock: ${item.stock||item.quantity||0}\n\nQuantity damaged:`);
+  if (qStr === null) return;
+  const q = parseInt(qStr);
+  if (isNaN(q) || q <= 0) { toast('Invalid quantity.', 'error'); return; }
+  const reason = prompt('Reason for damage/loss:\n(e.g. expired, broken, theft, spillage)');
+  if (!reason) { toast('Reason required.', 'error'); return; }
+  // Deduct from stock
+  if (item.stock !== undefined) item.stock = Math.max(0, item.stock - q);
+  else item.quantity = Math.max(0, (item.quantity||0) - q);
+  // Log damage
+  window._damageLog = window._damageLog || [];
+  window._damageLog.push({
+    item: item.name, qty: q, reason,
+    by: currentUser?.name, at: new Date().toISOString()
+  });
+  // Save to Supabase as expense
+  if (!isDemoMode()) {
+    await sb.from('expenses').insert({
+      hospital_id: currentHospital,
+      category: 'Inventory Damage/Loss',
+      description: item.name + ' × ' + q + ' — ' + reason,
+      amount: (item.cost||item.unit_cost||0) * q,
+      recorded_by: currentUser?.name
+    }).catch(()=>{});
+    if (item.sbId) {
+      await sb.from('inventory').update({quantity: item.stock||item.quantity}).eq('id', item.sbId).catch(()=>{});
+    }
+  }
+  toast('💔 Damage logged: '+q+' '+item.name, 'warning');
+  renderPharmStock();
+  if (typeof renderPharmDamages === 'function') renderPharmDamages();
+}
+
+function renderPharmDamages() {
+  const log = window._damageLog || [];
+  const el = gid('pharm-damages-table'); if (!el) return;
+  if (!log.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">✅</div><div class="es-title">No damages recorded</div><div class="es-msg">Damages and losses will be logged here</div></div>';
+    return;
+  }
+  el.innerHTML = `<table style="width:100%;font-size:13px;">
+    <tr><th>Date/Time</th><th>Item</th><th>Quantity</th><th>Reason</th><th>Recorded By</th></tr>
+    ${log.slice().reverse().map(d => `<tr>
+      <td style="font-size:11px;">${new Date(d.at).toLocaleString()}</td>
+      <td><b>${d.item}</b></td>
+      <td style="text-align:center;font-weight:700;color:var(--d);">${d.qty}</td>
+      <td>${d.reason}</td>
+      <td>${d.by||'—'}</td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+async function reconcileStock() {
+  const itemName = prompt('Reconcile which item? (Type item name)');
+  if (!itemName) return;
+  const item = (inventory||[]).find(i => i.name.toLowerCase().includes(itemName.toLowerCase()));
+  if (!item) { toast('Item not found.', 'error'); return; }
+  const sysStock = item.stock || item.quantity || 0;
+  const physStr = prompt(`Reconciling: ${item.name}\n\nSystem stock: ${sysStock}\n\nEnter physical count:`);
+  if (physStr === null) return;
+  const phys = parseInt(physStr);
+  if (isNaN(phys)) { toast('Invalid number.', 'error'); return; }
+  const variance = phys - sysStock;
+  if (!confirm(`Stock reconciliation:\n${item.name}\nSystem: ${sysStock}\nPhysical: ${phys}\nVariance: ${variance>0?'+':''}${variance}\n\nUpdate system to ${phys}?`)) return;
+  if (item.stock !== undefined) item.stock = phys;
+  else item.quantity = phys;
+  if (!isDemoMode() && item.sbId) {
+    await sb.from('inventory').update({quantity: phys}).eq('id', item.sbId).catch(()=>{});
+  }
+  toast('✓ '+item.name+' reconciled to '+phys, 'success');
+  renderPharmStock();
+}
+
+function recordDamage() {
+  const itemName = prompt('Record damage for which item? (Type item name)');
+  if (!itemName) return;
+  const item = (inventory||[]).find(i => i.name.toLowerCase().includes(itemName.toLowerCase()));
+  if (!item) { toast('Item not found.', 'error'); return; }
+  markItemDamage(item.id || item.name);
+}
+
+
+// LAB STATISTICS
+function renderLabStats() {
+  // Aggregate stats
+  let total = 0, completed = 0, pending = 0, critical = 0;
+  const byTest = {};
+  const byDay = {};
+  visits.forEach(v => {
+    (v.labs||[]).forEach(l => {
+      if (!l.name) return;
+      total++;
+      if (l.released) completed++;
+      else if (l.sampleId) pending++;
+      if (l.isCritical) critical++;
+      byTest[l.name] = (byTest[l.name]||0) + 1;
+      const day = l.samplePickedAt ? l.samplePickedAt.substr(0,10) : v.date;
+      byDay[day] = (byDay[day]||0) + 1;
+    });
+  });
+  // Cards
+  const cards = [
+    {l:'Total Tests',  v:total,     bg:'linear-gradient(135deg,#0f766e,#0d9488)'},
+    {l:'Completed',    v:completed, bg:'linear-gradient(135deg,#059669,#047857)'},
+    {l:'Pending',      v:pending,   bg:'linear-gradient(135deg,#d97706,#b45309)'},
+    {l:'Critical',     v:critical,  bg:'linear-gradient(135deg,#dc2626,#b91c1c)'},
+    {l:'Completion %', v: total ? Math.round(completed/total*100)+'%' : '—', bg:'linear-gradient(135deg,#0891b2,#0e7490)'},
+  ];
+  const cEl = gid('lab-stats-cards');
+  if (cEl) cEl.innerHTML = cards.map(c => `<div style="background:${c.bg};color:#fff;padding:14px 16px;border-radius:10px;">
+    <div style="font-size:11px;font-weight:700;opacity:.85;text-transform:uppercase;letter-spacing:.05em;">${c.l}</div>
+    <div style="font-size:24px;font-weight:800;margin-top:4px;">${c.v}</div>
+  </div>`).join('');
+  // Top tests
+  const topTests = Object.entries(byTest).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const topEl = gid('lab-stats-top-tests');
+  if (topEl) {
+    if (!topTests.length) topEl.innerHTML = '<div class="emp">No tests yet</div>';
+    else topEl.innerHTML = topTests.map(([t,c]) => `
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd);font-size:13px;">
+        <span>${t}</span><b style="color:var(--p);">${c}</b>
+      </div>`).join('');
+  }
+  // Critical values
+  const crits = [];
+  visits.forEach(v => (v.labs||[]).filter(l => l.isCritical && l.result).forEach(l => crits.push({patient: v.name, test: l.name, result: l.result})));
+  const critEl = gid('lab-stats-critical');
+  if (critEl) {
+    if (!crits.length) critEl.innerHTML = '<div class="emp">No critical values</div>';
+    else critEl.innerHTML = crits.slice(0,5).map(c => `
+      <div style="padding:6px 0;border-bottom:1px solid var(--bd);font-size:12px;">
+        <div style="font-weight:700;color:var(--d);">${c.test}</div>
+        <div style="color:var(--mu);">${c.patient}: ${c.result}</div>
+      </div>`).join('');
+  }
+  // Chart
+  setTimeout(() => {
+    const canvas = gid('lab-stats-daily');
+    if (!canvas || typeof Chart === 'undefined') return;
+    const days = Object.keys(byDay).sort().slice(-7);
+    if (window._labStatsChart) window._labStatsChart.destroy();
+    window._labStatsChart = new Chart(canvas, {
+      type: 'bar',
+      data: {labels: days, datasets: [{label: 'Tests', data: days.map(d=>byDay[d]), backgroundColor: '#0f766e'}]},
+      options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}}}
+    });
+  }, 100);
+}
+
+// LAB CONSUMABLES (separate from main inventory)
+function renderLabCons() {
+  // Filter inventory for lab section
+  const term = (gid('lcons-search')?.value||'').toLowerCase();
+  const labItems = (inventory||[]).filter(i => 
+    i.invSection === 'lab' || (i.category||'').toLowerCase().includes('lab') || (i.category||'').toLowerCase().includes('reagent')
+  ).filter(i => !term || (i.name||'').toLowerCase().includes(term));
+  const el = gid('lab-cons-table'); if (!el) return;
+  if (!labItems.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">🧪</div><div class="es-title">No lab consumables</div><div class="es-msg">Add lab items via the + Add Item button</div></div>';
+    return;
+  }
+  el.innerHTML = `<table style="width:100%;font-size:13px;">
+    <tr><th>Item</th><th>Category</th><th>In Stock</th><th>Unit Cost</th><th>Action</th></tr>
+    ${labItems.map(it => {
+      const stock = it.stock !== undefined ? it.stock : (it.quantity || 0);
+      const reorder = it.reorder || 10;
+      const low = stock <= reorder;
+      return `<tr ${low?'style="background:#fef3c7;"':''}>
+        <td><b>${it.name}</b></td>
+        <td><span class="pill pill-info">${it.category||'Reagent'}</span></td>
+        <td style="text-align:center;font-weight:700;color:${low?'var(--d)':'var(--a)'};">${stock} ${low?'<span class="pill pill-warning" style="font-size:9px;">LOW</span>':''}</td>
+        <td style="text-align:right;">$${(it.cost||it.unit_cost||0).toFixed(2)}</td>
+        <td><button class="bsm bp" onclick="restockOne('${it.id||it.name}')">+ Restock</button></td>
+      </tr>`;
+    }).join('')}
+  </table>`;
+}
+
+function addLabCons() {
+  const name = prompt('Lab consumable name (e.g. CBC reagent, syringes):');
+  if (!name) return;
+  const stock = parseInt(prompt('Initial stock:'));
+  if (isNaN(stock)) return;
+  const cost = parseFloat(prompt('Unit cost:'));
+  inventory = inventory || [];
+  const item = {
+    id: 'lc-'+Date.now(), name, category: 'Lab Reagent',
+    invSection: 'lab', stock, quantity: stock, cost: cost||0
+  };
+  inventory.push(item);
+  if (!isDemoMode()) {
+    sb.from('inventory').insert({
+      hospital_id: currentHospital,
+      item_name: name, category: 'Lab Reagent',
+      "invSection": 'lab', quantity: stock, unit_cost: cost
+    }).select().single().then(r => { if (r.data) item.sbId = r.data.id; }).catch(()=>{});
+  }
+  toast('+ '+name+' added', 'success');
+  renderLabCons();
+}
+
+
+// ── NURSE TABS ──
+function setNurseTab(tab, btn) {
+  ['triage','meds'].forEach(t => {
+    const p = gid('nurse-' + t + '-panel');
+    if (p) p.style.display = t === tab ? 'block' : 'none';
+    const bt = gid('nurse-tab-' + t);
+    if (bt) bt.classList.toggle('active', t === tab);
+  });
+  if (tab === 'meds') renderNurseMedAdmin();
+  if (tab === 'triage') renderTriage();
+}
+
+// Medication Administration Record - what nurses see
+function renderNurseMedAdmin() {
+  const term = (gid('mar-search')?.value || '').toLowerCase();
+  const el = gid('mar-table'); if (!el) return;
+  // Active visits with prescriptions, not yet fully administered
+  const active = visits.filter(v =>
+    v.status !== 'DISCHARGED' && (v.prescriptions||[]).some(r => r.name)
+  ).filter(v => !term || v.name.toLowerCase().includes(term));
+
+  if (!active.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">💊</div><div class="es-title">No active prescriptions</div><div class="es-msg">Patients\' medication will appear here</div></div>';
+    return;
+  }
+
+  el.innerHTML = active.map(v => {
+    const p = patients.find(x => x.id === v.patId) || {};
+    const rx = (v.prescriptions||[]).filter(r => r.name);
+    return `<div class="card" style="margin:0 0 12px;padding:12px;border-left:4px solid var(--p);">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${patAvatar(v.name, 'sm')}
+          <div>
+            <div style="font-weight:700;font-size:14px;">${v.name}</div>
+            <div style="font-size:11px;color:var(--mu);">${p.patNum||'—'} · ${p.ageVal||'?'}${(p.ageUnit||'y')[0]}/${p.gender||'?'} · ${v.date}</div>
+          </div>
+        </div>
+        <div>
+          <span class="pill pill-info">${v.status.replace(/_/g,' ')}</span>
+        </div>
+      </div>
+      <table style="width:100%;font-size:13px;">
+        <tr style="background:var(--lt);">
+          <th style="padding:8px 10px;">Drug</th>
+          <th style="padding:8px 10px;">Unit Prescribed</th>
+          <th style="padding:8px 10px;">Administered</th>
+          <th style="padding:8px 10px;">Remainder</th>
+          <th style="padding:8px 10px;">Instructions</th>
+          <th style="padding:8px 10px;">Action</th>
+        </tr>
+        ${rx.map((r, i) => {
+          const totalQty = r.qty || 1;
+          const admin = r.administered || 0;
+          const remainder = totalQty - admin;
+          const isFull = admin >= totalQty;
+          return `<tr ${isFull?'style="background:#f0fdf9;"':''}>
+            <td style="padding:8px 10px;">
+              <div style="font-weight:700;">${r.name} ${r.strength||''}</div>
+              ${r.formulation?`<span class="pill pill-neutral" style="font-size:9px;">${r.formulation}</span>`:''}
+              ${r.dispensed?`<div style="font-size:10px;color:var(--a);font-weight:700;margin-top:2px;">✅ Dispensed by pharmacy</div>`:`<div style="font-size:10px;color:var(--w);font-weight:700;margin-top:2px;">⏳ Awaiting pharmacy</div>`}
+            </td>
+            <td style="padding:8px 10px;font-weight:700;text-align:center;">${totalQty}</td>
+            <td style="padding:8px 10px;font-weight:700;text-align:center;color:var(--a);">${admin}</td>
+            <td style="padding:8px 10px;font-weight:700;text-align:center;color:${remainder>0?'var(--w)':'var(--a)'};">${remainder}</td>
+            <td style="padding:8px 10px;font-size:12px;">${r.instructions||r.dosage||'<span style="color:var(--mu)">—</span>'}</td>
+            <td style="padding:8px 10px;">
+              ${!isFull && r.dispensed ? `<button class="bsm bp" onclick="administerDose('${v.id}',${i})">+ Administer 1</button>` : ''}
+              ${isFull ? '<span class="pill pill-success" style="font-size:10px;">Complete</span>' : ''}
+              ${!r.dispensed ? '<button class="bsm" disabled style="background:var(--lt);color:var(--mu);">Awaiting Rx</button>' : ''}
+            </td>
+          </tr>`;
+        }).join('')}
+      </table>
+    </div>`;
+  }).join('');
+}
+
+async function administerDose(vid, rxIdx) {
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  const r = (v.prescriptions||[])[rxIdx]; if (!r) return;
+  const totalQty = r.qty || 1;
+  const admin = r.administered || 0;
+  if (admin >= totalQty) { toast('Already fully administered.', 'info'); return; }
+  // Prompt for actual unit count administered (in case nurse gives 2 at once)
+  const inputUnit = prompt('Units administered now (default 1):', '1');
+  const units = parseInt(inputUnit) || 1;
+  const newAdmin = Math.min(totalQty, admin + units);
+  r.administered = newAdmin;
+  r.lastAdministeredBy = currentUser?.name;
+  r.lastAdministeredAt = new Date().toISOString();
+  // Add to MAR (treatment chart)
+  v.treatmentChart = v.treatmentChart || [];
+  v.treatmentChart.push({
+    drug: r.name, dose: r.strength + ' x ' + units,
+    route: r.formulation, time: new Date().toLocaleTimeString(),
+    date: new Date().toLocaleDateString(),
+    nurse: currentUser?.name
+  });
+  if (!isDemoMode() && v.sbId) {
+    await sb.from('treatment_chart').insert({
+      visit_id: v.sbId, patient_id: v.patId, hospital_id: currentHospital,
+      drug_name: r.name, dose: (r.strength||'') + ' x ' + units,
+      route: r.formulation, administered_time: new Date().toLocaleTimeString(),
+      administered_date: new Date().toISOString().split('T')[0],
+      nurse_name: currentUser?.name
+    }).catch(()=>{});
+  }
+  toast('💊 ' + r.name + ' administered.', 'success');
+  speak('');
+  renderNurseMedAdmin();
+}
+
+
+// ── PHARMACY STOCK ──
+function renderPharmStock() {
+  const term = (gid('pharm-stock-search')?.value || '').toLowerCase();
+  const items = (inventory||[]).filter(i =>
+    !term || (i.name||'').toLowerCase().includes(term) || (i.category||'').toLowerCase().includes(term)
+  );
+  const el = gid('pharm-stock-table'); if (!el) return;
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">📦</div><div class="es-title">No stock items</div><div class="es-msg">Add items in the Inventory section</div></div>';
+    return;
+  }
+  el.innerHTML = `<table style="width:100%;font-size:13px;">
+    <tr><th>Item Name</th><th>Category</th><th>In Stock</th><th>Selling Price</th><th>Status</th><th>Action</th></tr>
+    ${items.map(i => {
+      const stock = i.stock || 0;
+      const reorder = i.reorderLevel || 10;
+      const isLow = stock < reorder;
+      const isOut = stock === 0;
+      return `<tr ${isOut?'style="background:#fee2e2;"':isLow?'style="background:#fef3c7;"':''}>
+        <td><b>${i.name}</b>${i.strength?`<br><span style="font-size:10px;color:var(--mu);">${i.strength}</span>`:''}</td>
+        <td><span class="pill pill-neutral">${i.category||'—'}</span></td>
+        <td style="font-weight:700;text-align:center;">${stock} <span style="color:var(--mu);font-size:10px;">${i.unit||'units'}</span></td>
+        <td style="font-weight:700;color:var(--a);">$${(i.sellPrice||i.price||0).toFixed(2)}</td>
+        <td>${isOut?'<span class="pill pill-danger">Out of Stock</span>':isLow?'<span class="pill pill-warning">Low Stock</span>':'<span class="pill pill-success">OK</span>'}</td>
+        <td>
+          <button class="bsm bp" onclick="reconcileItem('${(i.sbId||i.id||i.name).replace(/'/g,'&#39;')}','${i.name.replace(/'/g,'&#39;')}',${stock})">✓ Adjust</button>
+          <button class="bsm bd2" onclick="damageItem('${(i.sbId||i.id||i.name).replace(/'/g,'&#39;')}','${i.name.replace(/'/g,'&#39;')}')">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('')}
+  </table>`;
+}
+
+async function reconcileItem(itemId, name, currentStock) {
+  const newStock = prompt('Reconcile stock for ' + name + '\n\nCurrent recorded: ' + currentStock + '\n\nEnter actual physical count:', currentStock);
+  if (newStock === null) return;
+  const n = parseInt(newStock);
+  if (isNaN(n) || n < 0) { toast('Invalid quantity.', 'error'); return; }
+  const reason = prompt('Reason for adjustment (variance: ' + (n - currentStock) + '):\ne.g. "Stock count discrepancy", "Restocked", "Returned":', 'Stock reconciliation');
+  const item = (inventory||[]).find(i => (i.sbId||i.id||i.name) === itemId);
+  if (!item) { toast('Item not found.', 'error'); return; }
+  const oldStock = item.stock;
+  item.stock = n;
+  // Save reconciliation log
+  if (!isDemoMode() && item.sbId) {
+    await sb.from('inventory').update({quantity: n}).eq('id', item.sbId).catch(()=>{});
+    await sb.from('audit_log').insert({
+      hospital_id: currentHospital, user_id: currentUser?.id, user_name: currentUser?.name,
+      action: 'RECONCILE', table_name: 'inventory', record_id: String(item.sbId),
+      old_values: {quantity: oldStock}, new_values: {quantity: n, reason}
+    }).catch(()=>{});
+  }
+  toast('✓ Stock reconciled: ' + name + ' (' + oldStock + ' → ' + n + ')', 'success');
+  renderPharmStock();
+}
+
+async function damageItem(itemId, name) {
+  const qty = prompt('Quantity damaged for ' + name + ':', '1');
+  if (!qty) return;
+  const n = parseInt(qty);
+  if (isNaN(n) || n < 1) { toast('Invalid quantity.', 'error'); return; }
+  const reason = prompt('Reason for damage:\ne.g. "Expired", "Broken vial", "Spilled", "Contaminated":');
+  if (!reason) { toast('Reason required.', 'error'); return; }
+  const item = (inventory||[]).find(i => (i.sbId||i.id||i.name) === itemId);
+  if (!item) { toast('Item not found.', 'error'); return; }
+  const oldStock = item.stock;
+  item.stock = Math.max(0, oldStock - n);
+  if (!isDemoMode() && item.sbId) {
+    await sb.from('inventory').update({quantity: item.stock}).eq('id', item.sbId).catch(()=>{});
+    await sb.from('audit_log').insert({
+      hospital_id: currentHospital, user_id: currentUser?.id, user_name: currentUser?.name,
+      action: 'DAMAGE', table_name: 'inventory', record_id: String(item.sbId),
+      old_values: {quantity: oldStock}, new_values: {quantity: item.stock, damaged: n, reason}
+    }).catch(()=>{});
+  }
+  toast('🗑️ ' + n + ' x ' + name + ' marked as damaged: ' + reason, 'warning');
+  renderPharmStock();
+}
+
+function openReconcile() {
+  toast('💡 Use the Adjust button on each item to reconcile its stock.', 'info');
+}
+function openDamage() {
+  toast('💡 Use the 🗑️ button on each item to record damage.', 'info');
+}
+
+// Hook into pharmacy tab switcher
+const _origSetPharmTab = typeof setPharmTab === 'function' ? setPharmTab : null;
+window.setPharmTab = function(tab, btn) {
+  ['pending','incomplete','dispensed','stock'].forEach(t => {
+    const p = gid('pharm-' + t + '-panel');
+    if (p) p.style.display = t === tab ? 'block' : 'none';
+    const bt = gid('pharm-tab-' + t);
+    if (bt) bt.classList.toggle('active', t === tab);
+  });
+  if (tab === 'pending')    typeof renderPharmPending === 'function' && renderPharmPending();
+  if (tab === 'incomplete') typeof renderPharmIncomplete === 'function' && renderPharmIncomplete();
+  if (tab === 'dispensed')  typeof renderPharmDispensed === 'function' && renderPharmDispensed();
+  if (tab === 'stock')      renderPharmStock();
+};
+
+
+// ══════════════════════════════════════════════
+// LAB STATISTICS & CONSUMABLES
+// ══════════════════════════════════════════════
+function buildLabStats() {
+  const allLabs = visits.flatMap(v => (v.labs||[]).filter(l => l.name).map(l => ({...l, vDate: v.date})));
+  const todayStr = new Date().toLocaleDateString();
+  const todayCount = allLabs.filter(l => l.vDate === todayStr).length;
+  const pendingCount = allLabs.filter(l => !l.result).length;
+  const completedCount = allLabs.filter(l => l.released).length;
+  const reviewCount = allLabs.filter(l => l.result && !l.released).length;
+  const criticalCount = allLabs.filter(l => l.isCritical).length;
+  // Cards
+  const cards = [
+    {l:'Tests Today', v: todayCount, c:'var(--p)'},
+    {l:'Pending', v: pendingCount, c:'var(--w)'},
+    {l:'Awaiting Review', v: reviewCount, c:'var(--i)'},
+    {l:'Released', v: completedCount, c:'var(--a)'},
+    {l:'Critical Values', v: criticalCount, c:'var(--d)'},
+  ];
+  const cardsEl = gid('lab-stat-cards');
+  if (cardsEl) cardsEl.innerHTML = cards.map(c => `
+    <div style="background:${c.c};color:#fff;padding:14px 16px;border-radius:10px;">
+      <div style="font-size:10px;font-weight:700;opacity:.85;text-transform:uppercase;letter-spacing:.06em;">${c.l}</div>
+      <div style="font-size:24px;font-weight:800;margin-top:3px;">${c.v}</div>
+    </div>`).join('');
+  // Top tests
+  const counts = {};
+  allLabs.forEach(l => counts[l.name] = (counts[l.name] || 0) + 1);
+  const top = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 8);
+  const topEl = gid('lab-top-tests');
+  if (topEl) {
+    if (!top.length) topEl.innerHTML = '<div class="empty-state"><div class="es-msg">No data yet</div></div>';
+    else {
+      const max = top[0][1];
+      topEl.innerHTML = top.map(([name, n]) => `
+        <div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+            <span style="font-weight:600;">${name}</span>
+            <span style="color:var(--p);font-weight:700;">${n}</span>
+          </div>
+          <div style="background:var(--bd);height:6px;border-radius:3px;overflow:hidden;">
+            <div style="background:var(--p);height:100%;width:${(n/max*100).toFixed(0)}%;"></div>
+          </div>
+        </div>`).join('');
+    }
+  }
+  // Status breakdown
+  const total = allLabs.length || 1;
+  const stats = [
+    {l:'Pending', v: pendingCount, c: 'var(--w)'},
+    {l:'Awaiting Review', v: reviewCount, c: 'var(--i)'},
+    {l:'Released', v: completedCount, c: 'var(--a)'},
+  ];
+  const breakEl = gid('lab-status-breakdown');
+  if (breakEl) breakEl.innerHTML = stats.map(s => `
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+        <span style="font-weight:600;">${s.l}</span>
+        <span style="font-weight:700;color:${s.c};">${s.v} (${(s.v/total*100).toFixed(0)}%)</span>
+      </div>
+      <div style="background:var(--bd);height:8px;border-radius:4px;overflow:hidden;">
+        <div style="background:${s.c};height:100%;width:${(s.v/total*100).toFixed(0)}%;"></div>
+      </div>
+    </div>`).join('');
+}
+
+// Lab consumables - separate inventory category
+function renderLabConsumables() {
+  const term = (gid('lab-consum-search')?.value || '').toLowerCase();
+  const items = (inventory||[]).filter(i =>
+    i.invSection === 'lab' && (!term || (i.name||'').toLowerCase().includes(term))
+  );
+  const el = gid('lab-consum-table'); if (!el) return;
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">🧫</div><div class="es-title">No lab consumables</div><div class="es-msg">Click + Add Item to register reagents, tubes, slides, etc.</div></div>';
+    return;
+  }
+  el.innerHTML = `<table style="width:100%;font-size:13px;">
+    <tr><th>Item Name</th><th>Category</th><th>Current Stock</th><th>Unit Cost</th><th>Status</th><th>Action</th></tr>
+    ${items.map(i => {
+      const stock = i.stock || 0;
+      const reorder = i.reorderLevel || 5;
+      const isLow = stock < reorder;
+      return `<tr ${stock===0?'style="background:#fee2e2;"':isLow?'style="background:#fef3c7;"':''}>
+        <td><b>${i.name}</b></td>
+        <td><span class="pill pill-neutral">${i.category||'Reagent'}</span></td>
+        <td style="font-weight:700;text-align:center;">${stock} <span style="color:var(--mu);font-size:10px;">${i.unit||'units'}</span></td>
+        <td>$${(i.cost||0).toFixed(2)}</td>
+        <td>${stock===0?'<span class="pill pill-danger">Out</span>':isLow?'<span class="pill pill-warning">Low</span>':'<span class="pill pill-success">OK</span>'}</td>
+        <td>
+          <button class="bsm bp" onclick="restockOne('${(i.sbId||i.id||i.name).replace(/'/g,'&#39;')}','${i.name.replace(/'/g,'&#39;')}',${stock})">📥 Restock</button>
+          <button class="bsm bd2" onclick="damageItem('${(i.sbId||i.id||i.name).replace(/'/g,'&#39;')}','${i.name.replace(/'/g,'&#39;')}')">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('')}
+  </table>`;
+}
+
+async function restockOne(itemId, name, currentStock) {
+  const qty = prompt('Restock quantity for ' + name + '\n\nCurrent: ' + currentStock + '\n\nUnits to add:', '50');
+  if (!qty) return;
+  const n = parseInt(qty);
+  if (isNaN(n) || n < 1) { toast('Invalid quantity.', 'error'); return; }
+  const item = (inventory||[]).find(i => (i.sbId||i.id||i.name) === itemId);
+  if (!item) { toast('Item not found.', 'error'); return; }
+  item.stock = (item.stock || 0) + n;
+  if (!isDemoMode() && item.sbId) {
+    await sb.from('inventory').update({quantity: item.stock}).eq('id', item.sbId).catch(()=>{});
+  }
+  toast('📥 +' + n + ' ' + name + ' restocked. New total: ' + item.stock, 'success');
+  renderLabConsumables();
+}
+
+async function addLabConsumable() {
+  const name = prompt('Lab consumable name (e.g. "EDTA Tubes"):'); if (!name) return;
+  const category = prompt('Category (e.g. "Reagent", "Tube", "Slide"):', 'Reagent');
+  const stockStr = prompt('Initial stock:', '100');
+  const stock = parseInt(stockStr) || 0;
+  const costStr = prompt('Cost per unit ($):', '0.50');
+  const cost = parseFloat(costStr) || 0;
+  const newItem = {
+    name, category, stock, cost,
+    invSection: 'lab', unit: 'units',
+    reorderLevel: Math.max(5, Math.floor(stock * 0.1))
+  };
+  if (!isDemoMode()) {
+    const {data} = await sb.from('inventory').insert({
+      hospital_id: currentHospital, item_name: name, category, quantity: stock,
+      unit_cost: cost, "invSection": 'lab', unit: 'units',
+      reorder_level: newItem.reorderLevel
+    }).select().single().catch(()=>({data:null}));
+    if (data) newItem.sbId = data.id;
+  }
+  inventory = inventory || [];
+  inventory.unshift(newItem);
+  toast('+ Added: ' + name, 'success');
+  renderLabConsumables();
+}
+
+function restockLabConsumable() {
+  toast('💡 Click 📥 Restock on each item to add stock.', 'info');
+}
+
 // ══════════════════════════════════════════════
 // BOOT / INIT  
 // ══════════════════════════════════════════════
@@ -6369,11 +8003,32 @@ function clearAllPE() {
     </div>
     <!-- Summary cards -->
     <div id="triage-summary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px;"></div>
+    <!-- Tabs: Triage Queue | Medication Administration -->
+    <div class="stabs" style="margin-bottom:12px;">
+      <button class="st active" id="nurse-tab-triage" onclick="setNurseTab('triage',this)">🩺 Triage Queue</button>
+      <button class="st" id="nurse-tab-meds" onclick="setNurseTab('meds',this)">💊 Medication Administration</button>
+    </div>
     <!-- Triage queue table -->
-    <div class="card" style="padding:10px;margin-bottom:14px;">
-      <h4 style="margin-bottom:8px;color:var(--p);">📋 Patients Awaiting Triage</h4>
-      <div style="overflow-x:auto;">
-        <table id="triage-table"></table>
+    <div id="nurse-triage-panel">
+      <div class="card" style="padding:14px;margin-bottom:14px;">
+        <h4 style="margin-bottom:8px;color:var(--p);">📋 Patients Awaiting Triage</h4>
+        <div style="overflow-x:auto;">
+          <table id="triage-table"></table>
+        </div>
+      </div>
+    </div>
+    <!-- Medication Administration Record (MAR) -->
+    <div id="nurse-meds-panel" style="display:none;">
+      <div class="card" style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <h4 style="margin:0;color:var(--p);">💊 Medication Administration Record</h4>
+          <div style="display:flex;gap:6px;">
+            <input id="mar-search" placeholder="Search patient..." oninput="renderNurseMedAdmin()" style="margin:0;width:200px;">
+            <button class="bo bsm" onclick="renderNurseMedAdmin()">🔄 Refresh</button>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--mu);margin-bottom:10px;">Doctor's prescriptions for active inpatients/admitted. Track unit administered vs prescribed.</p>
+        <div id="mar-table"></div>
       </div>
     </div>
     <div class="card"><h4 style="margin-bottom:8px;">Patients Awaiting Triage</h4><table id="table-triage"></table></div>
@@ -6465,246 +8120,268 @@ function clearAllPE() {
     <div id="doc-queue">
       <div id="queue-list-card" class="card"><table id="table-cons"></table></div>
       <!-- CONSULTATION FORM — opens inline below queue -->
-      <div id="cons-form" class="card" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:11px;">
-          <div>
-            <h3 id="c-name" style="color:var(--p);margin:0;"></h3>
-            <span id="c-type-badge" style="margin-top:3px;display:inline-block;"></span>
+      <div id="cons-form" class="card" style="display:none;padding:0;overflow:hidden;">
+        <!-- HEADER WITH PATIENT BADGE -->
+        <div style="background:linear-gradient(135deg,var(--p) 0%,var(--p2) 100%);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div id="cons-pat-avatar"></div>
+            <div>
+              <div style="font-size:11px;opacity:.85;text-transform:uppercase;letter-spacing:.06em;font-weight:700;">Active Consultation</div>
+              <div id="cons-pat-name" style="font-weight:800;font-size:17px;">—</div>
+              <div id="cons-pat-meta" style="font-size:11px;opacity:.85;">—</div>
+            </div>
           </div>
-          <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
-            <span id="c-date" style="font-size:12px;color:var(--mu);"></span>
-            <span id="c-pay"></span>
-            <button onclick="closeConsForm()" style="background:#e2e8f0;color:#475569;font-size:12px;padding:4px 10px;border-radius:5px;border:none;cursor:pointer;">✕ Close</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button onclick="saveClinical()" class="bp" style="background:#fff;color:var(--p);font-weight:700;">💾 Save</button>
+            <button onclick="endVisit()" style="background:#10b981;color:#fff;">✅ Discharge</button>
+            <button onclick="closeConsForm()" style="background:rgba(255,255,255,.2);color:#fff;">✕</button>
           </div>
         </div>
-        <!-- Previous visit history strip -->
-        <div id="c-hist" style="background:var(--lt);border-left:3px solid var(--s);padding:8px 12px;border-radius:5px;margin-bottom:10px;font-size:12px;max-height:90px;overflow-y:auto;"></div>
-        <!-- Allergy banner -->
-        <div id="allergy-banner"></div>
-        <!-- Vitals summary -->
-        <div id="c-vitals" style="display:none;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:6px;padding:9px;margin-bottom:8px;font-size:13px;"></div>
-        <!-- Vitals trend chart -->
-        <div id="vitals-trend-wrap" class="vitals-trend-box">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <span style="font-size:11px;font-weight:700;color:var(--p);text-transform:uppercase;">📈 Vitals Trend</span>
-            <div class="vt-btns">
-              <button class="vt-btn active" onclick="switchVitalChart('bp',this)">BP</button>
-              <button class="vt-btn" onclick="switchVitalChart('temp',this)">Temp</button>
-              <button class="vt-btn" onclick="switchVitalChart('weight',this)">Weight</button>
-              <button class="vt-btn" onclick="switchVitalChart('pulse',this)">Pulse</button>
-            </div>
-          </div>
-          <div style="position:relative;height:150px;"><canvas id="vitals-trend-chart"></canvas></div>
+
+        <!-- TABS BAR -->
+        <div class="cf-tabs">
+          <button class="cft active" data-tab="overview"  onclick="cfTab('overview')">📊 Overview</button>
+          <button class="cft" data-tab="clinical"  onclick="cfTab('clinical')">📝 Clinical Notes</button>
+          <button class="cft" data-tab="timeline"  onclick="cfTab('timeline')">⏱️ Timeline</button>
+          <button class="cft" data-tab="triage"    onclick="cfTab('triage')">🌡️ Triage Info</button>
+          <button class="cft" data-tab="rx"        onclick="cfTab('rx')">💊 Prescription</button>
+          <button class="cft" data-tab="lab"       onclick="cfTab('lab')">🔬 Laboratory</button>
+          <button class="cft" data-tab="services"  onclick="cfTab('services')">🩻 Other Services</button>
+          <button class="cft" data-tab="docs"      onclick="cfTab('docs')">📎 Documents</button>
         </div>
-        <!-- Lab results panel -->
-        <div id="lab-res-panel" style="display:none;margin-bottom:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <h4 style="color:var(--a);margin:0;font-size:13px;">🔬 Lab Results Ready</h4>
-            <button onclick="printLabResults()" class="bsm bo">🖨 Print</button>
-          </div>
-          <div id="lab-res-display"></div>
-        </div>
-        <!-- Radiology results panel -->
-        <div id="rad-res-panel" style="display:none;margin-bottom:12px;">
-          <h4 style="color:var(--pu);margin-bottom:8px;font-size:13px;">📡 Radiology Results</h4>
-          <div id="rad-res-display"></div>
-        </div>
-        <!-- ── CLINICAL HISTORY (collapsible accordions) ── -->
-        <p style="font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;margin-bottom:7px;">Clinical History &amp; Examination</p>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PC)</span> <span class="abbr-full">Presenting Complaint</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hPC" rows="2" placeholder="Chief complaint in patient's own words, duration…"></textarea></div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(HPC)</span> <span class="abbr-full">History of Presenting Complaint</span></span><span class="cr">▼</span></div><div class="cbody">
-          <div class="qf-bar">
-            <button type="button" class="qf" onclick="qFill('hHPC','SOCRATES: Site __, Onset __, Character __, Radiation __, Associated symptoms __, Timing __, Exacerbating/relieving __, Severity __/10.')">📋 SOCRATES template</button>
-            <button type="button" class="qf" onclick="qFill('hHPC','Sudden onset __ days/hours ago. Constant/intermittent. Aggravated by __. Relieved by __. No associated symptoms.')">📋 Generic</button>
-            <button type="button" class="qf" onclick="qClear('hHPC')">✕ Clear</button>
-          </div>
-          <textarea id="hHPC" rows="3" placeholder="Onset, character, severity, duration, modifying factors, associated symptoms…"></textarea>
-        </div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PM/PSH)</span> <span class="abbr-full">Past Medical &amp; Surgical History</span></span><span class="cr">▼</span></div><div class="cbody">
-          <div class="qf-bar">
-            <button type="button" class="qf" onclick="qFill('hPMH','No known chronic illness. No previous surgery. Not on regular medication.')">📋 Unremarkable</button>
-            <button type="button" class="qf" onclick="qFill('hPMH','HTN on amlodipine. No DM. No surgical history.')">+ HTN</button>
-            <button type="button" class="qf" onclick="qFill('hPMH','DM type 2 on metformin. Last HbA1c: __. No DM complications noted.')">+ DM</button>
-            <button type="button" class="qf" onclick="qFill('hPMH','HIV positive on ART. CD4: __. Last viral load: __.')">+ HIV</button>
-            <button type="button" class="qf" onclick="qFill('hPMH','Asthma — well controlled on Salbutamol PRN.')">+ Asthma</button>
-            <button type="button" class="qf" onclick="qClear('hPMH')">✕ Clear</button>
-          </div>
-          <textarea id="hPMH" rows="3" placeholder="Known conditions, previous operations, hospitalisations, TB, HIV status…"></textarea>
-        </div></div>
-        <div class="cb" id="ogBlock" style="display:none;"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(O/G)</span> <span class="abbr-full">Obstetric &amp; Gynaecological History</span></span><span class="cr">▼</span></div><div class="cbody">
-          <div class="g2"><div><label>LMP</label><input id="hLMP" type="date"></div><div><label>Gravida / Para</label><input id="hGP" placeholder="e.g. G3P2+1"></div></div>
-          <div class="qf-bar" style="margin-top:8px;">
-            <button type="button" class="qf" onclick="qFill('hOG','Regular menses, no contraception, no abnormal discharge or bleeding. No history of STI.')">📋 Unremarkable</button>
-            <button type="button" class="qf" onclick="qFill('hOG','On COC contraception. Regular menses. No abnormal bleeding.')">+ On OCP</button>
-            <button type="button" class="qf" onclick="qFill('hOG','Currently pregnant. EDD: __. Antenatal care at __. No complications so far.')">+ Pregnant</button>
-            <button type="button" class="qf" onclick="qClear('hOG')">✕ Clear</button>
-          </div>
-          <textarea id="hOG" rows="2" placeholder="Contraception, antenatal, delivery history…" style="margin-top:6px;"></textarea>
-        </div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span>👨‍👩‍👧 Family &amp; Social History</span><span class="cr">▼</span></div><div class="cbody">
-          <div class="qf-bar">
-            <button type="button" class="qf" onclick="qFill('hFSH','No significant family history. Non-smoker. No alcohol. Married with __ children.')">📋 Unremarkable</button>
-            <button type="button" class="qf" onclick="qAppend('hFSH','Family history: HTN.')">+ HTN family</button>
-            <button type="button" class="qf" onclick="qAppend('hFSH','Family history: DM.')">+ DM family</button>
-            <button type="button" class="qf" onclick="qAppend('hFSH','Smoker — __ pack-years.')">+ Smoker</button>
-            <button type="button" class="qf" onclick="qAppend('hFSH','Alcohol — __ units/week.')">+ Alcohol</button>
-            <button type="button" class="qf" onclick="qClear('hFSH')">✕ Clear</button>
-          </div>
-          <textarea id="hFSH" rows="2" placeholder="Family diseases, alcohol, tobacco, occupation, housing…"></textarea>
-        </div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(DH/A)</span> <span class="abbr-full">Drug History &amp; Allergies</span></span><span class="cr">▼</span></div><div class="cbody">
-          <div class="qf-bar">
-            <button type="button" class="qf" onclick="qFill('hDrug','No current medications. No traditional medicine use.')">📋 No meds</button>
-            <button type="button" class="qf" onclick="qFill('hAllergy','None known.')">📋 NKDA</button>
-            <button type="button" class="qf" onclick="qFill('hAllergy','Penicillin — rash')">+ PCN allergy</button>
-          </div>
-          <textarea id="hDrug" rows="2" placeholder="Current medications, doses, OTC, traditional…"></textarea>
-          <label>Known Allergies</label><input id="hAllergy" placeholder="e.g. Penicillin — rash. None known.">
-        </div></div>
-        <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PE)</span> <span class="abbr-full">Physical Examination</span></span><span class="cr">▼</span></div><div class="cbody">
-          <div style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;">
-            <button type="button" class="qf qf-all" onclick="fillAllPENormal()">🟢 All Systems Normal</button>
-            <button type="button" class="qf" style="background:#fee2e2;color:#991b1b;" onclick="clearAllPE()">✕ Clear All</button>
-          </div>
-          <div class="g2">
-            <div>
-              <label>General Appearance</label>
-              <div class="pe-row">
-                <input id="hPEGeneral" placeholder="Alert, oriented, not in distress…">
-                <button type="button" class="pe-norm" onclick="qFill('hPEGeneral','Alert, oriented to time/place/person, in no acute distress, well hydrated, well-nourished.')">Normal</button>
-              </div>
-            </div>
-            <div>
-              <label>Head &amp; Neck</label>
-              <div class="pe-row">
-                <input id="hPEHead" placeholder="No lymphadenopathy, JVP normal…">
-                <button type="button" class="pe-norm" onclick="qFill('hPEHead','No lymphadenopathy. JVP not raised. No thyroid enlargement. Conjunctivae pink. Sclera anicteric.')">Normal</button>
-              </div>
-            </div>
-            <div>
-              <label>Chest / Respiratory</label>
-              <div class="pe-row">
-                <input id="hPEChest" placeholder="Clear to auscultation bilaterally…">
-                <button type="button" class="pe-norm" onclick="qFill('hPEChest','Chest expansion symmetrical. Trachea central. Vesicular breath sounds. No crackles, wheezes or rhonchi. Resonant on percussion.')">Normal</button>
-              </div>
-            </div>
-            <div>
-              <label>Cardiovascular</label>
-              <div class="pe-row">
-                <input id="hPECVS" placeholder="Regular rate, no murmurs…">
-                <button type="button" class="pe-norm" onclick="qFill('hPECVS','S1 + S2 audible. Regular rate and rhythm. No murmurs, gallops, or rubs. Peripheral pulses full and symmetrical.')">Normal</button>
-              </div>
-            </div>
-            <div>
-              <label>Abdomen</label>
-              <div class="pe-row">
-                <input id="hPEAbdomen" placeholder="Soft, non-tender, no organomegaly…">
-                <button type="button" class="pe-norm" onclick="qFill('hPEAbdomen','Abdomen soft, non-tender, non-distended. No organomegaly. Bowel sounds present. No masses palpable.')">Normal</button>
-              </div>
-            </div>
-            <div>
-              <label>CNS / Neurological</label>
-              <div class="pe-row">
-                <input id="hPECNS" placeholder="GCS 15, pupils equal and reactive…">
-                <button type="button" class="pe-norm" onclick="qFill('hPECNS','GCS 15/15. Pupils equal and reactive to light. Cranial nerves grossly intact. Power 5/5 all limbs. Normal tone and reflexes. No cerebellar signs.')">Normal</button>
-              </div>
-            </div>
-            <div>
-              <label>Extremities / MSK</label>
-              <div class="pe-row">
-                <input id="hPEExtremities" placeholder="No oedema, full range of motion…">
-                <button type="button" class="pe-norm" onclick="qFill('hPEExtremities','No pedal oedema. Full range of motion all joints. No joint swelling, deformity, or tenderness. Peripheral pulses palpable.')">Normal</button>
-              </div>
-            </div>
-            <div>
-              <label>Skin</label>
-              <div class="pe-row">
-                <input id="hPESkin" placeholder="No rash, jaundice, or cyanosis…">
-                <button type="button" class="pe-norm" onclick="qFill('hPESkin','No rash, jaundice, cyanosis or pallor. Skin warm and dry. No active lesions.')">Normal</button>
-              </div>
-            </div>
-          </div>
-          <label>Other Examination Findings</label>
-          <textarea id="hPEOther" rows="2" placeholder="Any additional examination findings…"></textarea>
-        </div></div>
-        <hr class="dv">
-        <!-- DIFFERENTIAL DIAGNOSIS -->
-        <label><span class="abbr-hdr">(Diff Dx)</span> <span class="abbr-full">Differential Diagnosis</span></label>
-        <textarea id="cDiffDx" rows="2" placeholder="Working differentials in order of likelihood…"></textarea>
-        <hr class="dv">
-        <!-- LAB ORDERS (multi-select chips) -->
-        <div id="lab-order-sec">
-          <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;"><span class="abbr-hdr">(Ix)</span> <span class="abbr-full" style="text-transform:uppercase;">Investigations — Lab Orders</span></p>
-          <input id="lab-search" placeholder="Search lab tests…" onkeyup="filterLabTests()" style="margin-bottom:5px;">
-          <div class="lab-check-list" id="lab-check-list"></div>
-          <div id="selected-labs-display" style="margin-top:6px;font-size:12px;color:var(--mu);"></div>
-        </div>
-        <hr class="dv">
-        <!-- RADIOLOGY ORDERS -->
-        <div>
-          <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;"><span class="abbr-hdr">(Rad)</span> <span class="abbr-full" style="text-transform:uppercase;">Radiology / Imaging</span></p>
-          <div id="rad-orders-list"></div>
-          <button class="badd" onclick="addRadRow()">+ Add Imaging</button>
-        </div>
-        <hr class="dv">
-        <!-- NURSING PROCEDURES -->
-        <div id="proc-order-sec">
-          <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;"><span class="abbr-hdr">(Pr)</span> <span class="abbr-full" style="text-transform:uppercase;">Nursing &amp; Surgical Procedures</span></p>
-          <div id="proc-orders-list"></div>
-          <div style="display:flex;gap:6px;align-items:center;margin-top:5px;flex-wrap:wrap;">
-            <select id="proc-order-select" style="flex:1;min-width:200px;margin:0;font-size:13px;"><option value="">-- Select procedure --</option></select>
-            <button class="badd" onclick="addProcOrder()">+ Order</button>
+
+        <!-- ALLERGY ALERT BANNER (always visible if present) -->
+        <div id="allergy-alert-banner"></div>
+
+        <!-- TAB PANELS -->
+        <div style="padding:16px;">
+
+        <!-- ═══ TAB: OVERVIEW ═══ -->
+        <div class="cf-pan" data-pan="overview">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:14px;" id="cons-overview-cards"></div>
+          <div class="card" style="margin:0;">
+            <h4 style="margin-bottom:10px;color:var(--p);">📋 Visit Summary</h4>
+            <div id="cons-overview-summary" style="font-size:13px;line-height:1.7;"></div>
           </div>
         </div>
-        <hr class="dv">
-        <!-- FINAL DIAGNOSIS + MANAGEMENT -->
-        <label><span class="abbr-hdr">(Dx)</span> <span class="abbr-full">Final / Working Diagnosis</span></label>
-        <div style="position:relative;">
-          <input id="cFinalDx" placeholder="Type diagnosis or ICD-10 code…" oninput="showICD10('cFinalDx','icd10-results')">
-          <div id="icd10-results" class="drug-search-results" style="display:none;position:absolute;width:100%;z-index:200;"></div>
+
+        <!-- ═══ TAB: CLINICAL NOTES (history + PE + Dx) ═══ -->
+        <div class="cf-pan" data-pan="clinical" style="display:none;">
+          <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PC)</span> <span class="abbr-full">Presenting Complaint</span></span><span class="cr">▼</span></div><div class="cbody"><textarea id="hPC" rows="2" placeholder="Chief complaint in patient's own words, duration…"></textarea></div></div>
+          <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(HPC)</span> <span class="abbr-full">History of Presenting Complaint</span></span><span class="cr">▼</span></div><div class="cbody">
+            <div class="qf-bar">
+              <button type="button" class="qf" onclick="qFill('hHPC','SOCRATES: Site __, Onset __, Character __, Radiation __, Associated symptoms __, Timing __, Exacerbating/relieving __, Severity __/10.')">📋 SOCRATES</button>
+              <button type="button" class="qf" onclick="qFill('hHPC','Sudden onset __ days/hours ago. Constant/intermittent. Aggravated by __. Relieved by __. No associated symptoms.')">📋 Generic</button>
+              <button type="button" class="qf" onclick="qClear('hHPC')">✕ Clear</button>
+            </div>
+            <textarea id="hHPC" rows="3" placeholder="Onset, character, severity, duration, modifying factors, associated symptoms…"></textarea>
+          </div></div>
+          <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PM/PSH)</span> <span class="abbr-full">Past Medical &amp; Surgical History</span></span><span class="cr">▼</span></div><div class="cbody">
+            <div class="qf-bar">
+              <button type="button" class="qf" onclick="qFill('hPMH','No known chronic illness. No previous surgery. Not on regular medication.')">📋 Unremarkable</button>
+              <button type="button" class="qf" onclick="qFill('hPMH','HTN on amlodipine. No DM. No surgical history.')">+ HTN</button>
+              <button type="button" class="qf" onclick="qFill('hPMH','DM type 2 on metformin. Last HbA1c: __. No DM complications noted.')">+ DM</button>
+              <button type="button" class="qf" onclick="qFill('hPMH','HIV positive on ART. CD4: __. Last viral load: __.')">+ HIV</button>
+              <button type="button" class="qf" onclick="qFill('hPMH','Asthma — well controlled on Salbutamol PRN.')">+ Asthma</button>
+              <button type="button" class="qf" onclick="qClear('hPMH')">✕ Clear</button>
+            </div>
+            <textarea id="hPMH" rows="3" placeholder="Known conditions, previous operations, hospitalisations…"></textarea>
+          </div></div>
+          <div class="cb" id="ogBlock" style="display:none;"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(O/G)</span> <span class="abbr-full">Obstetric &amp; Gynaecological History</span></span><span class="cr">▼</span></div><div class="cbody">
+            <div class="g2"><div><label>LMP</label><input id="hLMP" type="date"></div><div><label>Gravida / Para</label><input id="hGP" placeholder="e.g. G3P2+1"></div></div>
+            <div class="qf-bar" style="margin-top:8px;">
+              <button type="button" class="qf" onclick="qFill('hOG','Regular menses, no contraception, no abnormal discharge or bleeding. No history of STI.')">📋 Unremarkable</button>
+              <button type="button" class="qf" onclick="qFill('hOG','On COC contraception. Regular menses.')">+ On OCP</button>
+              <button type="button" class="qf" onclick="qFill('hOG','Currently pregnant. EDD: __. Antenatal care at __.')">+ Pregnant</button>
+            </div>
+            <textarea id="hOG" rows="2" placeholder="Contraception, antenatal, delivery history…"></textarea>
+          </div></div>
+          <div class="cb"><div class="ch" onclick="tClin(this)"><span>👨‍👩‍👧 Family &amp; Social History</span><span class="cr">▼</span></div><div class="cbody">
+            <div class="qf-bar">
+              <button type="button" class="qf" onclick="qFill('hFSH','No significant family history. Non-smoker. No alcohol.')">📋 Unremarkable</button>
+              <button type="button" class="qf" onclick="qAppend('hFSH','Family history: HTN.')">+ HTN family</button>
+              <button type="button" class="qf" onclick="qAppend('hFSH','Smoker — __ pack-years.')">+ Smoker</button>
+            </div>
+            <textarea id="hFSH" rows="2" placeholder="Family diseases, alcohol, tobacco, occupation…"></textarea>
+          </div></div>
+          <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(DH/A)</span> <span class="abbr-full">Drug History &amp; Allergies</span></span><span class="cr">▼</span></div><div class="cbody">
+            <div class="qf-bar">
+              <button type="button" class="qf" onclick="qFill('hDrug','No current medications.')">📋 No meds</button>
+              <button type="button" class="qf" onclick="qFill('hAllergy','None known.')">📋 NKDA</button>
+              <button type="button" class="qf" onclick="qFill('hAllergy','Penicillin — rash')">+ PCN allergy</button>
+            </div>
+            <textarea id="hDrug" rows="2" placeholder="Current medications, doses, OTC, traditional…"></textarea>
+            <label>Known Allergies</label>
+            <input id="hAllergy" placeholder="e.g. Penicillin — rash. None known.">
+          </div></div>
+          <div class="cb"><div class="ch" onclick="tClin(this)"><span><span class="abbr-hdr">(PE)</span> <span class="abbr-full">Physical Examination</span></span><span class="cr">▼</span></div><div class="cbody">
+            <div style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;">
+              <button type="button" class="qf qf-all" onclick="fillAllPENormal()">🟢 All Systems Normal</button>
+              <button type="button" class="qf" style="background:#fee2e2;color:#991b1b;" onclick="clearAllPE()">✕ Clear All</button>
+            </div>
+            <div class="g2">
+              <div><label>General Appearance</label><div class="pe-row"><input id="hPEGeneral" placeholder="Alert, oriented…"><button type="button" class="pe-norm" onclick="qFill('hPEGeneral','Alert, oriented to time/place/person, in no acute distress, well hydrated, well-nourished.')">Normal</button></div></div>
+              <div><label>Head &amp; Neck</label><div class="pe-row"><input id="hPEHead" placeholder="No lymphadenopathy…"><button type="button" class="pe-norm" onclick="qFill('hPEHead','No lymphadenopathy. JVP not raised. No thyroid enlargement. Conjunctivae pink. Sclera anicteric.')">Normal</button></div></div>
+              <div><label>Chest / Respiratory</label><div class="pe-row"><input id="hPEChest" placeholder="Clear bilaterally…"><button type="button" class="pe-norm" onclick="qFill('hPEChest','Chest expansion symmetrical. Trachea central. Vesicular breath sounds. No crackles, wheezes or rhonchi.')">Normal</button></div></div>
+              <div><label>Cardiovascular</label><div class="pe-row"><input id="hPECVS" placeholder="Regular rate…"><button type="button" class="pe-norm" onclick="qFill('hPECVS','S1 + S2 audible. Regular rate and rhythm. No murmurs, gallops, or rubs. Peripheral pulses full.')">Normal</button></div></div>
+              <div><label>Abdomen</label><div class="pe-row"><input id="hPEAbdomen" placeholder="Soft, non-tender…"><button type="button" class="pe-norm" onclick="qFill('hPEAbdomen','Abdomen soft, non-tender, non-distended. No organomegaly. Bowel sounds present.')">Normal</button></div></div>
+              <div><label>CNS / Neurological</label><div class="pe-row"><input id="hPECNS" placeholder="GCS 15…"><button type="button" class="pe-norm" onclick="qFill('hPECNS','GCS 15/15. Pupils equal and reactive. Cranial nerves intact. Power 5/5 all limbs.')">Normal</button></div></div>
+              <div><label>Extremities / MSK</label><div class="pe-row"><input id="hPEExtremities" placeholder="No oedema…"><button type="button" class="pe-norm" onclick="qFill('hPEExtremities','No pedal oedema. Full range of motion. Peripheral pulses palpable.')">Normal</button></div></div>
+              <div><label>Skin</label><div class="pe-row"><input id="hPESkin" placeholder="No rash…"><button type="button" class="pe-norm" onclick="qFill('hPESkin','No rash, jaundice, cyanosis or pallor. Skin warm and dry.')">Normal</button></div></div>
+            </div>
+            <label>Other Examination Findings</label>
+            <textarea id="hPEOther" rows="2" placeholder="Any additional examination findings…"></textarea>
+          </div></div>
+          <hr class="dv">
+          <label><span class="abbr-hdr">(Diff Dx)</span> <span class="abbr-full">Differential Diagnosis</span></label>
+          <textarea id="cDiffDx" rows="2" placeholder="Working differentials in order of likelihood…"></textarea>
+          <label><span class="abbr-hdr">(Dx)</span> <span class="abbr-full">Final / Working Diagnosis</span></label>
+          <div style="position:relative;">
+            <input id="cFinalDx" placeholder="Type diagnosis or ICD-10 code…" oninput="showICD10('cFinalDx','icd10-results')">
+            <div id="icd10-results" class="drug-search-results" style="display:none;position:absolute;width:100%;z-index:200;"></div>
+          </div>
+          <label>Doctor Notes &amp; Treatment Plan</label>
+          <textarea id="cNotes" rows="3" placeholder="Plan, recommendations, follow-up instructions…"></textarea>
+          <label>Patient Recommendations / Advice</label>
+          <textarea id="cRecommendations" rows="2" placeholder="Lifestyle advice, return precautions, when to come back…"></textarea>
+          <!-- Follow-up date -->
+          <div style="background:var(--lt);border-radius:7px;padding:10px 13px;margin-top:10px;">
+            <label style="margin:0 0 5px;color:var(--p);">📅 Follow-up Return Date</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <input type="date" id="c-return-date" style="width:auto;margin:0;">
+              <input id="c-return-note" placeholder="Instructions for patient" style="flex:1;margin:0;min-width:180px;">
+            </div>
+          </div>
         </div>
-        <label><span class="abbr-hdr">(Mx)</span> <span class="abbr-full">Management Plan / Clinical Notes</span></label>
-        <textarea id="cNotes" rows="2" placeholder="Management plan, instructions, clinical notes…"></textarea>
-        <label><span class="abbr-hdr">(Rec)</span> <span class="abbr-full">Doctor's Recommendations to Patient</span></label>
-        <textarea id="cRecommendations" rows="2" placeholder="Patient education, lifestyle advice, dietary instructions, warning signs to watch for…"></textarea>
-        <hr class="dv">
-        <!-- PRESCRIPTIONS (formulation-aware Rx) -->
-        <div>
-          <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;"><span class="abbr-hdr">(Rx)</span> <span class="abbr-full" style="text-transform:uppercase;">Prescription Orders</span></p>
-          <input id="med-search" placeholder="Search drug by name, class or formulation…" onkeyup="filterMeds()" style="margin-bottom:5px;">
+
+        <!-- ═══ TAB: TIMELINE ═══ -->
+        <div class="cf-pan" data-pan="timeline" style="display:none;">
+          <div class="card" style="margin:0;">
+            <h4 style="margin-bottom:10px;color:var(--p);">⏱️ Patient Activity Timeline</h4>
+            <div id="cons-timeline-list"></div>
+          </div>
+        </div>
+
+        <!-- ═══ TAB: TRIAGE INFO ═══ -->
+        <div class="cf-pan" data-pan="triage" style="display:none;">
+          <div class="card" style="margin:0;">
+            <h4 style="margin-bottom:10px;color:var(--p);">🌡️ Triage / Vitals</h4>
+            <div id="cons-triage-info"></div>
+          </div>
+        </div>
+
+        <!-- ═══ TAB: PRESCRIPTION (NEW format with date, billing, columns) ═══ -->
+        <div class="cf-pan" data-pan="rx" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <h4 style="margin:0;color:var(--p);">💊 Prescription</h4>
+            <button class="bp" onclick="addRxRow()">+ Add Medication</button>
+          </div>
+          <div class="g2" style="margin-bottom:12px;">
+            <div><label>Prescription Date</label><input type="date" id="rx-date" value=""></div>
+            <div><label>Billing Type</label>
+              <select id="rx-billing">
+                <option value="cash">Cash</option>
+                <option value="insurance">Insurance / NHIF</option>
+                <option value="ngo">NGO Covered</option>
+                <option value="free">Free / Waived</option>
+              </select>
+            </div>
+          </div>
+          <input id="med-search" placeholder="🔍 Search medication…" onkeyup="filterMeds()" style="margin-bottom:8px;">
           <div class="drug-search-results" id="drug-results" style="display:none;"></div>
+          <!-- Header row -->
+          <div class="rx-head" style="display:grid;grid-template-columns:2.4fr 0.8fr 0.9fr 1.7fr auto;gap:6px;padding:9px 10px;background:var(--lt);border-radius:6px;font-weight:700;font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">
+            <div>Medicine</div>
+            <div>Quantity</div>
+            <div>Unit Price</div>
+            <div>Instructions (Nurse will see)</div>
+            <div></div>
+          </div>
           <div id="med-orders-list"></div>
+          <div id="rx-total-line" style="margin-top:10px;padding:9px 12px;background:var(--lt);border-radius:6px;font-weight:700;text-align:right;font-size:13px;color:var(--p);">Total: $0.00</div>
         </div>
-        <!-- Order Summary -->
-        <div class="osum"><h5>📋 Current Visit Bill</h5><div id="order-sum-body"><div class="emp" style="padding:8px;">No orders yet.</div></div></div>
-        <!-- Follow-up return date -->
-        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:7px;padding:10px 13px;margin-bottom:8px;">
-          <label style="margin:0 0 5px;color:var(--p);">📅 Follow-up Return Date</label>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input type="date" id="c-return-date" style="width:auto;margin:0;font-size:13px;">
-            <input id="c-return-note" placeholder="Instructions for patient (optional)" style="flex:1;margin:0;font-size:13px;min-width:180px;">
+
+        <!-- ═══ TAB: LABORATORY ═══ -->
+        <div class="cf-pan" data-pan="lab" style="display:none;">
+          <h4 style="margin-bottom:10px;color:var(--p);">🔬 Laboratory Investigations</h4>
+          <!-- Order new tests -->
+          <div class="card" style="margin:0 0 12px;background:var(--lt);">
+            <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;">ORDER NEW TESTS</p>
+            <input id="lab-search" placeholder="Search lab tests…" onkeyup="filterLabTests()" style="margin-bottom:5px;">
+            <div class="lab-check-list" id="lab-check-list"></div>
+            <div id="selected-labs-display" style="margin-top:6px;font-size:12px;color:var(--mu);"></div>
+          </div>
+          <!-- Existing test status -->
+          <div class="card" style="margin:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+              <p style="font-size:11px;font-weight:700;color:var(--mu);margin:0;">REQUESTED TESTS &amp; RESULTS</p>
+              <button class="bsm bo" onclick="refreshLabsForVisit()">🔄 Refresh</button>
+            </div>
+            <div id="cons-lab-status-list"></div>
           </div>
         </div>
-        <!-- Consultation fee -->
-        <div class="g2">
-          <div><label>Consultation Fee ($)</label><input type="number" id="c-consult-fee" value="10" step="0.01" min="0"></div>
-          <div><label>Consult Type (confirm)</label>
-            <select id="c-consult-type">
-              <option value="GENERAL">General</option><option value="LAB_ONLY">Lab Only</option>
-              <option value="RADIOLOGY">Radiology</option><option value="DENTAL">Dental</option>
-              <option value="ENT">ENT</option><option value="OTHER_SPECIAL">Other Special</option>
-            </select>
+
+        <!-- ═══ TAB: OTHER SERVICES (Imaging + Procedures) ═══ -->
+        <div class="cf-pan" data-pan="services" style="display:none;">
+          <div class="stabs" style="margin-bottom:12px;">
+            <button class="st active" onclick="cfSrvTab('imaging',this)">🩻 Imaging / Radiology</button>
+            <button class="st" onclick="cfSrvTab('proc',this)">🩹 Procedures</button>
+          </div>
+          <!-- IMAGING panel -->
+          <div id="cf-srv-imaging">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+              <h4 style="margin:0;color:var(--p);">🩻 Imaging Orders</h4>
+              <button class="bp" onclick="addRadRow()">+ Add Imaging</button>
+            </div>
+            <div id="rad-orders-list"></div>
+            <hr class="dv">
+            <h4 style="margin-bottom:10px;color:var(--p);">📝 Imaging Reports &amp; Results</h4>
+            <div id="cons-imaging-status-list"></div>
+          </div>
+          <!-- PROCEDURES panel -->
+          <div id="cf-srv-proc" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+              <h4 style="margin:0;color:var(--p);">🩹 Procedures</h4>
+              <button class="bp" onclick="addProcRow()">+ Add Procedure</button>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+              <select id="proc-order-select" style="flex:1;margin:0;"></select>
+              <button class="bp bsm" onclick="addProcFromSelect()">+ Add</button>
+            </div>
+            <div id="proc-orders-list"></div>
           </div>
         </div>
-        <!-- Actions -->
-        <div class="ab" id="cons-actions">
-          <button onclick="saveConsultation()" class="bp">💾 Save &amp; Close Consultation</button>
-          <button onclick="saveClinical()" class="ba" style="background:var(--s);">📝 Save Notes Only</button>
-          <button onclick="endVisit()" class="ba">✅ Discharge Patient</button>
-          <button onclick="openAdmit()" class="bpu">🛏️ Admit to Ward</button>
-          <button onclick="if(activeVid)printDischargeSummary(activeVid)" class="bo bsm" style="border-color:#10b981;color:#10b981;">📋 Discharge Summary</button>
-          <button onclick="closeConsForm()" style="background:#e2e8f0;color:#475569;">Cancel</button>
+
+        <!-- ═══ TAB: DOCUMENTS & ATTACHMENTS ═══ -->
+        <div class="cf-pan" data-pan="docs" style="display:none;">
+          <h4 style="margin-bottom:10px;color:var(--p);">📎 Documents &amp; Attachments</h4>
+          <div class="card" style="margin:0 0 12px;background:var(--lt);">
+            <label>Upload File (PDF, image, lab result scan)</label>
+            <input type="file" id="doc-upload" multiple accept="image/*,.pdf,.doc,.docx" style="background:#fff;">
+            <button class="bp" onclick="uploadDocs()" style="margin-top:8px;">📤 Upload Files</button>
+            <p style="font-size:11px;color:var(--mu);margin-top:8px;">Max 10MB per file. PDFs, images, Word documents, lab printouts.</p>
+          </div>
+          <div class="card" style="margin:0;">
+            <h5 style="margin:0 0 10px;color:var(--mu);font-size:11px;text-transform:uppercase;letter-spacing:.05em;">📁 Attached Files (<span id="docs-count">0</span>)</h5>
+            <div id="cons-docs-list">
+              <div class="empty-state">
+                <div class="es-icon">📁</div>
+                <div class="es-title">No files attached yet</div>
+                <div class="es-msg">Upload PDF reports, photos, lab printouts above</div>
+              </div>
+            </div>
+          </div>
         </div>
+
+        </div>
+
+        <!-- COLLAPSED ORDER SUMMARY (clinical focus restored) -->
+        <details class="osum-collapsed" style="background:var(--lt);border-radius:0;padding:10px 18px;margin:0;border-top:1px solid var(--bd);">
+          <summary style="cursor:pointer;font-weight:600;font-size:12px;color:var(--mu);user-select:none;">
+            💵 Order Summary &amp; Bill (for billing reference only)
+          </summary>
+          <div id="order-sum-body" style="margin-top:10px;"></div>
+        </details>
       </div><!-- end cons-form -->
     </div><!-- end doc-queue -->
 
@@ -6770,10 +8447,43 @@ function clearAllPE() {
       <button class="st"        id="lab-tab-enter"   onclick="setLabTab('enter',this)">📝 Enter Results</button>
       <button class="st"        id="lab-tab-review"  onclick="setLabTab('review',this)">✅ Review Results</button>
       <button class="st"        id="lab-tab-results" onclick="setLabTab('results',this)">📊 Lab Results</button>
-      <button class="st"        id="lab-tab-summary" onclick="setLabTab('summary',this)">📈 Summary</button>
+      <button class="st"        id="lab-tab-stats"   onclick="setLabTab('stats',this)">📈 Lab Statistics</button>
+      <button class="st"        id="lab-tab-consum"    onclick="setLabTab('consum',this)">🧪 Consumables</button>
     </div>
-    <!-- Summary panel -->
-    <div id="lab-summary-panel" style="display:none;"></div>
+    <!-- Statistics panel -->
+    <div id="lab-stats-panel" style="display:none;">
+      <div class="card" style="padding:14px;">
+        <h4 style="margin-bottom:14px;color:var(--p);">📈 Lab Statistics &amp; Summary</h4>
+        <div id="lab-stats-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px;"></div>
+        <div class="g2" style="gap:14px;">
+          <div class="card" style="margin:0;">
+            <h5 style="margin-bottom:8px;">Most Ordered Tests</h5>
+            <div id="lab-stats-top-tests"></div>
+          </div>
+          <div class="card" style="margin:0;">
+            <h5 style="margin-bottom:8px;">Recent Critical Values</h5>
+            <div id="lab-stats-critical"></div>
+          </div>
+        </div>
+        <div class="card" style="margin:14px 0 0;">
+          <h5 style="margin-bottom:8px;">Tests by Day (last 7 days)</h5>
+          <canvas id="lab-stats-daily" height="80"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- Consumables panel -->
+    <div id="lab-consum-panel" style="display:none;">
+      <div class="card" style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <h4 style="margin:0;color:var(--p);">🧪 Lab Consumables</h4>
+          <div style="display:flex;gap:6px;">
+            <input id="lcons-search" placeholder="🔍 Search..." oninput="renderLabCons()" style="margin:0;max-width:240px;">
+            <button class="bp" onclick="addLabCons()">+ Add Item</button>
+          </div>
+        </div>
+        <div id="lab-cons-table" style="overflow-x:auto;"></div>
+      </div>
+    </div>
     <!-- Pick sample panel -->
     <div id="lab-pick-panel">
       <div class="card" style="padding:10px;">
@@ -6840,31 +8550,54 @@ function clearAllPE() {
       <button class="bo bsm" onclick="renderPharm()">🔄 Refresh</button>
     </div>
     <div class="stabs" style="margin-bottom:12px;">
-      <button class="st active" id="pharm-tab-pending"     onclick="setPharmTab('pending',this)">💊 Dispense Prescriptions</button>
+      <button class="st active" id="pharm-tab-pending"     onclick="setPharmTab('pending',this)">💊 Dispense</button>
       <button class="st"        id="pharm-tab-incomplete"  onclick="setPharmTab('incomplete',this)">⚠️ Incomplete Doses</button>
       <button class="st"        id="pharm-tab-dispensed"   onclick="setPharmTab('dispensed',this)">✅ Dispensed</button>
+      <button class="st"        id="pharm-tab-stock"       onclick="setPharmTab('stock',this)">📦 Stock</button>
+      <button class="st"        id="pharm-tab-damages"     onclick="setPharmTab('damages',this)">💔 Damages</button>
     </div>
     <!-- Pending dispense -->
     <div id="pharm-pending-panel">
-      <div class="card" style="padding:10px;">
+      <div class="card" style="padding:14px;">
         <h4 style="margin-bottom:8px;color:var(--p);">💊 Pending Prescriptions</h4>
-        <input id="pharm-search" placeholder="Search patient..." oninput="renderPharmPending()" style="max-width:320px;margin-bottom:10px;">
+        <input id="pharm-search" placeholder="🔍 Search patient..." oninput="renderPharmPending()" style="max-width:320px;margin-bottom:10px;">
         <div id="pharm-pending-table"></div>
       </div>
     </div>
-    <!-- Incomplete doses — ClinicPlus Pending Incomplete Prescriptions -->
+    <!-- Incomplete doses -->
     <div id="pharm-incomplete-panel" style="display:none;">
-      <div class="card" style="padding:10px;">
+      <div class="card" style="padding:14px;">
         <h4 style="margin-bottom:8px;color:var(--d);">⚠️ Pending Incomplete Prescriptions</h4>
-        <p style="font-size:12px;color:var(--mu);margin-bottom:10px;">Patients with partially dispensed prescriptions that need follow-up</p>
+        <p style="font-size:12px;color:var(--mu);margin-bottom:10px;">Patients with partially dispensed prescriptions</p>
         <div id="pharm-incomplete-table"></div>
       </div>
     </div>
     <!-- Dispensed history -->
     <div id="pharm-dispensed-panel" style="display:none;">
-      <div class="card" style="padding:10px;">
+      <div class="card" style="padding:14px;">
         <h4 style="margin-bottom:8px;color:var(--a);">✅ Dispensed Prescriptions</h4>
         <div id="pharm-dispensed-table"></div>
+      </div>
+    </div>
+    <!-- STOCK PANEL -->
+    <div id="pharm-stock-panel" style="display:none;">
+      <div class="card" style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <h4 style="margin:0;color:var(--p);">📦 Pharmacy Stock</h4>
+          <div style="display:flex;gap:6px;">
+            <input id="stock-search" placeholder="🔍 Search items..." oninput="renderPharmStock()" style="margin:0;max-width:240px;">
+            <button class="bp" onclick="reconcileStock()">⚖️ Reconcile</button>
+            <button class="bd2" onclick="recordDamage()">💔 Damage</button>
+          </div>
+        </div>
+        <div id="pharm-stock-table" style="overflow-x:auto;"></div>
+      </div>
+    </div>
+    <!-- DAMAGES LOG -->
+    <div id="pharm-damages-panel" style="display:none;">
+      <div class="card" style="padding:14px;">
+        <h4 style="margin-bottom:10px;color:var(--d);">💔 Damages &amp; Loss Log</h4>
+        <div id="pharm-damages-table"></div>
       </div>
     </div>
   </section>
@@ -7659,4 +9392,93 @@ setInterval(() => {
 </div>
 
 </body>
-</html>
+</html>async function dispenseOne(vid, rxId) {
+  const v = visits.find(x => x.id === vid); if (!v) return;
+  const rx = (v.prescriptions||[]).find(r => (r.id || r.name) === rxId); if (!rx) return;
+  if (rx.dispensed) { toast('Already dispensed.', 'info'); return; }
+  // Prompt for quantity to dispense (might be partial)
+  const totalNeeded = rx.qty || 1;
+  const inputQty = prompt('Dispense quantity for ' + rx.name + ':\n(Prescribed: ' + totalNeeded + ')', String(totalNeeded));
+  if (!inputQty) return;
+  const dispenseQty = parseInt(inputQty);
+  if (isNaN(dispenseQty) || dispenseQty < 1) { toast('Invalid quantity.', 'error'); return; }
+  if (dispenseQty > totalNeeded) { toast('Cannot dispense more than prescribed.', 'error'); return; }
+  // Check stock
+  const item = (inventory||[]).find(i => i.name === rx.name);
+  if (!item || item.stock < dispenseQty) {
+    toast('Insufficient stock: ' + rx.name + '. Available: ' + (item ? item.stock : 0), 'error');
+    return;
+  }
+  item.stock -= dispenseQty;
+  rx.qtyDispensed = (rx.qtyDispensed || 0) + dispenseQty;
+  rx.dispensed = (rx.qtyDispensed >= totalNeeded);
+  rx.dispensedTime = new Date().toLocaleTimeString();
+  rx.dispensedBy = currentUser?.name;
+  if (!isDemoMode()) {
+    if (item.sbId) await sb.from('inventory').update({quantity: item.stock}).eq('id', item.sbId).catch(()=>{});
+    if (v.sbId && rx.sbId) {
+      await sb.from('prescriptions').update({
+        dispensed: rx.dispensed, dispensed_by: currentUser?.name, dispensed_at: new Date().toISOString()
+      }).eq('id', rx.sbId).catch(()=>{});
+    }
+  }
+  if (typeof checkFullyDispensed === 'function') checkFullyDispensed(v);
+  const partial = dispenseQty < totalNeeded ? ' (partial: ' + dispenseQty + '/' + totalNeeded + ')' : '';
+  toast('💊 ' + rx.name + ' x' + dispenseQty + partial + ' dispensed', 'success');
+  speak('');
+  if (typeof renderPharmPending === 'function') renderPharmPending();
+  if (typeof renderPharmIncomplete === 'function') renderPharmIncomplete();
+  if (typeof renderPharm === 'function') renderPharm();
+}async function dispenseOne(vid,rxId){
+  const v=visits.find(x=>x.id===vid);if(!v)return;
+  const rx=(v.prescriptions||[]).find(r=>(r.id||r.name)===rxId);if(!rx)return;
+  if(rx.dispensed){toast(rx.name+' already fully dispensed','info');return;}
+  // Calculate remaining quantity
+  const prescribed = rx.qty || 1;
+  const alreadyGiven = rx.dispensedQty || 0;
+  const remaining = prescribed - alreadyGiven;
+  if(remaining <= 0){
+    rx.dispensed = true;
+    toast(rx.name+' fully dispensed already.','info');
+    renderPharmPending();return;
+  }
+  // Prompt for quantity to dispense
+  const qInput = prompt(`💊 Dispense: ${rx.name}\n\nPrescribed: ${prescribed}\nAlready given: ${alreadyGiven}\nRemaining: ${remaining}\n\nQuantity to dispense now (max ${remaining}):`, remaining);
+  if(qInput === null) return;
+  const qty = parseInt(qInput);
+  if(isNaN(qty) || qty <= 0){toast('Invalid quantity.','error');return;}
+  if(qty > remaining){toast('Cannot dispense more than remaining ('+remaining+')','error');return;}
+  // Check stock
+  const item=(inventory||[]).find(i=>i.name===rx.name&&(i.invSection==='general'||!i.invSection));
+  if(item){
+    const stock = item.stock || item.quantity || 0;
+    if(stock<qty){
+      toast('Insufficient stock: '+rx.name+'. Have: '+stock+', Need: '+qty,'error');
+      return;
+    }
+    if(item.stock !== undefined) item.stock -= qty;
+    else item.quantity = stock - qty;
+  }
+  // Update dispensed quantity
+  rx.dispensedQty = (rx.dispensedQty || 0) + qty;
+  rx.dispensedTime = new Date().toLocaleTimeString();
+  rx.dispensedBy = currentUser?.name;
+  // Mark fully dispensed if all given
+  if(rx.dispensedQty >= prescribed) rx.dispensed = true;
+  // Save to Supabase
+  if(!isDemoMode()){
+    if(item && item.sbId){
+      await sb.from('inventory').update({quantity:item.stock||item.quantity}).eq('id',item.sbId).catch(()=>{});
+    }
+    if(v.sbId){
+      const update = {dispensed: rx.dispensed, dispensed_by: currentUser?.name};
+      if(rx.dispensed) update.dispensed_at = new Date().toISOString();
+      await sb.from('prescriptions').update(update).eq('visit_id',v.sbId).eq('drug_name',rx.name).catch(()=>{});
+    }
+  }
+  checkFullyDispensed(v);
+  toast(`💊 ${rx.name}: ${qty} dispensed (${rx.dispensedQty}/${prescribed})`+(rx.dispensed?' — COMPLETE':''),'success');
+  speak('');
+  renderPharmPending();
+  if(typeof renderPharmIncomplete === 'function') renderPharmIncomplete();
+}

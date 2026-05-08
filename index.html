@@ -397,14 +397,22 @@ tr:hover td{background:#f0f9ff;}
 
 /* ── PRINT ── */
 .no-print{}
-@media print{
-  #sidebar,#sb-toggle,.no-print,.ab button:not(.print-ok){display:none!important;}
-  #pra{display:block!important;}
-  #main-wrap{margin-left:0!important;}
-  body{background:#fff!important;}
-  .con{padding:0!important;}
-  .pit th,.pit td{padding:4px 6px;}
-  .wm-logo{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;opacity:.04;z-index:-1;}
+@media print {
+    /* Hide everything except the print area */
+    body * { visibility: hidden !important; }
+    #pra, #pra * { visibility: visible !important; }
+    #pra {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        display: block !important;
+        background: #fff !important;
+    }
+    #sidebar, #sb-toggle, .top-header, .no-print { display: none !important; }
+    body { background: #fff !important; margin: 0 !important; }
+    @page { margin: 1.2cm; }
+    .pit th, .pit td { padding: 4px 6px; }
 }
 
 /* ── PATIENT FLOW BOARD ── */
@@ -1296,38 +1304,37 @@ function toast(msg, type='info') {
 }
 
 // ── VOICE ──
-function speak(text) {
-  // Bell ring alert using Web Audio API
+function speak(level) {
+  // Sharper, ringtone-like sound. Three quick high-pitched chimes.
+  // 'level' can be: 'register', 'order', 'alert', 'critical' or anything else (silent)
+  if (!speakEnabled) return;
+  // Only play sounds for specific events
+  const allowed = ['register', 'order', 'alert', 'critical'];
+  if (level && !allowed.includes(level)) return;
+  // Default: silent (don't play for routine save/dispense actions)
+  if (!level) return;
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // First bell
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.connect(gain1); gain1.connect(ctx.destination);
-    osc1.type = 'sine'; osc1.frequency.setValueAtTime(880, ctx.currentTime);
-    osc1.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
-    gain1.gain.setValueAtTime(0.8, ctx.currentTime);
-    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-    osc1.start(ctx.currentTime); osc1.stop(ctx.currentTime + 0.6);
-    // Second bell (echo)
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.connect(gain2); gain2.connect(ctx.destination);
-    osc2.type = 'sine'; osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.2);
-    osc2.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5);
-    gain2.gain.setValueAtTime(0.4, ctx.currentTime + 0.2);
-    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-    osc2.start(ctx.currentTime + 0.2); osc2.stop(ctx.currentTime + 0.8);
-    // Close context after bell finishes
-    setTimeout(() => { try { ctx.close(); } catch(e){} }, 1000);
-  } catch(e) {
-    // Fallback: browser speech if AudioContext unavailable
-    if (window.speechSynthesis) {
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.9; window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
-    }
-  }
+    const ctx = window._audioCtx || (window._audioCtx = new (window.AudioContext || window.webkitAudioContext)());
+    const now = ctx.currentTime;
+    const isCritical = level === 'critical' || level === 'alert';
+    // 3 quick chimes, like a phone ringtone
+    const freqs = isCritical ? [1320, 1100, 880] : [1760, 1320, 1760];
+    freqs.forEach((freq, idx) => {
+      const t = now + idx * 0.12;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t);
+      // Sharp attack, fast decay (ringtone-like)
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.3, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.12);
+    });
+  } catch(e) { /* audio context failure - silent */ }
 }
 function toggleVoice() {
   voiceEnabled = !voiceEnabled;
@@ -1460,19 +1467,28 @@ function login() {
     gid('sb-user').textContent = d.name + ' · ' + d.role;
     gid('voice-badge').textContent = voiceEnabled ? '🔊' : '🔇';
     renderNav();
-    toast('Welcome, ' + d.name + '!', 'success');
+    toast('Welcome, ' + d.name + '! Loading your data...', 'success');
     updateUserChip();
     _startAlertPolling();
-    // Load real Supabase data quietly in background after UI is visible
-    setTimeout(() => {
-      sb.from('hospitals').select('*').limit(10).then(r => {
-        if (r.data && r.data.length) {
-          allHospitals = r.data;
-          currentHospital = r.data[0].id;
-        }
-        loadSupabaseData().catch(()=>{});
-      }).catch(()=>{});
-    }, 500);
+    // CRITICAL: ensure real hospital ID is set BEFORE any patient registration
+    // This makes demo accounts persistent in Supabase
+    ensureRealHospital().then(realId => {
+      if (realId) {
+        currentHospital = realId;
+        return loadSupabaseData();
+      }
+    }).then(() => {
+      toast('☁️ ' + (patients.length) + ' patient(s) loaded from cloud.', 'info');
+      if (typeof renderPatients === 'function') renderPatients();
+      if (typeof renderActiveVisits === 'function') renderActiveVisits();
+      if (typeof renderTriage === 'function') renderTriage();
+      if (typeof renderCons === 'function') renderCons();
+    }).catch(err => {
+      console.warn('Cloud sync failed:', err.message);
+      toast('⚠️ Working offline — data backed up locally.', 'warning');
+      // Fall back to localStorage cache
+      loadFromLocalStorage();
+    });
     setInterval(autoRefresh, 30000);
     return;
   }
@@ -1524,7 +1540,7 @@ async function loadSupabaseData() {
     sb.from('patient_feedback').select('*').eq('hospital_id', currentHospital).order('created_at',{ascending:false}).limit(100),
   ]).catch(() => ([{data:[]},{data:[]},{data:[]},{data:[]},{data:[]}]));
 
-  // Map to Tali-compatible format
+  // Map patients
   patients = (pRes.data||[]).map(p => ({
     id: p.id, name: p.full_name||'', ageVal: p.age||0, ageUnit: 'years',
     gender: p.gender||'Male', phone: p.phone||'', address: p.address||'',
@@ -1533,9 +1549,8 @@ async function loadSupabaseData() {
     sbId: p.id
   }));
 
-  // Map visits to Tali format
+  // Map visits
   visits = (vRes.data||[]).map(v => {
-    const sb_v = v;
     const note = (() => { try { return JSON.parse(v.doctor_notes||'{}'); } catch(e) { return {}; } })();
     return {
       id: v.id, patId: v.patient_id,
@@ -1553,6 +1568,88 @@ async function loadSupabaseData() {
     };
   });
 
+  // ── CRITICAL: Load labs, prescriptions, radiology, vitals for ALL active visits ──
+  if (visits.length > 0) {
+    const visitIds = visits.map(v => v.sbId);
+    try {
+      const [labRes, rxRes, radRes, vitRes, procRes] = await Promise.all([
+        sb.from('lab_tests').select('*').in('visit_id', visitIds),
+        sb.from('prescriptions').select('*').in('visit_id', visitIds),
+        sb.from('radiology_requests').select('*').in('visit_id', visitIds),
+        sb.from('vitals').select('*').in('visit_id', visitIds),
+        sb.from('nursing_procedures').select('*').in('visit_id', visitIds),
+      ]);
+      // Distribute records back to visits
+      (labRes.data||[]).forEach(l => {
+        const v = visits.find(x => x.sbId === l.visit_id);
+        if (!v) return;
+        v.labs.push({
+          id: 'L-'+l.id, sbId: l.id, name: l.test_name,
+          price: l.price || 0, sampleId: l.sample_id,
+          samplePickedAt: l.sample_picked_at, samplePickedBy: l.sample_picked_by,
+          result: l.result, refRange: l.reference_range, isCritical: l.is_critical,
+          released: l.status === 'completed' || l.released,
+          releasedAt: l.released_at, releasedBy: l.released_by,
+          resultedAt: l.result_at, resultedBy: l.result_by,
+          done: !!l.result
+        });
+      });
+      (rxRes.data||[]).forEach(r => {
+        const v = visits.find(x => x.sbId === r.visit_id);
+        if (!v) return;
+        v.prescriptions.push({
+          id: 'Rx-'+r.id, sbId: r.id, name: r.drug_name,
+          strength: r.strength, formulation: r.dosage_form,
+          qty: r.quantity || 1, price: r.unit_price || 0,
+          instructions: r.dosage || r.instructions || r.frequency,
+          dosage: r.dosage, dispensed: r.dispensed,
+          dispensedQty: r.dispensed_qty || 0,
+          partiallyDispensed: r.partially_dispensed,
+          dispensedTime: r.dispensed_time, dispensedDate: r.dispensed_date,
+          dispensedBy: r.dispensed_by,
+          administered: r.administered || 0,
+          lastAdministeredBy: r.last_administered_by,
+          lastAdministeredAt: r.last_administered_at
+        });
+      });
+      (radRes.data||[]).forEach(r => {
+        const v = visits.find(x => x.sbId === r.visit_id);
+        if (!v) return;
+        v.radiology.push({
+          id: 'R-'+r.id, sbId: r.id, name: r.procedure_name,
+          price: r.price || 0, result: r.result,
+          done: r.status === 'completed' || !!r.result,
+          reportedBy: r.result_by, reportedAt: r.reported_at
+        });
+      });
+      (vitRes.data||[]).forEach(vt => {
+        const v = visits.find(x => x.sbId === vt.visit_id);
+        if (!v) return;
+        v.vitals = {
+          bp: vt.blood_pressure, temp: vt.temperature,
+          pulse: vt.pulse, spo2: vt.spo2,
+          weight: vt.weight, height: vt.height,
+          rr: vt.respiratory_rate, bmi: vt.bmi,
+          notes: vt.notes, recordedBy: vt.recorded_by,
+          recordedAt: vt.created_at
+        };
+      });
+      (procRes.data||[]).forEach(pr => {
+        const v = visits.find(x => x.sbId === pr.visit_id);
+        if (!v) return;
+        v.procedures.push({
+          id: 'P-'+pr.id, sbId: pr.id, name: pr.procedure_name,
+          price: pr.price || 0, completed: pr.completed,
+          orderedBy: pr.ordered_by, completedBy: pr.completed_by,
+          notes: pr.notes
+        });
+      });
+      console.log('Loaded:', labRes.data?.length||0, 'labs,', rxRes.data?.length||0, 'Rx,', radRes.data?.length||0, 'rads,', vitRes.data?.length||0, 'vitals');
+    } catch(e) {
+      console.warn('Visit details load partial err:', e.message);
+    }
+  }
+
   expenses = (expRes.data||[]).map(e => ({
     id: e.id, date: e.expense_date||'', category: e.category||'',
     description: e.description||'', amount: e.amount||0,
@@ -1568,6 +1665,15 @@ async function loadSupabaseData() {
 
   // Load inventory from Supabase or init from WHO_MEDS
   await loadInventoryData();
+
+  // Refresh all visible sections so the loaded data appears
+  if (typeof renderPatients === 'function') renderPatients();
+  if (typeof renderActiveVisits === 'function') renderActiveVisits();
+  if (typeof renderTriage === 'function') renderTriage();
+  if (typeof renderCons === 'function') renderCons();
+  if (typeof renderLabPick === 'function') renderLabPick();
+  if (typeof renderPharmPending === 'function') renderPharmPending();
+  if (typeof renderRadQueue === 'function') renderRadQueue();
 }
 
 function mapStatus(sbStatus, nurseReady) {
@@ -1653,23 +1759,24 @@ function renderNav() {
     : (currentUser.sections || []);
   const dn = gid('dn');
   if (!dn) return;
-  // Group nav items - REMOVED Workstations (kept Appointments only); Finance is a dropdown
+  // Dashboard ALWAYS at top with no group label
+  // Cashier removed; Workstations removed (only Appointments kept inside Clinical)
   const groups = [
-    {label:'Clinical', keys:['reception','nurse','doctor','appointments']},
+    {label:'',            keys:['director'], noLabel:true},
+    {label:'Clinical',    keys:['reception','nurse','doctor','appointments']},
     {label:'Departments', keys:['lab','pharmacy','radiology']},
-    {label:'Finance', keys:['billing','expenses','suppliers','cashier'], collapsible:true},
-    {label:'Inventory', keys:['inventory']},
-    {label:'Staff', keys:['chat','protocols','feedbacks']},
-    {label:'Admin', keys:['admin','director']},
+    {label:'Finance',     keys:['billing','expenses','suppliers'], collapsible:true},
+    {label:'Inventory',   keys:['inventory']},
+    {label:'Staff',       keys:['chat','protocols','feedbacks']},
+    {label:'Admin',       keys:['admin']},
   ];
   let html = '';
   for (const g of groups) {
     const inGroup = g.keys.filter(k => secs.includes(k));
     if (!inGroup.length) continue;
     if (g.collapsible) {
-      // Collapsible group (Finance)
       const groupId = 'grp-' + g.label.toLowerCase();
-      const isOpen = localStorage.getItem('mt-grp-'+g.label) !== 'closed';
+      const isOpen = localStorage.getItem('mt-grp-' + g.label) !== 'closed';
       html += `<div class="nav-sep nav-sep-clickable" onclick="toggleNavGroup('${g.label}')">
         <span style="display:flex;align-items:center;gap:6px;">${g.label}</span>
         <span id="${groupId}-arrow" style="font-size:9px;transition:transform .15s;${isOpen?'transform:rotate(0deg)':'transform:rotate(-90deg)'}">▼</span>
@@ -1680,7 +1787,10 @@ function renderNav() {
       });
       html += `</div>`;
     } else {
-      html += `<div class="nav-sep">${g.label}</div>`;
+      // Render label only if not noLabel and not empty
+      if (g.label && !g.noLabel) {
+        html += `<div class="nav-sep">${g.label}</div>`;
+      }
       inGroup.forEach(k => {
         html += `<button id="btn-${k}" class="nb" onclick="showSection('${k}')">${SEC_ICONS[k]||'•'} ${SEC_LABELS[k]||k}</button>`;
       });
@@ -1924,7 +2034,10 @@ async function useExisting(pid,eName) {
   await createVisitForPatient(pid,name,ct,payer,'');
   gid('dup-warn').style.display='none';
 }
-function isDemoMode() { return currentHospital==='demo-hospital'; }
+function isDemoMode() {
+  // Only true if hospital still placeholder (shouldn't happen after login completes)
+  return !currentHospital || currentHospital === 'demo-hospital';
+}
 
 async function registerPatient() {
   const name=gv('pName'), ageVal=gv('pAgeVal');
@@ -1964,8 +2077,7 @@ async function registerPatient() {
 
   const routeMsg={GENERAL:'→ Triage Queue',LAB_ONLY:'→ Lab',RADIOLOGY:'→ Radiology',
     DENTAL:'→ Dental',ENT:'→ ENT',OTHER_SPECIAL:'→ Special Clinic'};
-  toast('✅ '+name+' registered. '+routeMsg[ct],'success');
-  speak('Patient '+name+' registered.');
+  toast('✅ '+name+' registered. '+routeMsg[ct],'success'); speak('register');
 
   // Clear form
   ['pName','pPhone','pAddress','pKinName','pKinPhone','pRegNote','pAgeVal'].forEach(f=>{
@@ -1975,6 +2087,7 @@ async function registerPatient() {
 
   // Show success banner
   showRegFeedback('✅ '+name+' registered successfully. '+routeMsg[ct], true);
+  saveToLocalStorage();  // Defense in depth
   renderPatients();
 }
 async function createVisitForPatient(patId,name,ct,payer,note) {
@@ -4439,12 +4552,118 @@ function printVisitReport(vid){
     </div>`+printFooter();
   doPrint();
 }
-function printAllLabs(id){
-  const v=visits.find(x=>x.id===id);if(!v)return;
-  const p=patients.find(x=>x.id===v.patId);const done=(v.labs||[]).filter(l=>l.done);
-  gid('pra-con').innerHTML=printHeader('LABORATORY RESULTS')+
-    `<p style="font-size:12px;margin-bottom:10px;padding:7px;background:#f8fafc;border-radius:5px;"><b>Patient:</b> ${v.name} &nbsp;|&nbsp; <b>Age:</b> ${p?p.ageVal+' '+p.ageUnit:'—'} &nbsp;|&nbsp; <b>Gender:</b> ${p?p.gender:'—'} &nbsp;|&nbsp; <b>Date:</b> ${v.date}</p>
-    ${done.length?done.map(l=>`<div style="margin-bottom:10px;border:1px solid #e2e8f0;border-radius:6px;padding:10px;"><h4 style="margin:0 0 6px;color:#1e3a8a;">${l.name}</h4><div style="font-size:13px;">${l.result}</div><div style="font-size:11px;color:#94a3b8;margin-top:5px;">Resulted: ${l.resultTime||v.date} by ${l.resultBy||'Lab'}</div></div>`).join(''):'<div class="emp">No completed results.</div>'}`+printFooter();
+function printAllLabs(id) {
+  const v = visits.find(x => x.id === id); if (!v) return;
+  const p = patients.find(x => x.id === v.patId) || {};
+  // Include released results AND results entered but pending review
+  const labs = (v.labs||[]).filter(l => l.result || l.released);
+  gid('pra-con').innerHTML = printHeader('LABORATORY RESULTS REPORT') + `
+    <table style="width:100%;font-size:12px;margin-bottom:14px;border:1px solid #e2e8f0;border-radius:6px;">
+      <tr style="background:#f8fafc;"><td style="padding:8px;"><b>Patient:</b> ${v.name}</td><td style="padding:8px;"><b>Age/Sex:</b> ${(p.ageVal||'?')+(p.ageUnit?p.ageUnit[0]:'y')} / ${p.gender||'?'}</td></tr>
+      <tr><td style="padding:8px;"><b>Patient #:</b> ${p.patNum||'—'}</td><td style="padding:8px;"><b>Visit Date:</b> ${v.date}</td></tr>
+      <tr style="background:#f8fafc;"><td style="padding:8px;" colspan="2"><b>Diagnosis:</b> ${v.clinical?.cFinalDx || 'Pending'}</td></tr>
+    </table>
+    <h3 style="border-bottom:2px solid #0f766e;padding-bottom:4px;color:#0f766e;">Test Results</h3>
+    ${labs.length ? `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead style="background:#0f766e;color:#fff;">
+        <tr><th style="padding:7px 9px;text-align:left;">Test</th><th style="padding:7px 9px;text-align:left;">Result</th><th style="padding:7px 9px;text-align:left;">Reference</th><th style="padding:7px 9px;text-align:left;">Status</th></tr>
+      </thead>
+      <tbody>
+      ${labs.map(l => `<tr style="border-bottom:1px solid #e2e8f0;${l.isCritical?'background:#fee2e2;':''}">
+        <td style="padding:7px 9px;font-weight:700;">${l.name}</td>
+        <td style="padding:7px 9px;${l.isCritical?'color:#991b1b;font-weight:700;':''}">${l.result || '<i>Pending</i>'}${l.isCritical?' <b>⚠️ CRITICAL</b>':''}</td>
+        <td style="padding:7px 9px;color:#64748b;font-size:11px;">${l.refRange || '—'}</td>
+        <td style="padding:7px 9px;font-size:11px;">${l.released?'✓ Released':l.result?'Awaiting Review':'Pending'}</td>
+      </tr>`).join('')}
+      </tbody>
+    </table>` : '<p style="text-align:center;padding:20px;color:#94a3b8;">No results entered yet.</p>'}
+    <div style="margin-top:18px;padding:10px;background:#f8fafc;border-radius:5px;font-size:11px;color:#64748b;">
+      <p><b>Reported by:</b> ${currentUser?.name || '—'}</p>
+      <p><b>Date:</b> ${new Date().toLocaleString()}</p>
+      <p style="margin-top:8px;"><i>This report is for clinical use only. Critical values flagged require immediate physician attention.</i></p>
+    </div>
+    ` + printFooter();
+  doPrint();
+}
+
+// Print all results (lab + imaging) for the current visit
+function printAllResults(vid) {
+  const id = vid || activeVid;
+  const v = visits.find(x => x.id === id); if (!v) { toast('No visit context.', 'error'); return; }
+  const p = patients.find(x => x.id === v.patId) || {};
+  const labs = (v.labs||[]).filter(l => l.result || l.released);
+  const rads = (v.radiology||[]).filter(r => r.result || r.done);
+  if (!labs.length && !rads.length) { toast('No results to print yet.', 'info'); return; }
+  gid('pra-con').innerHTML = printHeader('PATIENT RESULTS — ALL') + `
+    <table style="width:100%;font-size:12px;margin-bottom:14px;border:1px solid #e2e8f0;">
+      <tr style="background:#f8fafc;"><td style="padding:8px;"><b>Patient:</b> ${v.name}</td><td style="padding:8px;"><b>Age/Sex:</b> ${(p.ageVal||'?')+(p.ageUnit?p.ageUnit[0]:'y')} / ${p.gender||'?'}</td></tr>
+      <tr><td style="padding:8px;"><b>Patient #:</b> ${p.patNum||'—'}</td><td style="padding:8px;"><b>Visit Date:</b> ${v.date}</td></tr>
+    </table>
+    ${labs.length ? `
+      <h3 style="border-bottom:2px solid #0f766e;padding-bottom:4px;color:#0f766e;">🔬 Laboratory Results</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:18px;">
+        <thead style="background:#0f766e;color:#fff;"><tr><th style="padding:7px 9px;text-align:left;">Test</th><th style="padding:7px 9px;text-align:left;">Result</th><th style="padding:7px 9px;text-align:left;">Reference</th><th style="padding:7px 9px;text-align:left;">Status</th></tr></thead>
+        <tbody>${labs.map(l => `<tr style="border-bottom:1px solid #e2e8f0;${l.isCritical?'background:#fee2e2;':''}">
+          <td style="padding:7px 9px;font-weight:700;">${l.name}</td>
+          <td style="padding:7px 9px;${l.isCritical?'color:#991b1b;font-weight:700;':''}">${l.result || '<i>Pending</i>'}${l.isCritical?' ⚠️ CRITICAL':''}</td>
+          <td style="padding:7px 9px;color:#64748b;font-size:11px;">${l.refRange || '—'}</td>
+          <td style="padding:7px 9px;font-size:11px;">${l.released?'Released':'Review'}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    ` : ''}
+    ${rads.length ? `
+      <h3 style="border-bottom:2px solid #0f766e;padding-bottom:4px;color:#0f766e;">🩻 Imaging Reports</h3>
+      ${rads.map(r => `<div style="border:1px solid #e2e8f0;border-radius:6px;padding:10px;margin-bottom:10px;">
+        <h4 style="margin:0 0 6px;color:#0f766e;">${r.name}</h4>
+        <div style="font-size:12px;white-space:pre-wrap;">${r.result || '<i>Pending</i>'}</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:6px;">By: ${r.reportedBy || '—'} · ${r.reportedAt ? new Date(r.reportedAt).toLocaleString() : '—'}</div>
+      </div>`).join('')}
+    ` : ''}
+    <div style="margin-top:18px;padding:10px;background:#f8fafc;border-radius:5px;font-size:11px;color:#64748b;">
+      <p><b>Generated by:</b> ${currentUser?.name || '—'} on ${new Date().toLocaleString()}</p>
+    </div>
+    ` + printFooter();
+  doPrint();
+}
+
+// Print the WHOLE consultation note (history, exam, dx, plan, all orders)
+function printWholeConsultation(vid) {
+  const id = vid || activeVid;
+  const v = visits.find(x => x.id === id); if (!v) { toast('No visit context.', 'error'); return; }
+  const p = patients.find(x => x.id === v.patId) || {};
+  const cl = v.clinical || {};
+  const labs = v.labs || [];
+  const rx = v.prescriptions || [];
+  const rads = v.radiology || [];
+  gid('pra-con').innerHTML = printHeader('CONSULTATION NOTE') + `
+    <table style="width:100%;font-size:12px;margin-bottom:14px;border:1px solid #e2e8f0;">
+      <tr style="background:#f8fafc;"><td style="padding:8px;"><b>Patient:</b> ${v.name}</td><td style="padding:8px;"><b>Age/Sex:</b> ${(p.ageVal||'?')+(p.ageUnit?p.ageUnit[0]:'y')} / ${p.gender||'?'}</td></tr>
+      <tr><td style="padding:8px;"><b>Patient #:</b> ${p.patNum||'—'}</td><td style="padding:8px;"><b>Visit Date:</b> ${v.date}</td></tr>
+      <tr style="background:#f8fafc;"><td style="padding:8px;" colspan="2"><b>Doctor:</b> ${currentUser?.name || '—'}</td></tr>
+    </table>
+    ${cl.hPC ? `<h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;">Presenting Complaint</h3><p style="font-size:12px;">${cl.hPC}</p>` : ''}
+    ${cl.hHPC ? `<h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;">History of Presenting Complaint</h3><p style="font-size:12px;white-space:pre-wrap;">${cl.hHPC}</p>` : ''}
+    ${cl.hPMH ? `<h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;">Past Medical History</h3><p style="font-size:12px;white-space:pre-wrap;">${cl.hPMH}</p>` : ''}
+    ${cl.hDrug || cl.hAllergy ? `<h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;">Drug History &amp; Allergies</h3><p style="font-size:12px;">${cl.hDrug||''}${cl.hAllergy?'<br><b>Allergies:</b> '+cl.hAllergy:''}</p>` : ''}
+    ${cl.hFSH ? `<h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;">Family &amp; Social History</h3><p style="font-size:12px;">${cl.hFSH}</p>` : ''}
+    ${cl.hOG ? `<h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;">O/G History</h3><p style="font-size:12px;">${cl.hOG}</p>` : ''}
+    <h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;">Physical Examination</h3>
+    <table style="width:100%;font-size:12px;border-collapse:collapse;">
+      ${[['General',cl.hPEGeneral],['Head/Neck',cl.hPEHead],['Chest',cl.hPEChest],['CVS',cl.hPECVS],['Abdomen',cl.hPEAbdomen],['CNS',cl.hPECNS],['MSK',cl.hPEExtremities],['Skin',cl.hPESkin]].filter(p=>p[1]).map(p=>`<tr><td style="padding:5px 8px;background:#f8fafc;font-weight:700;width:120px;border:1px solid #e2e8f0;">${p[0]}</td><td style="padding:5px 8px;border:1px solid #e2e8f0;">${p[1]}</td></tr>`).join('')}
+    </table>
+    ${cl.cDiffDx ? `<h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;margin-top:14px;">Differential Diagnosis</h3><p style="font-size:12px;">${cl.cDiffDx}</p>` : ''}
+    ${cl.cFinalDx ? `<h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;">Final Diagnosis</h3><p style="font-size:13px;font-weight:700;">${cl.cFinalDx}</p>` : ''}
+    ${cl.cNotes ? `<h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;">Plan / Doctor Notes</h3><p style="font-size:12px;white-space:pre-wrap;">${cl.cNotes}</p>` : ''}
+    ${labs.filter(l=>l.name).length ? `<h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;">Lab Tests Ordered</h3><ul style="font-size:12px;">${labs.filter(l=>l.name).map(l=>`<li>${l.name}${l.released?' — '+l.result:''}</li>`).join('')}</ul>` : ''}
+    ${rads.filter(r=>r.name).length ? `<h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;">Imaging Ordered</h3><ul style="font-size:12px;">${rads.filter(r=>r.name).map(r=>`<li>${r.name}${r.done?' — '+r.result:''}</li>`).join('')}</ul>` : ''}
+    ${rx.filter(r=>r.name).length ? `<h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;">Prescriptions</h3><table style="width:100%;font-size:12px;border-collapse:collapse;"><thead style="background:#0f766e;color:#fff;"><tr><th style="padding:6px;text-align:left;">Medication</th><th style="padding:6px;text-align:left;">Strength</th><th style="padding:6px;text-align:left;">Qty</th><th style="padding:6px;text-align:left;">Instructions</th></tr></thead><tbody>${rx.filter(r=>r.name).map(r=>`<tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px;font-weight:700;">${r.name}</td><td style="padding:6px;">${r.strength||'—'}</td><td style="padding:6px;">${r.qty}</td><td style="padding:6px;">${r.instructions||r.dosage||'—'}</td></tr>`).join('')}</tbody></table>` : ''}
+    ${cl.cRecommendations ? `<h3 style="color:#0f766e;border-bottom:1px solid #0f766e;padding-bottom:3px;">Recommendations</h3><p style="font-size:12px;white-space:pre-wrap;">${cl.cRecommendations}</p>` : ''}
+    ${cl.returnDate ? `<div style="margin-top:14px;padding:10px;background:#fef3c7;border-radius:5px;font-size:12px;"><b>Follow-up:</b> ${cl.returnDate} ${cl.returnNote?'— '+cl.returnNote:''}</div>` : ''}
+    <div style="margin-top:30px;font-size:11px;">
+      <p>_____________________________</p>
+      <p><b>${currentUser?.name || 'Doctor'}</b><br>${currentUser?.role || 'Doctor'}<br>${new Date().toLocaleString()}</p>
+    </div>
+    ` + printFooter();
   doPrint();
 }
 function printRxLabel(vid){
@@ -5376,8 +5595,13 @@ async function saveClinical(){
   }
   // Run allergy check
   if(typeof checkAllergyAlert === 'function') checkAllergyAlert(v);
+  // Ring chime if new orders were placed
+  const hasNewOrders = (v.labs||[]).some(l => !l.sbId) || 
+                       (v.prescriptions||[]).some(r => !r.sbId) ||
+                       (v.radiology||[]).some(r => !r.sbId) ||
+                       (v.procedures||[]).some(p => !p.sbId);
   toast('💾 Clinical notes & orders saved. Lab/Pharmacy can now see them.','success');
-  speak('');
+  if (hasNewOrders) speak('order');
   // Refresh related sections
   if(typeof renderLabPick === 'function') renderLabPick();
   if(typeof renderPharmPending === 'function') renderPharmPending();
@@ -5970,7 +6194,9 @@ async function releaseAllResults(vid) {
   }
   // Local notification (toast + bell ring)
   toast('🔔 ✅ Lab results released for ' + v.name + '. Doctor notified.', 'success');
-  speak('');
+  // Critical chime if any released test was critical
+  const hasCritical = (v.labs||[]).some(l => l.released && l.isCritical);
+  if (hasCritical) speak('critical'); else speak('alert');
   // Cross-tab broadcast
   if (typeof _broadcastAlertAll === 'function') _broadcastAlertAll('Lab results ready: ' + v.name);
   renderLabReview();
@@ -5991,7 +6217,7 @@ async function releaseOneResult(vid, lid) {
     }).catch(()=>{});
   }
   toast('🔔 ✅ Result released — Doctor notified', 'success');
-  speak('');
+  if (l.isCritical) speak('critical'); else speak('alert');
   renderLabReview();
 }
 
@@ -6879,7 +7105,16 @@ function renderConsLabStatus(v) {
     el.innerHTML = '<div class="empty-state"><div class="es-icon">🔬</div><div class="es-title">No tests ordered</div><div class="es-msg">Order tests above</div></div>';
     return;
   }
-  el.innerHTML = `<table style="width:100%;font-size:13px;">
+  const releasedCount = labs.filter(l => l.released).length;
+  const printAllBtn = releasedCount > 0
+    ? `<div style="display:flex;gap:6px;margin-bottom:10px;justify-content:flex-end;flex-wrap:wrap;">
+         <button class="bp" onclick="printResultsOnly('${v.id}')">🖨️ Print All Released Results (${releasedCount})</button>
+         <button class="bo" onclick="printFullConsultation('${v.id}')">📄 Print Full Consultation</button>
+       </div>`
+    : `<div style="display:flex;gap:6px;margin-bottom:10px;justify-content:flex-end;">
+         <button class="bo" onclick="printFullConsultation('${v.id}')">📄 Print Full Consultation</button>
+       </div>`;
+  el.innerHTML = printAllBtn + `<table style="width:100%;font-size:13px;">
     <tr><th>Test</th><th>Sample ID</th><th>Status</th><th>Result Preview</th><th>Action</th></tr>
     ${labs.map(l => {
       let status = 'pill-warning', stext = '⏳ Pending';
@@ -6958,7 +7193,7 @@ async function saveImagingReport(idx, vid) {
     }).catch(()=>{});
   }
   toast('💾 Imaging report saved. Doctor notified.', 'success');
-  speak('');
+  speak('alert');
   if (typeof _broadcastAlertAll === 'function') _broadcastAlertAll('Imaging ready: ' + v.name);
   renderConsImagingStatus(v);
 }
@@ -7637,6 +7872,270 @@ function restockLabConsumable() {
   toast('💡 Click 📥 Restock on each item to add stock.', 'info');
 }
 
+
+// ──────────────────────────────────────────────
+// PERSISTENCE: ensure a real Supabase hospital exists
+// Returns: real hospital UUID, or null if Supabase unreachable
+// ──────────────────────────────────────────────
+async function ensureRealHospital() {
+  try {
+    const r = await sb.from('hospitals').select('id,name,branch').limit(10);
+    if (r.error) throw r.error;
+    if (r.data && r.data.length) {
+      allHospitals = r.data;
+      return r.data[0].id;
+    }
+    // No hospitals exist yet — create the default one
+    const ins = await sb.from('hospitals').insert({
+      name: 'iCURE Medical Centre', branch: 'Juba, South Sudan'
+    }).select().single();
+    if (ins.error) throw ins.error;
+    allHospitals = [ins.data];
+    return ins.data.id;
+  } catch(err) {
+    console.warn('ensureRealHospital failed:', err.message);
+    return null;
+  }
+}
+
+// ──────────────────────────────────────────────
+// LOCAL STORAGE BACKUP — defense in depth
+// ──────────────────────────────────────────────
+function saveToLocalStorage() {
+  try {
+    localStorage.setItem('mt-patients', JSON.stringify(patients.slice(0, 200)));
+    localStorage.setItem('mt-visits', JSON.stringify(visits.slice(0, 100)));
+    localStorage.setItem('mt-inventory', JSON.stringify(inventory.slice(0, 200)));
+    localStorage.setItem('mt-saved-at', new Date().toISOString());
+  } catch(e) { /* quota exceeded - ignore */ }
+}
+
+function loadFromLocalStorage() {
+  try {
+    const p = localStorage.getItem('mt-patients');
+    const v = localStorage.getItem('mt-visits');
+    const i = localStorage.getItem('mt-inventory');
+    const t = localStorage.getItem('mt-saved-at');
+    if (p) patients = JSON.parse(p);
+    if (v) visits = JSON.parse(v);
+    if (i) inventory = JSON.parse(i);
+    if (t) {
+      const age = Math.round((Date.now() - new Date(t).getTime()) / 60000);
+      toast('💾 Restored ' + (patients.length) + ' patients from local backup (' + age + ' min old).', 'info');
+    }
+    if (typeof renderPatients === 'function') renderPatients();
+    if (typeof renderActiveVisits === 'function') renderActiveVisits();
+  } catch(e) { console.warn('Local restore failed:', e.message); }
+}
+
+// Auto-save every 30s and on window unload
+setInterval(() => {
+  if (typeof patients !== 'undefined' && patients.length) saveToLocalStorage();
+}, 30000);
+window.addEventListener('beforeunload', () => {
+  if (typeof patients !== 'undefined' && patients.length) saveToLocalStorage();
+});
+
+
+// ──────────────────────────────────────────────
+// PRINTING: results-only and full consultation
+// ──────────────────────────────────────────────
+function printResultsOnly(vid) {
+  const v = visits.find(x => x.id === vid); if (!v) { toast('Visit not found.','error'); return; }
+  const p = patients.find(x => x.id === v.patId) || {};
+  const released = (v.labs||[]).filter(l => l.released);
+  const reportedImaging = (v.radiology||[]).filter(r => r.done && r.result);
+  if (!released.length && !reportedImaging.length) {
+    toast('No released results to print.', 'info');
+    return;
+  }
+  const hospName = (allHospitals && allHospitals[0]?.name) || 'iCURE Medical Centre';
+  const hospBranch = (allHospitals && allHospitals[0]?.branch) || 'Juba, South Sudan';
+  const html = `<!DOCTYPE html><html><head><title>Results — ${v.name}</title>
+<style>
+  body{font-family:Arial,sans-serif;max-width:780px;margin:20px auto;padding:0 20px;font-size:13px;color:#222;}
+  h1{margin:0;font-size:20px;color:#0f766e;border-bottom:2px solid #0f766e;padding-bottom:6px;}
+  h2{margin:20px 0 8px;font-size:14px;color:#0f766e;border-bottom:1px dashed #ccc;padding-bottom:3px;}
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;}
+  .pinfo{margin:8px 0;font-size:12px;}
+  .pinfo b{color:#0f766e;}
+  table{width:100%;border-collapse:collapse;margin:8px 0;}
+  th{background:#f0fdf9;padding:7px;text-align:left;border-bottom:2px solid #0f766e;font-size:11px;text-transform:uppercase;}
+  td{padding:7px;border-bottom:1px solid #ddd;font-size:12px;}
+  .crit{background:#fee2e2;color:#991b1b;font-weight:700;}
+  .footer{margin-top:30px;padding-top:14px;border-top:1px solid #ccc;font-size:11px;color:#666;}
+  .sig{margin-top:40px;display:grid;grid-template-columns:1fr 1fr;gap:30px;}
+  .sig-box{border-top:1px solid #444;padding-top:5px;font-size:11px;}
+  @media print{button{display:none;}}
+</style></head><body>
+<div class="hdr">
+  <div>
+    <h1>${hospName}</h1>
+    <div style="font-size:11px;color:#666;">${hospBranch}</div>
+  </div>
+  <div style="text-align:right;font-size:11px;color:#666;">
+    <div><b>Printed:</b> ${new Date().toLocaleString()}</div>
+    <div><b>Printed by:</b> ${currentUser?.name||'—'}</div>
+  </div>
+</div>
+<h2>📋 LABORATORY & IMAGING RESULTS</h2>
+<div class="pinfo">
+  <b>Patient:</b> ${v.name} &nbsp; | &nbsp; <b>ID:</b> ${p.patNum||'—'} &nbsp; | &nbsp; <b>Age/Sex:</b> ${p.ageVal||'?'}${(p.ageUnit||'y')[0]}/${p.gender||'?'} &nbsp; | &nbsp; <b>Visit:</b> ${v.date}
+  ${v.clinical?.cFinalDx ? '<br><b>Working Dx:</b> ' + v.clinical.cFinalDx : ''}
+</div>
+${released.length ? `
+<h2>🔬 LAB RESULTS</h2>
+<table>
+  <tr><th>Test</th><th>Sample ID</th><th>Result</th><th>Reference</th><th>Released</th></tr>
+  ${released.map(l => `<tr ${l.isCritical?'class="crit"':''}>
+    <td><b>${l.name}</b>${l.isCritical?' ⚠️ CRITICAL':''}</td>
+    <td>${l.sampleId||'—'}</td>
+    <td>${l.result||'—'}</td>
+    <td>${l.refRange||'—'}</td>
+    <td>${l.releasedAt ? new Date(l.releasedAt).toLocaleString() : '—'}<br><span style="font-size:10px;color:#666;">By: ${l.releasedBy||'—'}</span></td>
+  </tr>`).join('')}
+</table>` : ''}
+${reportedImaging.length ? `
+<h2>🩻 IMAGING REPORTS</h2>
+${reportedImaging.map(r => `
+  <div style="margin-bottom:14px;padding:10px;border:1px solid #ddd;border-radius:5px;">
+    <div style="font-weight:700;color:#0f766e;margin-bottom:5px;">${r.name}</div>
+    <div style="white-space:pre-wrap;font-size:12px;">${r.result}</div>
+    <div style="font-size:10px;color:#666;margin-top:6px;">Reported by ${r.reportedBy||'—'} on ${r.reportedAt ? new Date(r.reportedAt).toLocaleString() : '—'}</div>
+  </div>
+`).join('')}` : ''}
+<div class="sig">
+  <div class="sig-box">Reviewed by:<br><br>Dr. ${currentUser?.name||'_______________'}</div>
+  <div class="sig-box">Date / Signature:<br><br>_______________</div>
+</div>
+<div class="footer">${hospName} · ${hospBranch} · Generated by MediTrack Pro</div>
+<script>window.print();<\/script>
+</body></html>`;
+  const w = window.open('', '_blank');
+  if (!w) { toast('Pop-up blocked. Allow pop-ups to print.','error'); return; }
+  w.document.write(html); w.document.close();
+}
+
+function printFullConsultation(vid) {
+  const v = visits.find(x => x.id === vid); if (!v) { toast('Visit not found.','error'); return; }
+  const p = patients.find(x => x.id === v.patId) || {};
+  const cl = v.clinical || {};
+  const labs = (v.labs||[]).filter(l => l.name);
+  const rx = (v.prescriptions||[]).filter(r => r.name);
+  const rad = (v.radiology||[]).filter(r => r.name);
+  const proc = (v.procedures||[]).filter(p => p.name);
+  const hospName = (allHospitals && allHospitals[0]?.name) || 'iCURE Medical Centre';
+  const hospBranch = (allHospitals && allHospitals[0]?.branch) || 'Juba, South Sudan';
+  const sec = (title, body) => body ? `<div class="sec"><h3>${title}</h3><div>${body}</div></div>` : '';
+  const html = `<!DOCTYPE html><html><head><title>Consultation — ${v.name}</title>
+<style>
+  body{font-family:Arial,sans-serif;max-width:800px;margin:18px auto;padding:0 20px;font-size:12px;color:#222;line-height:1.5;}
+  h1{margin:0;font-size:20px;color:#0f766e;border-bottom:2px solid #0f766e;padding-bottom:6px;}
+  h2{margin:18px 0 6px;font-size:13px;color:#0f766e;border-bottom:1px dashed #ccc;padding-bottom:3px;text-transform:uppercase;letter-spacing:.05em;}
+  h3{margin:10px 0 3px;font-size:12px;color:#444;font-weight:700;}
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+  .pinfo{padding:8px 12px;background:#f0fdf9;border-radius:5px;margin:8px 0;}
+  .pinfo b{color:#0f766e;}
+  .sec{margin:8px 0;}
+  .sec div{margin-left:0;white-space:pre-wrap;}
+  table{width:100%;border-collapse:collapse;margin:6px 0;font-size:11px;}
+  th{background:#f0fdf9;padding:6px;text-align:left;border-bottom:1px solid #0f766e;}
+  td{padding:6px;border-bottom:1px solid #eee;}
+  .crit{background:#fee2e2;color:#991b1b;font-weight:700;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .footer{margin-top:24px;padding-top:10px;border-top:1px solid #ccc;font-size:10px;color:#666;text-align:center;}
+  @media print{button{display:none;}}
+</style></head><body>
+<div class="hdr">
+  <div>
+    <h1>${hospName}</h1>
+    <div style="font-size:10px;color:#666;">${hospBranch}</div>
+  </div>
+  <div style="text-align:right;font-size:10px;color:#666;">
+    <div><b>Printed:</b> ${new Date().toLocaleString()}</div>
+    <div><b>By:</b> ${currentUser?.name||'—'}</div>
+  </div>
+</div>
+<div class="pinfo">
+  <div class="grid">
+    <div><b>Patient:</b> ${v.name}</div>
+    <div><b>Patient ID:</b> ${p.patNum||'—'}</div>
+    <div><b>Age/Sex:</b> ${p.ageVal||'?'}${(p.ageUnit||'y')[0]}/${p.gender||'?'}</div>
+    <div><b>Visit Date:</b> ${v.date}</div>
+    <div><b>Phone:</b> ${p.phone||'—'}</div>
+    <div><b>Type:</b> ${v.consultType||'GENERAL'}</div>
+  </div>
+</div>
+<h2>HISTORY</h2>
+${sec('Presenting Complaint (PC)', cl.hPC)}
+${sec('History of Presenting Complaint (HPC)', cl.hHPC)}
+${sec('Past Medical & Surgical History', cl.hPMH)}
+${sec('Drug History', cl.hDrug)}
+${sec('Allergies', cl.hAllergy)}
+${sec('Family & Social History', cl.hFSH)}
+${cl.hOG ? sec('Obstetric/Gynae', cl.hOG) : ''}
+${cl.hLMP ? sec('LMP', cl.hLMP) : ''}
+${v.vitals ? `<h2>VITALS</h2><div class="grid"><div><b>BP:</b> ${v.vitals.bp||'—'}</div><div><b>Temp:</b> ${v.vitals.temp||'—'}°C</div><div><b>Pulse:</b> ${v.vitals.pulse||'—'}</div><div><b>SpO₂:</b> ${v.vitals.spo2||'—'}%</div><div><b>Wt:</b> ${v.vitals.weight||'—'}kg</div><div><b>BMI:</b> ${v.vitals.bmi||'—'}</div></div>` : ''}
+<h2>EXAMINATION</h2>
+${sec('General Appearance', cl.hPEGeneral)}
+${sec('Head & Neck', cl.hPEHead)}
+${sec('Chest / Respiratory', cl.hPEChest)}
+${sec('Cardiovascular', cl.hPECVS)}
+${sec('Abdomen', cl.hPEAbdomen)}
+${sec('CNS / Neurological', cl.hPECNS)}
+${sec('Extremities / MSK', cl.hPEExtremities)}
+${sec('Skin', cl.hPESkin)}
+${sec('Other Findings', cl.hPEOther)}
+<h2>ASSESSMENT & PLAN</h2>
+${sec('Differential Diagnosis', cl.cDiffDx)}
+${sec('Working Diagnosis', cl.cFinalDx)}
+${sec('Doctor Notes & Plan', cl.cNotes)}
+${sec('Patient Recommendations', cl.cRecommendations)}
+${cl.returnDate ? sec('Follow-up Return', cl.returnDate + (cl.returnNote ? ' — ' + cl.returnNote : '')) : ''}
+${labs.length ? `
+<h2>LABORATORY ORDERS / RESULTS</h2>
+<table>
+  <tr><th>Test</th><th>Sample ID</th><th>Status</th><th>Result</th></tr>
+  ${labs.map(l => `<tr ${l.isCritical?'class="crit"':''}>
+    <td><b>${l.name}</b></td>
+    <td>${l.sampleId||'—'}</td>
+    <td>${l.released?'✅ Released':l.result?'📝 Review':l.sampleId?'🧪 Sampled':'⏳ Pending'}</td>
+    <td>${l.result || '—'}</td>
+  </tr>`).join('')}
+</table>` : ''}
+${rad.length ? `
+<h2>IMAGING ORDERS / REPORTS</h2>
+${rad.map(r => `<div style="margin:6px 0;padding:7px;border:1px solid #eee;border-radius:4px;">
+  <b>${r.name}</b> — ${r.done?'✅ Reported':'⏳ Pending'}
+  ${r.result ? '<div style="margin-top:4px;white-space:pre-wrap;">' + r.result + '</div>' : ''}
+</div>`).join('')}` : ''}
+${rx.length ? `
+<h2>PRESCRIPTIONS</h2>
+<table>
+  <tr><th>Medicine</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Instructions</th></tr>
+  ${rx.map(r => `<tr>
+    <td><b>${r.name}</b> ${r.strength||''}</td>
+    <td>${r.qty||1}</td>
+    <td>$${(r.price||0).toFixed(2)}</td>
+    <td>$${((r.qty||1)*(r.price||0)).toFixed(2)}</td>
+    <td>${r.instructions||r.dosage||'—'}</td>
+  </tr>`).join('')}
+</table>` : ''}
+${proc.length ? `
+<h2>PROCEDURES ORDERED</h2>
+<ul>${proc.map(pr => `<li>${pr.name}${pr.notes?' — '+pr.notes:''}</li>`).join('')}</ul>` : ''}
+<div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:30px;">
+  <div style="border-top:1px solid #444;padding-top:5px;font-size:10px;">Doctor Signature<br><br>${currentUser?.name||'_______________'}</div>
+  <div style="border-top:1px solid #444;padding-top:5px;font-size:10px;">Date<br><br>${new Date().toLocaleDateString()}</div>
+</div>
+<div class="footer">${hospName} · ${hospBranch} · Generated by MediTrack Pro</div>
+<script>window.print();<\/script>
+</body></html>`;
+  const w = window.open('', '_blank');
+  if (!w) { toast('Pop-up blocked. Allow pop-ups to print.','error'); return; }
+  w.document.write(html); w.document.close();
+}
+
 // ══════════════════════════════════════════════
 // BOOT / INIT  
 // ══════════════════════════════════════════════
@@ -8104,6 +8603,8 @@ function restockLabConsumable() {
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button onclick="saveClinical()" class="bp" style="background:#fff;color:var(--p);font-weight:700;">💾 Save</button>
+            <button onclick="printAllResults()" style="background:rgba(255,255,255,.25);color:#fff;border:1px solid rgba(255,255,255,.4);" title="Print all lab + imaging results only">🔬 Print Results</button>
+            <button onclick="printWholeConsultation()" style="background:rgba(255,255,255,.25);color:#fff;border:1px solid rgba(255,255,255,.4);" title="Print full consultation note">📄 Print Note</button>
             <button onclick="endVisit()" style="background:#10b981;color:#fff;">✅ Discharge</button>
             <button onclick="closeConsForm()" style="background:rgba(255,255,255,.2);color:#fff;">✕</button>
           </div>
@@ -8113,11 +8614,11 @@ function restockLabConsumable() {
         <div class="cf-tabs">
           <button class="cft active" data-tab="overview"  onclick="cfTab('overview')">📊 Overview</button>
           <button class="cft" data-tab="clinical"  onclick="cfTab('clinical')">📝 Clinical Notes</button>
-          <button class="cft" data-tab="timeline"  onclick="cfTab('timeline')">⏱️ Timeline</button>
-          <button class="cft" data-tab="triage"    onclick="cfTab('triage')">🌡️ Triage Info</button>
-          <button class="cft" data-tab="rx"        onclick="cfTab('rx')">💊 Prescription</button>
           <button class="cft" data-tab="lab"       onclick="cfTab('lab')">🔬 Laboratory</button>
           <button class="cft" data-tab="services"  onclick="cfTab('services')">🩻 Other Services</button>
+          <button class="cft" data-tab="rx"        onclick="cfTab('rx')">💊 Prescription</button>
+          <button class="cft" data-tab="triage"    onclick="cfTab('triage')">🌡️ Triage Info</button>
+          <button class="cft" data-tab="timeline"  onclick="cfTab('timeline')">⏱️ Timeline</button>
           <button class="cft" data-tab="docs"      onclick="cfTab('docs')">📎 Documents</button>
         </div>
 
@@ -8286,7 +8787,10 @@ function restockLabConsumable() {
           <div class="card" style="margin:0;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
               <p style="font-size:11px;font-weight:700;color:var(--mu);margin:0;">REQUESTED TESTS &amp; RESULTS</p>
-              <button class="bsm bo" onclick="refreshLabsForVisit()">🔄 Refresh</button>
+              <div style="display:flex;gap:5px;">
+                <button class="bsm bp" onclick="printAllResults()">🖨️ Print All Results</button>
+                <button class="bsm bo" onclick="refreshLabsForVisit()">🔄 Refresh</button>
+              </div>
             </div>
             <div id="cons-lab-status-list"></div>
           </div>

@@ -5381,28 +5381,7 @@ async function saveClinical(){
   // Refresh related sections
   if(typeof renderLabPick === 'function') renderLabPick();
   if(typeof renderPharmPending === 'function') renderPharmPending();
-}function saveClinical(){
-  const v=visits.find(x=>x.id===activeVid);if(!v)return;
-  v.clinical=v.clinical||{};
-  v.clinical.pc=document.getElementById('hPC').value;v.clinical.hpc=document.getElementById('hHPC').value;
-  v.clinical.pmh=document.getElementById('hPMH').value;v.clinical.lmp=document.getElementById('hLMP').value;
-  v.clinical.gravPara=document.getElementById('hGP').value;v.clinical.obsGyn=document.getElementById('hOG').value;
-  v.clinical.fsh=document.getElementById('hFSH').value;v.clinical.drugHx=document.getElementById('hDrug').value;
-  v.clinical.allergies=document.getElementById('hAllergy').value;v.clinical.diffDx=document.getElementById('cDiffDx').value;
-  v.clinical.finalDx=document.getElementById('cFinalDx').value;v.clinical.notes=document.getElementById('cNotes').value;
-  v.clinical.recommendations=document.getElementById('cRecommendations').value;
-  v.clinical.returnDate=document.getElementById('c-return-date')?.value||'';
-  v.clinical.returnNote=document.getElementById('c-return-note')?.value||'';
-  v.clinical.peGeneral=document.getElementById('hPEGeneral').value;v.clinical.peHead=document.getElementById('hPEHead').value;
-  v.clinical.peChest=document.getElementById('hPEChest').value;v.clinical.peCVS=document.getElementById('hPECVS').value;
-  v.clinical.peAbdomen=document.getElementById('hPEAbdomen').value;v.clinical.peCNS=document.getElementById('hPECNS').value;
-  v.clinical.peExtremities=document.getElementById('hPEExtremities').value;v.clinical.peSkin=document.getElementById('hPESkin').value;
-  v.clinical.peOther=document.getElementById('hPEOther').value;
-  if(!v.cleared.includes('Doctor'))v.cleared.push('Doctor');
-  auditLog('UPDATE','visits',v.sbId||v.id,{action:'Clinical notes saved'});// (Supabase saves handled per-operation)
-}
-
-// ── buildVitalsTrendChart (adapted from b9) ──
+}// ── buildVitalsTrendChart (adapted from b9) ──
 function buildVitalsTrendChart(patId){
   const wrap=document.getElementById('vitals-trend-wrap');
   const lbl=document.getElementById('vitals-trend-label');

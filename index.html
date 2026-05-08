@@ -2628,106 +2628,76 @@ function switchVitalChart(type,btn){
   _vtChart=new Chart(ctx,{type:'line',data:{labels:d.labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}}},scales:{y:{beginAtZero:false}}}});
 }
 
-function openCons(id){
-  activeVid=id;
-  const v=visits.find(x=>x.id===id);if(!v)return;
-  const p=patients.find(x=>x.id===v.patId);
-  gid('c-name').innerText=v.name;
-  gid('c-date').innerText=v.date;
-  gid('c-pay').innerHTML=payBadge(v);
-  const ctCls={GENERAL:'ct-gen',LAB_ONLY:'ct-lab',RADIOLOGY:'ct-rad',DENTAL:'ct-spc',ENT:'ct-spc',OTHER_SPECIAL:'ct-spc'}[v.consultType]||'ct-gen';
-  gid('c-type-badge').innerHTML=`<span class="consult-type-badge ${ctCls}">${v.consultType||'GENERAL'}</span>`;
-  // Set consult type selector
-  const ctSel=gid('c-consult-type');if(ctSel)ctSel.value=v.consultType||'GENERAL';
-  // Previous visit history
-  const prevVists=visits.filter(x=>x.patId===v.patId&&x.id!==id).slice(0,3);
-  gid('c-hist').innerHTML=prevVists.length
-    ?prevVists.map(pv=>`<div style="margin-bottom:4px;"><span style="font-weight:700;">${pv.date}</span> — ${pv.clinical?.finalDx||pv.clinical?.cFinalDx||'No Dx'} <span class="badge bgr" style="font-size:9px;">${pv.status.replace(/_/g,' ')}</span></div>`).join('')
-    :'<span style="color:var(--mu);">New patient — no previous visits</span>';
-  // Allergy banner
-  const alg=gid('allergy-banner');
-  if(alg){
-    if(p&&(v.clinical?.hAllergy||p.allergies)){
-      const algText=v.clinical?.hAllergy||p.allergies||'';
-      alg.style.display=algText?'block':'none';
-      alg.innerHTML=`⚠️ <strong>ALLERGIES:</strong> ${algText}`;
-    } else alg.style.display='none';
-  }
-  // Show OB/GYN block for female
-  gid('ogBlock').style.display=p?.gender==='Female'?'block':'none';
-  // Vitals
-  const vVitals=gid('c-vitals');
-  if(v.vitals){
-    vVitals.style.display='block';
-    const bp=v.vitals.bp||'—';const temp=v.vitals.temp||'—';const pulse=v.vitals.pulse||'—';
-    const spo2=v.vitals.spo2||'—';const w=v.vitals.weight||'—';const h=v.vitals.height||'—';
-    let bmi='';if(v.vitals.weight&&v.vitals.height){const bv=parseFloat(v.vitals.weight)/((parseFloat(v.vitals.height)/100)**2);bmi=` | BMI: ${bv.toFixed(1)}`;}
-    vVitals.innerHTML=`💓 BP: <b>${bp}</b> &nbsp;|&nbsp; 🌡️ Temp: <b>${temp}°C</b> &nbsp;|&nbsp; ❤️ Pulse: <b>${pulse}</b> &nbsp;|&nbsp; 🫁 SpO2: <b>${spo2}%</b> &nbsp;|&nbsp; ⚖️ Wt: <b>${w}kg</b>${bmi}`;
-  } else {
-    vVitals.style.display='none';
-  }
-  // Vitals trend
-  const pvs=visits.filter(x=>x.patId===v.patId&&x.vitals).slice(-8);
-  const vtWrap=gid('vitals-trend-wrap');
-  if(pvs.length>=2&&vtWrap){
-    vtWrap.style.display='block';
-    window._vConsultData={
-      labels:pvs.map(x=>x.date),
-      bp:{sys:pvs.map(x=>{const pp=(x.vitals?.bp||'').split('/');return pp[0]?parseInt(pp[0]):null;}),dia:pvs.map(x=>{const pp=(x.vitals?.bp||'').split('/');return pp[1]?parseInt(pp[1]):null;})},
-      temp:pvs.map(x=>x.vitals?.temp?parseFloat(x.vitals.temp):null),
-      weight:pvs.map(x=>x.vitals?.weight?parseFloat(x.vitals.weight):null),
-      pulse:pvs.map(x=>x.vitals?.pulse?parseInt(x.vitals.pulse):null),
-    };
-    setTimeout(()=>switchVitalChart('bp',document.querySelector('#vitals-trend-wrap .vt-btn.active')),100);
-  } else if(vtWrap) vtWrap.style.display='none';
-  // Lab/Rad result panels
-  const labPanel=gid('lab-res-panel');
-  const labs=(v.labs||[]).filter(l=>l.done);
-  if(labs.length&&labPanel){
-    labPanel.style.display='block';
-    gid('lab-res-display').innerHTML=labs.map(l=>`<div style="margin-bottom:6px;padding:7px 10px;background:var(--lt);border-radius:5px;font-size:12px;"><b>${l.name}</b>: ${l.result||'Pending'}</div>`).join('');
-  } else if(labPanel)labPanel.style.display='none';
-  // Populate existing clinical data
-  const cl=v.clinical||{};
-  ['hPC','hHPC','hPMH','hOG','hFSH','hDrug','hAllergy','hPEGeneral','hPEHead','hPEChest','hPECVS','hPEAbdomen','hPECNS','hPEExtremities','hPESkin','hPEOther','cDiffDx','cFinalDx','cNotes','cRecommendations'].forEach(fid=>{
-    const el=gid(fid);if(el&&cl[fid])el.value=cl[fid];
+function openCons(id) {
+  activeVid = id;
+  const v = visits.find(x => x.id === id);
+  if (!v) { toast('Visit not found.', 'error'); return; }
+  const p = patients.find(x => x.id === v.patId) || {};
+
+  // Show OB/GYN block for female only
+  const og = gid('ogBlock'); if (og) og.style.display = p.gender === 'Female' ? 'block' : 'none';
+
+  // Populate clinical text fields from saved data
+  const cl = v.clinical || {};
+  ['hPC','hHPC','hPMH','hOG','hFSH','hDrug','hAllergy',
+   'hPEGeneral','hPEHead','hPEChest','hPECVS','hPEAbdomen','hPECNS','hPEExtremities','hPESkin','hPEOther',
+   'cDiffDx','cFinalDx','cNotes','cRecommendations'].forEach(fid => {
+    const el = gid(fid);
+    if (el) el.value = cl[fid] || '';
   });
-  if(gid('hLMP')&&cl.hLMP)gid('hLMP').value=cl.hLMP;
-  if(gid('hGP')&&cl.hGP)gid('hGP').value=cl.hGP;
-  if(gid('c-return-date')&&cl.returnDate)gid('c-return-date').value=cl.returnDate;
-  if(gid('c-return-note')&&cl.returnNote)gid('c-return-note').value=cl.returnNote;
-  // Populate lab/rad/proc orders
-  medRows=[]; radRows=[]; procRows=[]; medRowId=0; radRowId=0;
-  gid('med-orders-list').innerHTML='';
-  gid('rad-orders-list').innerHTML='';
-  gid('proc-orders-list').innerHTML='';
-  (v.prescriptions||[]).forEach(r=>addRxRow(r));
-  (v.radiology||[]).forEach(r=>addRadRow(r));
-  (v.procedures||[]).forEach(p=>addProcFromData(p));
-  // Populate lab chips
-  selectedLabTests=new Set((v.labs||[]).filter(l=>l.name).map(l=>l.name));
-  buildLabChips();
-  renderOrderSummary();
-  // Populate proc select
-  const procSel=gid('proc-order-select');
-  if(procSel){procSel.innerHTML='<option value="">-- Select procedure --</option>'+(window._nursingProcs||NURSING_PROCEDURES).map(p=>`<option value="${p.name}" data-price="${p.price}">${p.name} — $${p.price.toFixed(2)}</option>`).join('');}
-  // Show form
-  gid('cons-form').style.display='block';
-  gid('cons-form').scrollIntoView({behavior:'smooth'});
-  // Start on Overview tab and render header
-  setTimeout(() => { 
-    if(typeof cfTab === 'function') cfTab('overview'); 
-  }, 50);
-  v.status='WITH_DOCTOR';
-  // Default to Overview tab and populate it
-  setTimeout(()=>{
-    const firstTab = document.querySelector('.ct-tab');
-    if (firstTab) swCt('overview', firstTab);
-    if (typeof populateOverview === 'function') populateOverview();
-    if (typeof populateLabTab === 'function') populateLabTab();
+  if (gid('hLMP')) gid('hLMP').value = cl.hLMP || '';
+  if (gid('hGP'))  gid('hGP').value  = cl.hGP  || '';
+  if (gid('c-return-date')) gid('c-return-date').value = cl.returnDate || '';
+  if (gid('c-return-note')) gid('c-return-note').value = cl.returnNote || '';
+
+  // Reset row tracking and clear lists
+  medRows = []; radRows = []; procRows = [];
+  medRowId = 0; radRowId = 0;
+  const medList  = gid('med-orders-list');  if (medList)  medList.innerHTML = '';
+  const radList  = gid('rad-orders-list');  if (radList)  radList.innerHTML = '';
+  const procList = gid('proc-orders-list'); if (procList) procList.innerHTML = '';
+
+  // Repopulate prescription / radiology / procedure rows
+  (v.prescriptions || []).forEach(r => { if (typeof addRxRow === 'function') addRxRow(r); });
+  (v.radiology    || []).forEach(r => { if (typeof addRadRow === 'function') addRadRow(r); });
+  (v.procedures   || []).forEach(pr => { if (typeof addProcFromData === 'function') addProcFromData(pr); });
+
+  // Lab chips - mark already-ordered tests as selected
+  selectedLabTests = new Set((v.labs || []).filter(l => l.name).map(l => l.name));
+  if (typeof buildLabChips === 'function') buildLabChips();
+
+  // Procedure dropdown
+  const procSel = gid('proc-order-select');
+  if (procSel) {
+    procSel.innerHTML = '<option value="">-- Select procedure --</option>' +
+      (window._nursingProcs || NURSING_PROCEDURES).map(pr =>
+        `<option value="${pr.name}" data-price="${pr.price}">${pr.name} — $${pr.price.toFixed(2)}</option>`
+      ).join('');
+  }
+
+  // Show the form
+  const form = gid('cons-form');
+  if (form) {
+    form.style.display = 'block';
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Mark visit as in consultation
+  v.status = 'WITH_DOCTOR';
+
+  // Default Rx date and billing
+  const rxDate = gid('rx-date'); if (rxDate && !rxDate.value) rxDate.value = new Date().toISOString().split('T')[0];
+  const rxBill = gid('rx-billing'); if (rxBill) rxBill.value = v.payer || 'cash';
+
+  // Default to Overview tab and render its content
+  setTimeout(() => {
+    if (typeof cfTab === 'function') cfTab('overview');
     if (typeof updateOrderSummary === 'function') updateOrderSummary(v);
+    if (typeof checkAllergyAlert === 'function') checkAllergyAlert(v);
   }, 50);
-  renderCons();
+
+  // Refresh queue
+  if (typeof renderCons === 'function') renderCons();
 }
 
 function closeConsForm(){
@@ -5150,11 +5120,18 @@ async function dispenseOne(vid, rxId) {
     }
   }
   if (!isDemoMode() && v.sbId) {
+    // Save FULL dispensing state including partial quantities
     await sb.from('prescriptions').update({
       dispensed: rx.dispensed,
+      dispensed_qty: rx.dispensedQty || 0,
+      partially_dispensed: rx.partiallyDispensed || false,
       dispensed_by: currentUser?.name,
-      dispensed_at: new Date().toISOString()
-    }).eq('visit_id', v.sbId).eq('drug_name', rx.name).catch(()=>{});
+      dispensed_at: new Date().toISOString(),
+      dispensed_time: rx.dispensedTime,
+      dispensed_date: rx.dispensedDate
+    }).eq('visit_id', v.sbId).eq('drug_name', rx.name).catch(err => {
+      console.warn('Prescription dispense save error:', err.message);
+    });
   }
   
   if (typeof auditLog === 'function') auditLog('UPDATE','prescriptions',v.sbId||v.id,{action:'Dispensed ' + rx.name + ' × ' + dispQty});
@@ -7407,13 +7384,28 @@ async function administerDose(vid, rxIdx) {
     nurse: currentUser?.name
   });
   if (!isDemoMode() && v.sbId) {
+    // Insert MAR record
     await sb.from('treatment_chart').insert({
       visit_id: v.sbId, patient_id: v.patId, hospital_id: currentHospital,
       drug_name: r.name, dose: (r.strength||'') + ' x ' + units,
       route: r.formulation, administered_time: new Date().toLocaleTimeString(),
       administered_date: new Date().toISOString().split('T')[0],
       nurse_name: currentUser?.name
-    }).catch(()=>{});
+    }).catch(err => console.warn('MAR insert err:', err.message));
+    // Update prescription with administered count so doctor sees it too
+    if (r.sbId) {
+      await sb.from('prescriptions').update({
+        administered: newAdmin,
+        last_administered_by: currentUser?.name,
+        last_administered_at: new Date().toISOString()
+      }).eq('id', r.sbId).catch(err => console.warn('Rx admin update err:', err.message));
+    } else {
+      await sb.from('prescriptions').update({
+        administered: newAdmin,
+        last_administered_by: currentUser?.name,
+        last_administered_at: new Date().toISOString()
+      }).eq('visit_id', v.sbId).eq('drug_name', r.name).catch(err => console.warn('Rx admin update err:', err.message));
+    }
   }
   toast('💊 ' + r.name + ' administered.', 'success');
   speak('');
@@ -9392,93 +9384,4 @@ setInterval(() => {
 </div>
 
 </body>
-</html>async function dispenseOne(vid, rxId) {
-  const v = visits.find(x => x.id === vid); if (!v) return;
-  const rx = (v.prescriptions||[]).find(r => (r.id || r.name) === rxId); if (!rx) return;
-  if (rx.dispensed) { toast('Already dispensed.', 'info'); return; }
-  // Prompt for quantity to dispense (might be partial)
-  const totalNeeded = rx.qty || 1;
-  const inputQty = prompt('Dispense quantity for ' + rx.name + ':\n(Prescribed: ' + totalNeeded + ')', String(totalNeeded));
-  if (!inputQty) return;
-  const dispenseQty = parseInt(inputQty);
-  if (isNaN(dispenseQty) || dispenseQty < 1) { toast('Invalid quantity.', 'error'); return; }
-  if (dispenseQty > totalNeeded) { toast('Cannot dispense more than prescribed.', 'error'); return; }
-  // Check stock
-  const item = (inventory||[]).find(i => i.name === rx.name);
-  if (!item || item.stock < dispenseQty) {
-    toast('Insufficient stock: ' + rx.name + '. Available: ' + (item ? item.stock : 0), 'error');
-    return;
-  }
-  item.stock -= dispenseQty;
-  rx.qtyDispensed = (rx.qtyDispensed || 0) + dispenseQty;
-  rx.dispensed = (rx.qtyDispensed >= totalNeeded);
-  rx.dispensedTime = new Date().toLocaleTimeString();
-  rx.dispensedBy = currentUser?.name;
-  if (!isDemoMode()) {
-    if (item.sbId) await sb.from('inventory').update({quantity: item.stock}).eq('id', item.sbId).catch(()=>{});
-    if (v.sbId && rx.sbId) {
-      await sb.from('prescriptions').update({
-        dispensed: rx.dispensed, dispensed_by: currentUser?.name, dispensed_at: new Date().toISOString()
-      }).eq('id', rx.sbId).catch(()=>{});
-    }
-  }
-  if (typeof checkFullyDispensed === 'function') checkFullyDispensed(v);
-  const partial = dispenseQty < totalNeeded ? ' (partial: ' + dispenseQty + '/' + totalNeeded + ')' : '';
-  toast('💊 ' + rx.name + ' x' + dispenseQty + partial + ' dispensed', 'success');
-  speak('');
-  if (typeof renderPharmPending === 'function') renderPharmPending();
-  if (typeof renderPharmIncomplete === 'function') renderPharmIncomplete();
-  if (typeof renderPharm === 'function') renderPharm();
-}async function dispenseOne(vid,rxId){
-  const v=visits.find(x=>x.id===vid);if(!v)return;
-  const rx=(v.prescriptions||[]).find(r=>(r.id||r.name)===rxId);if(!rx)return;
-  if(rx.dispensed){toast(rx.name+' already fully dispensed','info');return;}
-  // Calculate remaining quantity
-  const prescribed = rx.qty || 1;
-  const alreadyGiven = rx.dispensedQty || 0;
-  const remaining = prescribed - alreadyGiven;
-  if(remaining <= 0){
-    rx.dispensed = true;
-    toast(rx.name+' fully dispensed already.','info');
-    renderPharmPending();return;
-  }
-  // Prompt for quantity to dispense
-  const qInput = prompt(`💊 Dispense: ${rx.name}\n\nPrescribed: ${prescribed}\nAlready given: ${alreadyGiven}\nRemaining: ${remaining}\n\nQuantity to dispense now (max ${remaining}):`, remaining);
-  if(qInput === null) return;
-  const qty = parseInt(qInput);
-  if(isNaN(qty) || qty <= 0){toast('Invalid quantity.','error');return;}
-  if(qty > remaining){toast('Cannot dispense more than remaining ('+remaining+')','error');return;}
-  // Check stock
-  const item=(inventory||[]).find(i=>i.name===rx.name&&(i.invSection==='general'||!i.invSection));
-  if(item){
-    const stock = item.stock || item.quantity || 0;
-    if(stock<qty){
-      toast('Insufficient stock: '+rx.name+'. Have: '+stock+', Need: '+qty,'error');
-      return;
-    }
-    if(item.stock !== undefined) item.stock -= qty;
-    else item.quantity = stock - qty;
-  }
-  // Update dispensed quantity
-  rx.dispensedQty = (rx.dispensedQty || 0) + qty;
-  rx.dispensedTime = new Date().toLocaleTimeString();
-  rx.dispensedBy = currentUser?.name;
-  // Mark fully dispensed if all given
-  if(rx.dispensedQty >= prescribed) rx.dispensed = true;
-  // Save to Supabase
-  if(!isDemoMode()){
-    if(item && item.sbId){
-      await sb.from('inventory').update({quantity:item.stock||item.quantity}).eq('id',item.sbId).catch(()=>{});
-    }
-    if(v.sbId){
-      const update = {dispensed: rx.dispensed, dispensed_by: currentUser?.name};
-      if(rx.dispensed) update.dispensed_at = new Date().toISOString();
-      await sb.from('prescriptions').update(update).eq('visit_id',v.sbId).eq('drug_name',rx.name).catch(()=>{});
-    }
-  }
-  checkFullyDispensed(v);
-  toast(`💊 ${rx.name}: ${qty} dispensed (${rx.dispensedQty}/${prescribed})`+(rx.dispensed?' — COMPLETE':''),'success');
-  speak('');
-  renderPharmPending();
-  if(typeof renderPharmIncomplete === 'function') renderPharmIncomplete();
-}
+</html>

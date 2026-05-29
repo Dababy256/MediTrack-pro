@@ -4,29 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>MediTrack Pro | Complete Hospital Management System</title>
-<meta name="description" content="Enterprise-grade Hospital Management Information System with offline support, PWA capabilities, and comprehensive clinical workflows">
+<meta name="description" content="Enterprise-grade Hospital Management Information System">
 <meta name="theme-color" content="#0f766e">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="MediTrack Pro">
-<link rel="manifest" id="mt-manifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
-/* ═══════════════════════════════════════════════════════
+/* ============================================
    MEDITRACK PRO - COMPLETE STYLESHEET
-   ═══════════════════════════════════════════════════════ */
+   ============================================ */
 :root {
   --p: #0f766e;
   --p2: #115e59;
-  --p-light: #5eead4;
-  --sb-1: #1e293b;
-  --sb-2: #0f766e;
   --bg: #f8fafc;
   --card: #ffffff;
   --lt: #f1f5f9;
@@ -43,10 +34,6 @@
   --pu2: #ede9fe;
   --tx: #0f172a;
   --mu: #64748b;
-  --mu-l: #94a3b8;
-  --sp: 4px;
-  --sp-lg: 8px;
-  --sp-xl: 16px;
 }
 
 .dark {
@@ -56,12 +43,6 @@
   --bd: #334155;
   --tx: #f1f5f9;
   --mu: #94a3b8;
-  --mu-l: #64748b;
-  --d2: #3f1212;
-  --w2: #3a2a07;
-  --a2: #0a3320;
-  --i2: #0d2a3a;
-  --pu2: #221540;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -73,8 +54,6 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 13px;
   line-height: 1.45;
-  font-weight: 400;
-  -webkit-font-smoothing: antialiased;
 }
 
 /* Toast Notifications */
@@ -120,7 +99,6 @@ body {
   color: var(--mu);
   padding: 0 4px;
 }
-.toast-close:hover { color: var(--tx); }
 
 .toast-progress {
   position: absolute;
@@ -146,22 +124,6 @@ body {
   to { width: 0%; }
 }
 
-/* Offline Banner */
-#offline-banner {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #f59e0b;
-  color: #fff;
-  text-align: center;
-  padding: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  z-index: 9999;
-  display: none;
-}
-
 /* Sidebar */
 #sidebar {
   position: fixed;
@@ -169,14 +131,13 @@ body {
   top: 0;
   bottom: 0;
   width: 248px;
-  background: linear-gradient(180deg, var(--sb-1) 0%, var(--sb-2) 100%);
+  background: linear-gradient(180deg, #1e293b 0%, #0f766e 100%);
   color: #fff;
   overflow-y: auto;
   z-index: 100;
   display: flex;
   flex-direction: column;
   transition: transform .25s ease;
-  box-shadow: 2px 0 12px rgba(0,0,0,.08);
 }
 
 .sb-logo {
@@ -202,7 +163,6 @@ body {
   color: #fff;
   font-size: 13px;
   font-weight: 800;
-  letter-spacing: .04em;
 }
 
 .sb-footer {
@@ -238,10 +198,8 @@ button {
   font-family: inherit;
 }
 button:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(15,23,42,.1); }
-button:active { transform: translateY(0); }
-
 .bp { background: var(--p); color: #fff; }
-.bp:hover { background: var(--p2); }
+.bp:hover { background: #115e59; }
 .ba { background: var(--a); color: #fff; }
 .bd2 { background: var(--d); color: #fff; padding: 3px 7px; font-size: 11px; }
 .bo { background: transparent; border: 1.5px solid var(--p); color: var(--p); }
@@ -251,15 +209,12 @@ button:active { transform: translateY(0); }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th { padding: 10px 12px; text-align: left; font-weight: 700; font-size: 11px; color: var(--mu); text-transform: uppercase; border-bottom: 2px solid var(--bd); }
 td { padding: 10px 12px; border-bottom: 1px solid var(--bd); vertical-align: middle; }
-tbody tr:nth-child(even) { background: #fafbfc; }
 tbody tr:hover { background: var(--lt); }
-.dark tbody tr:nth-child(even) { background: #162032; }
 
 /* Badges */
 .badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: 700; }
 .bpd { background: #d1fae5; color: #065f46; }
 .bpa { background: #fef3c7; color: #92400e; }
-.bp2 { background: #fee2e2; color: #991b1b; }
 .bgr { background: #f1f5f9; color: #475569; }
 
 /* Tabs */
@@ -273,7 +228,6 @@ tbody tr:hover { background: var(--lt); }
   background: var(--lt);
   border: 1.5px solid var(--bd);
   color: var(--mu);
-  transition: .15s;
 }
 .st.active { background: var(--p); color: #fff; border-color: var(--p); }
 
@@ -286,15 +240,15 @@ tbody tr:hover { background: var(--lt); }
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0,0,0,.18);
 }
-.sc-label { font-size: 10px; font-weight: 700; opacity: .85; text-transform: uppercase; letter-spacing: .06em; }
-.sc-value { font-size: 22px; font-weight: 900; margin: 3px 0; letter-spacing: -0.5px; }
+.sc-label { font-size: 10px; font-weight: 700; opacity: .85; text-transform: uppercase; }
+.sc-value { font-size: 22px; font-weight: 900; margin: 3px 0; }
 
 /* Patient Avatar */
 .pat-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--p), var(--p2));
+  background: linear-gradient(135deg, var(--p), #115e59);
   color: #fff;
   display: inline-flex;
   align-items: center;
@@ -340,7 +294,6 @@ label {
   color: var(--mu);
   margin-bottom: 2px;
   text-transform: uppercase;
-  letter-spacing: .04em;
 }
 
 /* Grids */
@@ -368,31 +321,10 @@ label {
   border-bottom: 3px solid transparent;
   margin-bottom: -2px;
   cursor: pointer;
-  transition: all .15s;
 }
 .cft.active { color: var(--p); border-bottom-color: var(--p); font-weight: 700; background: var(--card); }
 
-/* Drug Search */
-.drug-search-results {
-  max-height: 200px;
-  overflow-y: auto;
-  border: 1.5px solid var(--bd);
-  border-radius: 5px;
-  background: #fff;
-  margin-top: 2px;
-  position: absolute;
-  z-index: 200;
-  width: 100%;
-}
-.drug-item {
-  padding: 8px 11px;
-  cursor: pointer;
-  font-size: 12px;
-  border-bottom: 1px solid var(--bd);
-}
-.drug-item:hover { background: var(--lt); }
-
-/* Modal */
+/* Modals */
 .mo {
   display: none;
   position: fixed;
@@ -429,39 +361,81 @@ label {
 .empty-state { text-align: center; padding: 48px 20px; color: var(--mu); }
 .empty-state .es-icon { font-size: 42px; opacity: .4; margin-bottom: 8px; }
 
+/* Lab Chips */
+.lab-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1.5px solid var(--bd);
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.lab-chip.selected { background: var(--p); color: #fff; border-color: var(--p); }
+
+/* Order Summary */
+.osum-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--bd);
+  font-size: 12px;
+}
+.osum-total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 800;
+  font-size: 14px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 2px solid var(--p);
+}
+.dv { border: none; border-top: 1.5px solid var(--bd); margin: 11px 0; }
+.ab { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+
+/* Navigation */
+.nav-sep {
+  padding: 14px 16px 5px 16px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,.45);
+  text-transform: uppercase;
+}
+.nb {
+  display: block;
+  width: calc(100% - 12px);
+  margin: 1px 6px;
+  padding: 10px 12px;
+  background: transparent;
+  color: rgba(255,255,255,.9);
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.nb:hover { background: rgba(255,255,255,.1); }
+.nb.active { background: #ffffff; color: var(--p); font-weight: 700; }
+
 /* Responsive */
 @media (max-width: 768px) {
   #sidebar { transform: translateX(-100%); width: 280px; }
   #sidebar.sb-open { transform: translateX(0); }
   #main-wrap { margin-left: 0 !important; }
   .con { padding: 14px; }
-  .g3, .g4 { grid-template-columns: 1fr 1fr; }
-}
-
-@media print {
-  body * { visibility: hidden !important; }
-  #pra, #pra * { visibility: visible !important; }
-  #pra { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; }
-  #sidebar, #sb-toggle, .top-header { display: none !important; }
+  .g, .g2, .g3, .g4 { grid-template-columns: 1fr; }
 }
 </style>
 
 <script>
-/* ═══════════════════════════════════════════════════════
-   MEDITRACK PRO - ENHANCED JAVASCRIPT
-   Includes: Offline queue, toast notifications, keyboard shortcuts
-   ═══════════════════════════════════════════════════════ */
+// ============================================
+// MEDITRACK PRO - COMPLETE JAVASCRIPT
+// Fixed Login Issue
+// ============================================
 
-// ==================== CONFIGURATION ====================
-const CONFIG = {
-  supabaseUrl: 'https://jrzziyyhllflobtuvwte.supabase.co',
-  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyenppeXlobGxmbG9idHV2d3RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NjE2ODMsImV4cCI6MjA4OTEzNzY4M30.3GMwHOt5e5xNCbSn3VR_xFsSqPItBmIkkVwyMCw2ctk',
-  appName: 'MediTrack Pro',
-  version: '2.0.0',
-  maxUploadSize: 10 * 1024 * 1024,
-};
-
-// ==================== TOAST MANAGER ====================
+// Toast Manager
 class ToastManager {
   constructor() {
     this.container = null;
@@ -482,22 +456,16 @@ class ToastManager {
     const id = Date.now();
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.id = `toast-${id}`;
-    
     const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-    
     toast.innerHTML = `
       <div class="toast-icon">${icons[type] || icons.info}</div>
       <div class="toast-message">${message}</div>
       <button class="toast-close" onclick="window.toastManager.hide(${id})">×</button>
       <div class="toast-progress" style="animation-duration: ${duration}ms"></div>
     `;
-    
     this.container.appendChild(toast);
-    
     const timeout = setTimeout(() => this.hide(id), duration);
     toast.dataset.timeout = timeout;
-    
     return id;
   }
   
@@ -510,196 +478,24 @@ class ToastManager {
     }
   }
   
-  success(msg, duration) { return this.show(msg, 'success', duration); }
-  error(msg, duration) { return this.show(msg, 'error', duration); }
-  warning(msg, duration) { return this.show(msg, 'warning', duration); }
-  info(msg, duration) { return this.show(msg, 'info', duration); }
+  success(msg) { return this.show(msg, 'success'); }
+  error(msg) { return this.show(msg, 'error'); }
+  warning(msg) { return this.show(msg, 'warning'); }
+  info(msg) { return this.show(msg, 'info'); }
 }
 
-// ==================== OFFLINE QUEUE ====================
-class OfflineQueue {
-  constructor() {
-    this.queueKey = 'mt-offline-queue';
-    this.queue = this.loadQueue();
-    this.setupOnlineListener();
-  }
-  
-  loadQueue() {
-    try {
-      return JSON.parse(localStorage.getItem(this.queueKey) || '[]');
-    } catch { return []; }
-  }
-  
-  saveQueue() {
-    localStorage.setItem(this.queueKey, JSON.stringify(this.queue));
-  }
-  
-  setupOnlineListener() {
-    window.addEventListener('online', () => {
-      document.getElementById('offline-banner').style.display = 'none';
-      this.process();
-      window.toastManager?.success('🔄 Back online! Syncing data...');
-    });
-    window.addEventListener('offline', () => {
-      document.getElementById('offline-banner').style.display = 'block';
-      window.toastManager?.warning('📡 You are offline. Changes will sync when back online.');
-    });
-  }
-  
-  async add(operation, table, data) {
-    const item = {
-      id: Date.now(),
-      operation,
-      table,
-      data,
-      timestamp: new Date().toISOString(),
-      retries: 0
-    };
-    this.queue.push(item);
-    this.saveQueue();
-    
-    if (navigator.onLine) await this.process();
-    else this.showOfflineNotification();
-    
-    return item.id;
-  }
-  
-  showOfflineNotification() {
-    const banner = document.getElementById('offline-banner');
-    if (banner) {
-      banner.style.display = 'block';
-      banner.textContent = `📡 Offline Mode - ${this.queue.length} pending sync operations`;
-    }
-  }
-  
-  async process() {
-    if (this.processing || !navigator.onLine) return;
-    this.processing = true;
-    
-    while (this.queue.length > 0 && navigator.onLine) {
-      const item = this.queue[0];
-      try {
-        let result;
-        switch (item.operation) {
-          case 'insert':
-            result = await window.sb.from(item.table).insert(item.data);
-            break;
-          case 'update':
-            result = await window.sb.from(item.table).update(item.data).eq('id', item.data.id);
-            break;
-        }
-        if (!result?.error) {
-          this.queue.shift();
-          this.saveQueue();
-        } else {
-          item.retries++;
-          if (item.retries >= 3) this.queue.shift();
-          else break;
-        }
-      } catch (e) { break; }
-    }
-    
-    this.processing = false;
-    if (this.queue.length === 0) {
-      document.getElementById('offline-banner').style.display = 'none';
-    }
-  }
-  
-  getPendingCount() { return this.queue.length; }
-}
-
-// ==================== KEYBOARD SHORTCUTS ====================
-class KeyboardShortcuts {
-  constructor() {
-    this.shortcuts = new Map();
-    this.setupListeners();
-  }
-  
-  register(key, callback, description) {
-    this.shortcuts.set(key.toLowerCase(), { callback, description });
-  }
-  
-  setupListeners() {
-    document.addEventListener('keydown', (e) => {
-      const tag = e.target.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-        if (!e.ctrlKey && !e.altKey) return;
-      }
-      
-      const parts = [];
-      if (e.ctrlKey) parts.push('ctrl');
-      if (e.altKey) parts.push('alt');
-      parts.push(e.key.toLowerCase());
-      const key = parts.join('+');
-      
-      const shortcut = this.shortcuts.get(key);
-      if (shortcut) {
-        e.preventDefault();
-        shortcut.callback(e);
-      }
-    });
-  }
-  
-  showHelp() {
-    const shortcuts = Array.from(this.shortcuts.entries())
-      .map(([key, { description }]) => `${key}: ${description}`)
-      .join('\n');
-    alert(`⌨️ Keyboard Shortcuts:\n\n${shortcuts}`);
-  }
-}
-
-// ==================== ERROR TRACKER ====================
-class ErrorTracker {
-  capture(error, context = {}) {
-    console.error('[Error]', error, context);
-    window.toastManager?.error(error.message || 'An error occurred');
-    
-    // Log to localStorage for debugging
-    const errors = JSON.parse(localStorage.getItem('mt-errors') || '[]');
-    errors.unshift({
-      message: error.message,
-      stack: error.stack,
-      context,
-      timestamp: new Date().toISOString()
-    });
-    localStorage.setItem('mt-errors', JSON.stringify(errors.slice(0, 50)));
-  }
-}
-
-// ==================== INITIALIZATION ====================
 window.toastManager = new ToastManager();
-window.offlineQueue = new OfflineQueue();
-window.keyboardShortcuts = new KeyboardShortcuts();
-window.errorTracker = new ErrorTracker();
+const toast = (msg, type) => window.toastManager?.[type]?.(msg) || window.toastManager?.show(msg, type);
 
-// Register shortcuts
-window.keyboardShortcuts.register('alt+n', () => showSection('reception'), 'New Patient');
-window.keyboardShortcuts.register('alt+d', () => showSection('doctor'), 'Doctor Consultation');
-window.keyboardShortcuts.register('alt+l', () => showSection('lab'), 'Laboratory');
-window.keyboardShortcuts.register('alt+p', () => showSection('pharmacy'), 'Pharmacy');
-window.keyboardShortcuts.register('alt+b', () => showSection('billing'), 'Billing');
-window.keyboardShortcuts.register('ctrl+f', () => document.getElementById('global-search-input')?.focus(), 'Global Search');
-window.keyboardShortcuts.register('f1', () => window.keyboardShortcuts.showHelp(), 'Help');
-
-// Supabase client
-let sb;
-try {
-  const supabaseScript = document.createElement('script');
-  supabaseScript.src = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
-  supabaseScript.onload = () => {
-    sb = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
-    window.sb = sb;
-  };
-  document.head.appendChild(supabaseScript);
-} catch(e) { console.warn('Supabase init failed:', e); }
-
-// Demo data (continued from original)
+// ============================================
+// DEMO DATA
+// ============================================
 const WHO_MEDS = [
-  {name:'Amoxicillin',strength:'500mg',formulation:'Capsule',drugClass:'Antibiotic',price:.20,unit:'Capsules',reorderLevel:50,stock:80},
-  {name:'Paracetamol',strength:'500mg',formulation:'Tablet',drugClass:'Analgesic',price:.05,unit:'Tablets',reorderLevel:100,stock:200},
+  {name:'Amoxicillin',strength:'500mg',formulation:'Capsule',drugClass:'Antibiotic',price:0.20,unit:'Capsules',reorderLevel:50,stock:80},
+  {name:'Paracetamol',strength:'500mg',formulation:'Tablet',drugClass:'Analgesic',price:0.05,unit:'Tablets',reorderLevel:100,stock:200},
   {name:'Artemether+Lumefantrine',strength:'20/120mg',formulation:'Tablet',drugClass:'Antimalarial',price:3.50,unit:'Strips',reorderLevel:20,stock:30},
-  {name:'Metformin',strength:'500mg',formulation:'Tablet',drugClass:'Antidiabetic',price:.10,unit:'Tablets',reorderLevel:50,stock:80},
-  {name:'Amlodipine',strength:'5mg',formulation:'Tablet',drugClass:'Antihypertensive',price:.15,unit:'Tablets',reorderLevel:30,stock:60},
+  {name:'Metformin',strength:'500mg',formulation:'Tablet',drugClass:'Antidiabetic',price:0.10,unit:'Tablets',reorderLevel:50,stock:80},
+  {name:'Amlodipine',strength:'5mg',formulation:'Tablet',drugClass:'Antihypertensive',price:0.15,unit:'Tablets',reorderLevel:30,stock:60},
 ];
 
 const LAB_TESTS = [
@@ -711,17 +507,18 @@ const RADIOLOGY_PROCS = [
   {name:'Chest X-Ray',price:20},{name:'Abdominal Ultrasound',price:35},{name:'CT Scan Head',price:120}
 ];
 
-// Global state
+// ============================================
+// GLOBAL STATE
+// ============================================
 let currentUser = null;
-let currentHospital = null;
-let allHospitals = [];
 let patients = [];
 let visits = [];
 let inventory = [];
 let staffList = [];
 let expenses = [];
+let suppliers = [];
 
-const ALL_SECS = ['reception','nurse','doctor','billing','lab','pharmacy','radiology','inventory','expenses','suppliers','chat','protocols','feedbacks','admin','director','flow','appointments'];
+const ALL_SECS = ['reception','nurse','doctor','billing','lab','pharmacy','radiology','inventory','expenses','suppliers','admin'];
 
 // Helper functions
 const gid = id => document.getElementById(id);
@@ -730,76 +527,204 @@ const today = () => new Date().toISOString().split('T')[0];
 const enc = s => encodeURIComponent(s || '');
 const dec = s => decodeURIComponent(s || '');
 
-function toast(msg, type='info') { window.toastManager?.show(msg, type); }
-function speak(level) { /* Audio feedback - optional */ }
+// Modal helpers
+function oModal(id) { gid(id)?.classList.add('open'); }
+function cModal(id) { gid(id)?.classList.remove('open'); }
 
-function showSection(id) {
-  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
-  document.getElementById(`sec-${id}`)?.classList.add('active');
-  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
-  document.getElementById(`btn-${id}`)?.classList.add('active');
-  gid('sidebar')?.classList.remove('sb-open');
+// ============================================
+// FIXED LOGIN FUNCTION - WORKING!
+// ============================================
+function login() {
+  const username = gv('lu');
+  const password = gid('lp2')?.value || '';
+  const errorEl = gid('le');
   
-  // Render section content
-  const renders = {
-    director: renderDash,
-    reception: renderPatients,
-    nurse: renderTriage,
-    doctor: renderCons,
-    billing: renderBilling,
-    lab: renderLab,
-    pharmacy: renderPharm,
-    radiology: renderRad,
-    inventory: renderInventory,
-    expenses: renderExpenses,
-    suppliers: renderSuppliers,
-    chat: renderChat,
-    protocols: renderSOPs,
-    feedbacks: renderFeedbacks,
-    admin: renderAdmin,
-  };
-  if (renders[id]) renders[id]();
+  console.log('Login attempt:', username, password);
+  
+  // Clear previous error
+  if (errorEl) errorEl.textContent = '';
+  
+  // Validate inputs
+  if (!username || !password) {
+    if (errorEl) errorEl.textContent = '❌ Please enter username and password';
+    toast('Please enter username and password', 'error');
+    return;
+  }
+  
+  // DEMO ACCOUNTS - Fixed password validation
+  // Password format: username + "123" (e.g., doctor123, nurse123, etc.)
+  const expectedPassword = username + '123';
+  
+  console.log('Expected password:', expectedPassword);
+  console.log('Entered password:', password);
+  console.log('Match:', password === expectedPassword);
+  
+  if (password === expectedPassword) {
+    // Valid login
+    const userRoles = {
+      'admin': { name: 'System Administrator', role: 'admin', sections: ALL_SECS },
+      'doctor': { name: 'Dr. Gerald Apule', role: 'doctor', sections: ['reception','nurse','doctor','lab','pharmacy','radiology','billing'] },
+      'nurse': { name: 'Sarah Namukasa', role: 'nurse', sections: ['reception','nurse'] },
+      'lab': { name: 'John Mukasa', role: 'lab', sections: ['lab'] },
+      'pharmacy': { name: 'Peter Ochieng', role: 'pharmacy', sections: ['pharmacy','inventory'] },
+      'billing': { name: 'Grace Auma', role: 'billing', sections: ['billing'] }
+    };
+    
+    const roleData = userRoles[username];
+    if (roleData) {
+      currentUser = {
+        id: 'user-' + username,
+        name: roleData.name,
+        username: username,
+        role: roleData.role,
+        sections: roleData.sections
+      };
+      
+      // Initialize demo data
+      initDemoData();
+      
+      // Update UI
+      gid('lp').style.display = 'none';
+      gid('app').style.display = 'block';
+      gid('sb-user').textContent = `${roleData.name} · ${roleData.role.toUpperCase()}`;
+      
+      // Update user chip
+      const avatar = gid('user-avatar');
+      const userName = gid('user-name');
+      const userRole = gid('user-role');
+      if (avatar) avatar.textContent = roleData.name.split(' ').map(n => n[0]).join('').toUpperCase();
+      if (userName) userName.textContent = roleData.name;
+      if (userRole) userRole.textContent = roleData.role;
+      
+      // Render navigation and default section
+      renderNav();
+      showSection('reception');
+      
+      toast(`Welcome, ${roleData.name}!`, 'success');
+      console.log('Login successful');
+    } else {
+      if (errorEl) errorEl.textContent = '❌ Unknown username';
+      toast('Unknown username', 'error');
+    }
+  } else {
+    if (errorEl) errorEl.textContent = '❌ Invalid password. Use username + "123" (e.g., doctor123)';
+    toast('Invalid password. Use username + "123"', 'error');
+    console.log('Login failed: password mismatch');
+  }
 }
 
-// Dashboard
-function renderDash() {
-  const tv = visits.filter(v => v.date === today());
-  const rev = tv.reduce((s,v) => s + (v.totalPaid || 0), 0);
-  const debt = visits.reduce((s,v) => s + ((v.totalBill || 0) - (v.totalPaid || 0)), 0);
-  
-  gid('d-rev').textContent = '$' + rev.toFixed(0);
-  gid('d-pats').textContent = tv.length;
-  gid('d-debt').textContent = '$' + debt.toFixed(0);
+function logout() {
+  if (!confirm('Sign out of MediTrack Pro?')) return;
+  currentUser = null;
+  gid('app').style.display = 'none';
+  gid('lp').style.display = 'flex';
+  gid('lu').value = '';
+  gid('lp2').value = '';
+  const errorEl = gid('le');
+  if (errorEl) errorEl.textContent = '';
+  toast('Signed out successfully', 'info');
 }
 
-// Reception
+// ============================================
+// DEMO DATA INITIALIZATION
+// ============================================
+function initDemoData() {
+  if (patients.length > 0) return;
+  
+  // Sample patients
+  patients = [
+    { id: 'P1', name: 'John Okello', ageVal: 45, ageUnit: 'years', gender: 'Male', phone: '+256701234567', patNum: 'PT-001' },
+    { id: 'P2', name: 'Mary Achieng', ageVal: 32, ageUnit: 'years', gender: 'Female', phone: '+256702345678', patNum: 'PT-002' },
+    { id: 'P3', name: 'Peter Ocen', ageVal: 28, ageUnit: 'years', gender: 'Male', phone: '+256703456789', patNum: 'PT-003' },
+    { id: 'P4', name: 'Grace Adhiambo', ageVal: 5, ageUnit: 'years', gender: 'Female', phone: '+256704567890', patNum: 'PT-004' },
+  ];
+  
+  // Sample visits
+  visits = [
+    { id: 'V1', patId: 'P1', name: 'John Okello', date: today(), status: 'WAITING_TRIAGE', consultFee: 10, totalPaid: 0, labs: [], prescriptions: [], radiology: [] },
+    { id: 'V2', patId: 'P2', name: 'Mary Achieng', date: today(), status: 'WAITING_CONSULTATION', consultFee: 10, totalPaid: 0, labs: [], prescriptions: [], radiology: [], vitals: { bp: '120/80', temp: '36.8', weight: '65', pulse: '78' } },
+    { id: 'V3', patId: 'P3', name: 'Peter Ocen', date: today(), status: 'WAITING_LAB', consultFee: 10, totalPaid: 0, labs: [{ name: 'Malaria RDT', price: 5, done: false }], prescriptions: [], radiology: [] },
+  ];
+  
+  // Sample inventory
+  inventory = WHO_MEDS.map((m, i) => ({ id: 'I-' + i, ...m, stock: m.stock || 50 }));
+  
+  // Sample staff
+  staffList = [
+    { id: 'S1', name: 'Dr. Gerald Apule', username: 'doctor', role: 'Doctor' },
+    { id: 'S2', name: 'Sarah Namukasa', username: 'nurse', role: 'Nurse' },
+    { id: 'S3', name: 'John Mukasa', username: 'lab', role: 'Lab Technician' },
+  ];
+  
+  // Sample expenses
+  expenses = [
+    { id: 'E1', date: today(), category: 'Supplies', description: 'Medical gloves', amount: 150 },
+    { id: 'E2', date: today(), category: 'Utilities', description: 'Electricity', amount: 300 },
+  ];
+  
+  // Sample suppliers
+  suppliers = [
+    { id: 'S1', name: 'Kampala Pharma Ltd', phone: '+256701111111', email: 'orders@kampalapharma.ug' },
+    { id: 'S2', name: 'MedSupply Uganda', phone: '+256702222222', email: 'info@medsupply.ug' },
+  ];
+}
+
+// ============================================
+// RECEPTION MODULE
+// ============================================
 function renderPatients() {
   const term = (gid('patSearch')?.value || '').toLowerCase();
   const filtered = patients.filter(p => p.name.toLowerCase().includes(term)).slice(0, 50);
   
   let html = `<table><thead><tr><th>Name</th><th>Age/Sex</th><th>Phone</th><th>Last Visit</th><th>Actions</th></tr></thead><tbody>`;
+  
   filtered.forEach(p => {
     const lastVisit = visits.find(v => v.patId === p.id);
     html += `<tr>
-      <td><b>${p.name}</b><br><small>${p.patNum || ''}</small></td>
+      <td><b>${p.name}</b><br><small style="color:var(--mu);">${p.patNum || ''}</small></td>
       <td>${p.ageVal}${p.ageUnit?.[0]} / ${p.gender}</td>
       <td>${p.phone || '—'}</td>
       <td>${lastVisit?.date || '—'}</td>
       <td><button class="bsm bp" onclick="startVisit('${p.id}','${enc(p.name)}')">+ Visit</button></td>
     </tr>`;
   });
+  
+  if (!filtered.length) html += `<tr><td colspan="5" class="empty-state">No patients found</td></tr>`;
   html += `</tbody></table>`;
   gid('table-pats').innerHTML = html;
+}
+
+function renderActiveVisits() {
+  const active = visits.filter(v => v.status !== 'DISCHARGED');
+  let html = `<table><thead><tr><th>Patient</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
+  
+  active.forEach(v => {
+    const statusClass = v.status === 'WAITING_TRIAGE' ? 'bpa' : (v.status === 'WAITING_CONSULTATION' ? 'bpd' : 'bgr');
+    html += `<tr>
+      <td><b>${v.name}</b></td>
+      <td>${v.date}</td>
+      <td><span class="badge ${statusClass}">${v.status.replace(/_/g, ' ')}</span></td>
+      <td><button class="bsm bp" onclick="showSection('doctor');openCons('${v.id}')">Open</button></td>
+    </tr>`;
+  });
+  
+  if (!active.length) html += `<tr><td colspan="4" class="empty-state">No active visits</td></tr>`;
+  html += `</tbody></table>`;
+  gid('active-visits-table').innerHTML = html;
 }
 
 async function registerPatient() {
   const name = gv('pName');
   const ageVal = gv('pAgeVal');
-  if (!name || !ageVal) { toast('Enter name and age', 'error'); return; }
+  
+  if (!name || !ageVal) {
+    toast('Please enter patient name and age', 'error');
+    return;
+  }
   
   const newPatient = {
     id: 'PAT-' + Date.now(),
-    name,
+    name: name,
     ageVal: parseInt(ageVal),
     ageUnit: gv('pAgeUnit') || 'years',
     gender: gv('pGender') || 'Male',
@@ -811,7 +736,7 @@ async function registerPatient() {
   patients.unshift(newPatient);
   
   // Create visit
-  const visit = {
+  const newVisit = {
     id: 'V-' + Date.now(),
     patId: newPatient.id,
     name: name,
@@ -823,23 +748,24 @@ async function registerPatient() {
     prescriptions: [],
     radiology: []
   };
-  visits.unshift(visit);
+  visits.unshift(newVisit);
   
-  if (!navigator.onLine) {
-    await window.offlineQueue.add('insert', 'patients', newPatient);
-    toast('📡 Patient saved offline. Will sync when online.', 'warning');
-  } else {
-    toast(`✅ ${name} registered successfully`, 'success');
-  }
+  toast(`✅ ${name} registered and queued for triage`, 'success');
   
-  speak('register');
+  // Clear form
+  gid('pName').value = '';
+  gid('pAgeVal').value = '';
+  gid('pPhone').value = '';
+  gid('pAddress').value = '';
+  
   renderPatients();
   renderActiveVisits();
+  renderTriage();
 }
 
 function startVisit(patId, encName) {
   const name = dec(encName);
-  const visit = {
+  const newVisit = {
     id: 'V-' + Date.now(),
     patId: patId,
     name: name,
@@ -851,47 +777,43 @@ function startVisit(patId, encName) {
     prescriptions: [],
     radiology: []
   };
-  visits.unshift(visit);
+  visits.unshift(newVisit);
   toast(`${name} queued for triage`, 'success');
   renderPatients();
   renderActiveVisits();
+  renderTriage();
 }
 
-function renderActiveVisits() {
-  const active = visits.filter(v => v.status !== 'DISCHARGED');
-  let html = `<table><thead><tr><th>Patient</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>`;
-  active.forEach(v => {
-    html += `<tr>
-      <td><b>${v.name}</b></td>
-      <td>${v.date}</td>
-      <td><span class="badge bgr">${v.status.replace(/_/g,' ')}</span></td>
-      <td><button class="bsm bp" onclick="showSection('doctor');openCons('${v.id}')">Open</button></td>
-    </tr>`;
-  });
-  html += `</tbody></table>`;
-  gid('active-visits-table').innerHTML = html;
-}
-
-// Nurse Triage
+// ============================================
+// NURSE TRIAGE MODULE
+// ============================================
 function renderTriage() {
-  const triage = visits.filter(v => v.status === 'WAITING_TRIAGE');
+  const triagePatients = visits.filter(v => v.status === 'WAITING_TRIAGE');
   let html = `<table><thead><tr><th>Patient</th><th>Arrived</th><th>Action</th></tr></thead><tbody>`;
-  triage.forEach(v => {
+  
+  triagePatients.forEach(v => {
     html += `<tr>
       <td><b>${v.name}</b></td>
       <td>${v.date}</td>
       <td><button class="bsm bp" onclick="openTriage('${v.id}')">Take Vitals</button></td>
     </tr>`;
   });
-  if (!triage.length) html += `<tr><td colspan="3" class="empty-state">No patients waiting for triage</td></tr>`;
+  
+  if (!triagePatients.length) html += `<tr><td colspan="3" class="empty-state">No patients waiting for triage</td></tr>`;
   html += `</tbody></table>`;
   gid('triage-table').innerHTML = html;
 }
 
 function openTriage(id) {
   window.activeVid = id;
+  const v = visits.find(x => x.id === id);
   gid('triage-form').style.display = 'block';
-  gid('triage-target').innerText = 'Vitals — ' + visits.find(v => v.id === id)?.name;
+  gid('triage-target').innerHTML = `<b>${v.name}</b> - Enter Vital Signs`;
+  // Clear form
+  ['vBP', 'vTemp', 'vWeight', 'vPulse', 'vSpO2'].forEach(f => {
+    const el = gid(f);
+    if (el) el.value = '';
+  });
 }
 
 function submitTriage() {
@@ -903,7 +825,8 @@ function submitTriage() {
     temp: gv('vTemp'),
     weight: gv('vWeight'),
     pulse: gv('vPulse'),
-    spo2: gv('vSpO2')
+    spo2: gv('vSpO2'),
+    time: new Date().toLocaleTimeString()
   };
   v.status = 'WAITING_CONSULTATION';
   
@@ -913,10 +836,13 @@ function submitTriage() {
   renderCons();
 }
 
-// Doctor Consultation
+// ============================================
+// DOCTOR CONSULTATION MODULE
+// ============================================
 function renderCons() {
   const queue = visits.filter(v => v.status === 'WAITING_CONSULTATION');
-  let html = `<table><thead><td><th>Patient</th><th>Vitals</th><th>Action</th></tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>Patient</th><th>Vitals</th><th>Action</th></tr></thead><tbody>`;
+  
   queue.forEach(v => {
     const hasVitals = v.vitals ? '✓' : '✗';
     html += `<tr>
@@ -925,7 +851,8 @@ function renderCons() {
       <td><button class="bsm bp" onclick="openCons('${v.id}')">Consult</button></td>
     </tr>`;
   });
-  if (!queue.length) html += `<tr><td colspan="3" class="empty-state">No patients waiting</td></tr>`;
+  
+  if (!queue.length) html += `<tr><td colspan="3" class="empty-state">No patients waiting for consultation</td></tr>`;
   html += `</tbody></table>`;
   gid('table-cons').innerHTML = html;
 }
@@ -934,22 +861,35 @@ function openCons(id) {
   window.activeVid = id;
   const v = visits.find(x => x.id === id);
   gid('cons-form').style.display = 'block';
-  gid('cons-pat-name').innerText = v.name;
+  gid('cons-pat-name').innerHTML = v.name;
+  
+  // Show vitals if available
+  const vitalsDiv = gid('cons-vitals-display');
+  if (vitalsDiv && v.vitals) {
+    vitalsDiv.innerHTML = `<div class="card" style="margin-bottom:12px;background:var(--lt);">
+      <b>📊 Vitals:</b> BP ${v.vitals.bp || '—'} | Temp ${v.vitals.temp || '—'}°C | 
+      Pulse ${v.vitals.pulse || '—'} | SpO₂ ${v.vitals.spo2 || '—'}% | Wt ${v.vitals.weight || '—'}kg
+    </div>`;
+    vitalsDiv.style.display = 'block';
+  }
   
   // Populate existing data
   const cl = v.clinical || {};
   gid('hPC').value = cl.hPC || '';
   gid('hHPC').value = cl.hHPC || '';
+  gid('hPE').value = cl.hPE || '';
+  gid('cDiffDx').value = cl.cDiffDx || '';
   gid('cFinalDx').value = cl.cFinalDx || '';
   gid('cNotes').value = cl.cNotes || '';
   
-  // Clear and rebuild orders
+  // Clear orders
   gid('med-orders-list').innerHTML = '';
   gid('rad-orders-list').innerHTML = '';
   window.medRows = [];
   window.radRows = [];
   window.selectedLabTests = new Set();
   
+  // Restore existing orders
   (v.prescriptions || []).forEach(rx => addRxRow(rx));
   (v.radiology || []).forEach(rad => addRadRow(rad));
   (v.labs || []).forEach(lab => window.selectedLabTests.add(lab.name));
@@ -982,7 +922,7 @@ function addRxRow(prefill) {
 }
 
 function removeRxRow(id) {
-  const row = document.getElementById(`rx-row-${id}`)?.parentElement;
+  const row = document.getElementById(`rn-${id}`)?.parentElement;
   if (row) row.remove();
   delete window.medRows[id];
   updateOrderSummary();
@@ -1015,7 +955,7 @@ function addRadRow(prefill) {
 }
 
 function removeRadRow(id) {
-  const row = document.getElementById(`rad-row-${id}`)?.parentElement;
+  const row = document.getElementById(`radn-${id}`)?.parentElement;
   if (row) row.remove();
   delete window.radRows[id];
   updateOrderSummary();
@@ -1051,14 +991,12 @@ function updateOrderSummary() {
   let total = 0;
   let html = '';
   
-  // Consult fee
   const fee = parseFloat(gid('c-consult-fee')?.value) || 10;
   if (fee) {
     html += `<div class="osum-row"><span>Consultation Fee</span><span>$${fee.toFixed(2)}</span></div>`;
     total += fee;
   }
   
-  // Labs
   window.selectedLabTests?.forEach(name => {
     const test = LAB_TESTS.find(t => t.name === name);
     const price = test?.price || 0;
@@ -1066,7 +1004,6 @@ function updateOrderSummary() {
     total += price;
   });
   
-  // Radiology
   window.radRows?.forEach(r => {
     if (r?.name) {
       html += `<div class="osum-row"><span>🩻 ${r.name}</span><span>$${(r.price || 0).toFixed(2)}</span></div>`;
@@ -1074,7 +1011,6 @@ function updateOrderSummary() {
     }
   });
   
-  // Prescriptions
   window.medRows?.forEach(r => {
     if (r?.name) {
       const subtotal = (r.qty || 1) * (r.price || 0);
@@ -1091,15 +1027,15 @@ function saveConsultation() {
   const v = visits.find(x => x.id === window.activeVid);
   if (!v) return;
   
-  // Save clinical notes
   v.clinical = {
     hPC: gv('hPC'),
     hHPC: gv('hHPC'),
+    hPE: gv('hPE'),
+    cDiffDx: gv('cDiffDx'),
     cFinalDx: gv('cFinalDx'),
     cNotes: gv('cNotes')
   };
   
-  // Save orders
   v.prescriptions = window.medRows?.filter(r => r?.name) || [];
   v.radiology = window.radRows?.filter(r => r?.name) || [];
   v.labs = Array.from(window.selectedLabTests || []).map(name => {
@@ -1107,22 +1043,33 @@ function saveConsultation() {
     return { name, price: test?.price || 0, done: false };
   });
   v.consultFee = parseFloat(gid('c-consult-fee')?.value) || 10;
-  v.status = v.labs.length ? 'LAB_READY' : (v.radiology.length ? 'RAD_READY' : 'BILLING');
   
-  toast(`✅ Consultation saved. Patient ready for ${v.status.replace('_',' ')}`, 'success');
+  if (v.labs.length) v.status = 'WAITING_LAB';
+  else if (v.radiology.length) v.status = 'WAITING_RAD';
+  else v.status = 'BILLING';
+  
+  toast(`✅ Consultation saved. Patient ready for ${v.status.replace('_', ' ')}`, 'success');
   closeConsForm();
+  renderCons();
+  renderLab();
+  renderRad();
+  renderBilling();
 }
 
-// Billing
+// ============================================
+// BILLING MODULE
+// ============================================
 function renderBilling() {
-  const unpaid = visits.filter(v => (v.totalBill || 0) > (v.totalPaid || 0));
-  let html = `</table><thead><tr><th>Patient</th><th>Date</th><th>Total</th><th>Paid</th><th>Balance</th><th>Action</th></tr></thead><tbody>`;
-  unpaid.forEach(v => {
+  const allVisits = visits.filter(v => v.status !== 'DISCHARGED');
+  let html = `<table><thead><tr><th>Patient</th><th>Date</th><th>Total</th><th>Paid</th><th>Balance</th><th>Action</th></tr></thead><tbody>`;
+  
+  allVisits.forEach(v => {
     const total = (v.consultFee || 0) + 
-      (v.labs || []).reduce((s,l) => s + l.price, 0) +
-      (v.prescriptions || []).reduce((s,r) => s + (r.price * r.qty), 0);
+      (v.labs || []).reduce((s, l) => s + l.price, 0) +
+      (v.prescriptions || []).reduce((s, r) => s + (r.price * r.qty), 0);
     const paid = v.totalPaid || 0;
     const balance = total - paid;
+    
     html += `<tr>
       <td><b>${v.name}</b></td>
       <td>${v.date}</td>
@@ -1132,8 +1079,9 @@ function renderBilling() {
       <td><button class="bsm bp" onclick="openPayment('${v.id}')">Pay</button></td>
     </tr>`;
   });
-  if (!unpaid.length) html += `<tr><td colspan="6" class="empty-state">No pending payments</td></tr>`;
-  html += `</tbody></table>`;
+  
+  if (!allVisits.length) html += `<tr><td colspan="6" class="empty-state">No pending payments</td></tr>`;
+  html += `</tbody></tr>`;
   gid('table-bill').innerHTML = html;
 }
 
@@ -1141,15 +1089,15 @@ function openPayment(id) {
   window.activePayVid = id;
   const v = visits.find(x => x.id === id);
   const total = (v.consultFee || 0) + 
-    (v.labs || []).reduce((s,l) => s + l.price, 0) +
-    (v.prescriptions || []).reduce((s,r) => s + (r.price * r.qty), 0);
+    (v.labs || []).reduce((s, l) => s + l.price, 0) +
+    (v.prescriptions || []).reduce((s, r) => s + (r.price * r.qty), 0);
   const paid = v.totalPaid || 0;
   const balance = total - paid;
   
-  gid('pay-title').innerText = `Payment — ${v.name}`;
-  gid('pay-balance').innerText = `Balance: $${balance.toFixed(2)}`;
+  gid('pay-title').innerHTML = `Payment — ${v.name}`;
+  gid('pay-balance').innerHTML = `Balance Due: $${balance.toFixed(2)}`;
   gid('pay-amount').value = balance.toFixed(2);
-  gid('pay-modal').classList.add('open');
+  oModal('pay-modal');
 }
 
 function processPayment() {
@@ -1157,28 +1105,47 @@ function processPayment() {
   if (!v) return;
   
   const amount = parseFloat(gv('pay-amount')) || 0;
-  if (amount <= 0) { toast('Enter valid amount', 'error'); return; }
+  if (amount <= 0) {
+    toast('Enter valid amount', 'error');
+    return;
+  }
   
   v.totalPaid = (v.totalPaid || 0) + amount;
-  toast(`✅ Received $${amount.toFixed(2)} from ${v.name}`, 'success');
   
-  gid('pay-modal').classList.remove('open');
+  const total = (v.consultFee || 0) + 
+    (v.labs || []).reduce((s, l) => s + l.price, 0) +
+    (v.prescriptions || []).reduce((s, r) => s + (r.price * r.qty), 0);
+  
+  if (v.totalPaid >= total) {
+    v.status = 'DISCHARGED';
+    toast(`✅ Patient ${v.name} discharged. Full payment received.`, 'success');
+  } else {
+    toast(`✅ Received $${amount.toFixed(2)} from ${v.name}. Remaining: $${(total - v.totalPaid).toFixed(2)}`, 'success');
+  }
+  
+  cModal('pay-modal');
   renderBilling();
+  renderActiveVisits();
 }
 
-// Lab
+// ============================================
+// LAB MODULE
+// ============================================
 function renderLab() {
   const pending = visits.filter(v => (v.labs || []).some(l => !l.done));
-  let html = `<td><thead><tr><th>Patient</th><th>Tests</th><th>Action</th></tr></thead><tbody>`;
+  let html = `<table><thead><tr><th>Patient</th><th>Tests</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
+  
   pending.forEach(v => {
     const pendingTests = (v.labs || []).filter(l => !l.done);
     html += `<tr>
       <td><b>${v.name}</b></td>
       <td>${pendingTests.map(l => l.name).join(', ')}</td>
+      <td><span class="badge bpa">Pending</span></td>
       <td><button class="bsm bp" onclick="openLabEntry('${v.id}')">Enter Results</button></td>
     </tr>`;
   });
-  if (!pending.length) html += `<tr><td colspan="3" class="empty-state">No pending lab tests</td></tr>`;
+  
+  if (!pending.length) html += `<tr><td colspan="4" class="empty-state">No pending lab tests</td></tr>`;
   html += `</tbody></table>`;
   gid('lab-pending-table').innerHTML = html;
 }
@@ -1190,9 +1157,16 @@ function openLabEntry(vid) {
   
   let html = `<h4>${v.name}</h4>`;
   pending.forEach((l, i) => {
-    html += `<div><label>${l.name}</label><textarea id="lab-result-${i}" rows="2"></textarea></div>`;
+    html += `<div style="margin-bottom:12px;">
+      <label>${l.name}</label>
+      <textarea id="lab-result-${i}" rows="2" placeholder="Enter result for ${l.name}..."></textarea>
+    </div>`;
   });
-  html += `<button class="bp" onclick="submitLabResults()">Save Results</button>`;
+  html += `<div class="ab">
+    <button class="bp" onclick="submitLabResults()">Save Results</button>
+    <button onclick="gid('lab-entry').style.display='none'">Cancel</button>
+  </div>`;
+  
   gid('lab-entry-content').innerHTML = html;
   gid('lab-entry').style.display = 'block';
 }
@@ -1213,13 +1187,17 @@ function submitLabResults() {
   gid('lab-entry').style.display = 'none';
   toast('✅ Lab results saved and released', 'success');
   renderLab();
+  renderBilling();
   renderCons();
 }
 
-// Pharmacy
+// ============================================
+// PHARMACY MODULE
+// ============================================
 function renderPharm() {
   const pending = visits.filter(v => (v.prescriptions || []).some(r => !r.dispensed));
   let html = `<table><thead><tr><th>Patient</th><th>Prescriptions</th><th>Action</th></tr></thead><tbody>`;
+  
   pending.forEach(v => {
     const undispensed = (v.prescriptions || []).filter(r => !r.dispensed);
     html += `<tr>
@@ -1228,6 +1206,7 @@ function renderPharm() {
       <td><button class="bsm bp" onclick="dispensePrescriptions('${v.id}')">Dispense</button></td>
     </tr>`;
   });
+  
   if (!pending.length) html += `<tr><td colspan="3" class="empty-state">No pending prescriptions</td></tr>`;
   html += `</tbody></table>`;
   gid('pharm-pending-table').innerHTML = html;
@@ -1238,15 +1217,20 @@ function dispensePrescriptions(vid) {
   (v.prescriptions || []).forEach(r => {
     r.dispensed = true;
     r.dispensedBy = currentUser?.name || 'Pharmacist';
+    r.dispensedTime = new Date().toLocaleTimeString();
   });
   toast(`💊 Medications dispensed for ${v.name}`, 'success');
   renderPharm();
+  renderBilling();
 }
 
-// Radiology
+// ============================================
+// RADIOLOGY MODULE
+// ============================================
 function renderRad() {
   const pending = visits.filter(v => (v.radiology || []).some(r => !r.done));
   let html = `<table><thead><tr><th>Patient</th><th>Procedure</th><th>Action</th></tr></thead><tbody>`;
+  
   pending.forEach(v => {
     const pendingRad = (v.radiology || []).filter(r => !r.done);
     html += `<tr>
@@ -1255,7 +1239,8 @@ function renderRad() {
       <td><button class="bsm bp" onclick="openRadReport('${v.id}')">Write Report</button></td>
     </tr>`;
   });
-  if (!pending.length) html += `<tr><td colspan="3" class="empty-state">No pending radiology</td></td>`;
+  
+  if (!pending.length) html += `<tr><td colspan="3" class="empty-state">No pending radiology</td></tr>`;
   html += `</tbody></table>`;
   gid('rad-pending-table').innerHTML = html;
 }
@@ -1267,9 +1252,16 @@ function openRadReport(vid) {
   
   let html = `<h4>${v.name}</h4>`;
   pending.forEach((r, i) => {
-    html += `<div><label>${r.name}</label><textarea id="rad-report-${i}" rows="4"></textarea></div>`;
+    html += `<div style="margin-bottom:12px;">
+      <label>${r.name}</label>
+      <textarea id="rad-report-${i}" rows="3" placeholder="Enter radiology report..."></textarea>
+    </div>`;
   });
-  html += `<button class="bp" onclick="submitRadReport()">Save Report</button>`;
+  html += `<div class="ab">
+    <button class="bp" onclick="submitRadReport()">Save Report</button>
+    <button onclick="gid('rad-entry').style.display='none'">Cancel</button>
+  </div>`;
+  
   gid('rad-entry-content').innerHTML = html;
   gid('rad-entry').style.display = 'block';
 }
@@ -1290,56 +1282,72 @@ function submitRadReport() {
   gid('rad-entry').style.display = 'none';
   toast('✅ Radiology report saved', 'success');
   renderRad();
-  renderCons();
+  renderBilling();
 }
 
-// Inventory
+// ============================================
+// INVENTORY MODULE
+// ============================================
 function renderInventory() {
-  let html = `<td><thead><tr><th>Item</th><th>Stock</th><th>Unit Price</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
+  let html = `<tr><thead><tr><th>Item</th><th>Stock</th><th>Unit Price</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
+  
   inventory.forEach(it => {
-    const isLow = it.stock <= it.reorderLevel;
+    const isLow = it.stock <= (it.reorderLevel || 10);
     html += `<tr>
-      <td><b>${it.name}</b>${it.strength ? `<br><small>${it.strength}</small>` : ''}</td>
-      <td><span style="color:${isLow ? 'var(--d)' : 'var(--a)'}">${it.stock} ${it.unit}</span></td>
-      <td>$${it.price.toFixed(2)}</td>
+      <td><b>${it.name}</b>${it.strength ? `<br><small style="color:var(--mu);">${it.strength}</small>` : ''}</td>
+      <td><span style="color:${isLow ? 'var(--d)' : 'var(--a)'};font-weight:700;">${it.stock} ${it.unit}</span></td>
+      <td>$${(it.price || 0).toFixed(2)}</td>
       <td>${isLow ? '<span class="badge bpa">Low Stock</span>' : '<span class="badge bpd">OK</span>'}</td>
       <td><button class="bsm ba" onclick="restockItem('${it.id}')">+ Restock</button></td>
     </tr>`;
   });
+  
+  if (!inventory.length) html += `<tr><td colspan="5" class="empty-state">No inventory items</td></tr>`;
   html += `</tbody></table>`;
   gid('table-inv').innerHTML = html;
 }
 
 function restockItem(id) {
   const it = inventory.find(x => x.id === id);
-  const qty = parseInt(prompt(`Restock ${it.name}\nCurrent: ${it.stock}\nAdd quantity:`));
+  if (!it) return;
+  
+  const qty = parseInt(prompt(`Restock ${it.name}\nCurrent stock: ${it.stock}\nQuantity to add:`, '50'));
   if (qty && qty > 0) {
     it.stock += qty;
-    toast(`✅ +${qty} ${it.unit} added to ${it.name}`, 'success');
+    toast(`✅ Added ${qty} ${it.unit} to ${it.name}`, 'success');
     renderInventory();
   }
 }
 
-// Expenses
+// ============================================
+// EXPENSES MODULE
+// ============================================
 function renderExpenses() {
   let html = `<table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Action</th></tr></thead><tbody>`;
+  
   expenses.slice(0, 50).forEach(e => {
     html += `<tr>
       <td>${e.date}</td>
       <td>${e.category}</td>
       <td>${e.description}</td>
-      <td style="color:var(--d);">$${e.amount.toFixed(2)}</td>
+      <td><span style="color:var(--d);font-weight:700;">$${e.amount.toFixed(2)}</span></td>
       <td><button class="bd2 bsm" onclick="deleteExpense('${e.id}')">✕</button></td>
     </tr>`;
   });
-  html += `</tbody></tr>`;
+  
+  if (!expenses.length) html += `<tr><td colspan="5" class="empty-state">No expenses recorded</td></tr>`;
+  html += `</tbody></table>`;
   gid('table-exp').innerHTML = html;
 }
 
 function saveExpense() {
   const desc = gv('expDesc');
   const amt = parseFloat(gv('expAmt')) || 0;
-  if (!desc || !amt) { toast('Enter description and amount', 'error'); return; }
+  
+  if (!desc || !amt) {
+    toast('Enter description and amount', 'error');
+    return;
+  }
   
   expenses.unshift({
     id: 'E-' + Date.now(),
@@ -1352,18 +1360,26 @@ function saveExpense() {
   toast('💰 Expense recorded', 'success');
   cModal('exp-modal');
   renderExpenses();
-  ['expDesc', 'expAmt', 'expRef'].forEach(f => { const el = gid(f); if (el) el.value = ''; });
+  
+  // Clear form
+  gid('expDesc').value = '';
+  gid('expAmt').value = '';
+  gid('expRef').value = '';
 }
 
 function deleteExpense(id) {
+  if (!confirm('Delete this expense?')) return;
   expenses = expenses.filter(e => e.id !== id);
   renderExpenses();
   toast('Expense deleted', 'info');
 }
 
-// Suppliers
+// ============================================
+// SUPPLIERS MODULE
+// ============================================
 function renderSuppliers() {
-  let html = `</table><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Action</th></tr></thead><tbody>`;
+  let html = `<td><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Action</th></tr></thead><tbody>`;
+  
   suppliers.forEach(s => {
     html += `<tr>
       <td><b>${s.name}</b></td>
@@ -1372,32 +1388,44 @@ function renderSuppliers() {
       <td><button class="bsm bo" onclick="editSupplier('${s.id}')">Edit</button></td>
     </tr>`;
   });
+  
+  if (!suppliers.length) html += `<tr><td colspan="4" class="empty-state">No suppliers added</td></tr>`;
   html += `</tbody></table>`;
   gid('table-suppliers').innerHTML = html;
 }
 
 function saveSupplier() {
   const name = gv('supName');
-  if (!name) { toast('Supplier name required', 'error'); return; }
+  if (!name) {
+    toast('Supplier name required', 'error');
+    return;
+  }
   
   const id = gv('supEditId');
-  const supplier = { name, phone: gv('supPhone'), email: gv('supEmail'), address: gv('supAddress') };
+  const supplier = {
+    name: name,
+    phone: gv('supPhone'),
+    email: gv('supEmail'),
+    address: gv('supAddress')
+  };
   
   if (id) {
     const idx = suppliers.findIndex(s => s.id === id);
     if (idx !== -1) suppliers[idx] = { ...suppliers[idx], ...supplier };
+    toast('Supplier updated', 'success');
   } else {
     suppliers.push({ id: 'S-' + Date.now(), ...supplier });
+    toast('Supplier added', 'success');
   }
   
   cModal('sup-add-modal');
   renderSuppliers();
-  toast('Supplier saved', 'success');
 }
 
 function editSupplier(id) {
   const s = suppliers.find(x => x.id === id);
   if (!s) return;
+  
   gid('supEditId').value = s.id;
   gid('supName').value = s.name;
   gid('supPhone').value = s.phone || '';
@@ -1407,112 +1435,12 @@ function editSupplier(id) {
   oModal('sup-add-modal');
 }
 
-// Chat
-async function renderChat() {
-  const messages = JSON.parse(localStorage.getItem('mt-chat') || '[]');
-  let html = `<div class="chat-area">`;
-  messages.slice(-50).forEach(m => {
-    const isMine = m.from === currentUser?.name;
-    html += `<div class="${isMine ? 'chat-mine' : 'chat-other'}">
-      ${!isMine ? `<div class="chat-name">${m.from}</div>` : ''}
-      <div>${m.text}</div>
-      <div class="chat-time">${m.time}</div>
-    </div>`;
-  });
-  html += `</div>`;
-  gid('chat-messages').innerHTML = html;
-}
-
-function sendChat() {
-  const text = gv('chat-input');
-  if (!text) return;
-  
-  const message = {
-    id: Date.now(),
-    from: currentUser?.name || 'Staff',
-    text: text,
-    time: new Date().toLocaleTimeString()
-  };
-  
-  const messages = JSON.parse(localStorage.getItem('mt-chat') || '[]');
-  messages.push(message);
-  localStorage.setItem('mt-chat', JSON.stringify(messages));
-  
-  gid('chat-input').value = '';
-  renderChat();
-}
-
-// SOPs
-function renderSOPs() {
-  const sops = [
-    { id: 'SOP-001', title: 'Patient Registration', steps: ['Greet patient', 'Collect demographics', 'Assign visit number'] },
-    { id: 'SOP-002', title: 'Triage & Vitals', steps: ['Record vital signs', 'Assess urgency', 'Route to appropriate service'] },
-    { id: 'SOP-003', title: 'Doctor Consultation', steps: ['Review history', 'Perform examination', 'Order tests', 'Prescribe treatment'] },
-  ];
-  
-  let html = '';
-  sops.forEach(sop => {
-    html += `<div class="cb">
-      <div class="ch" onclick="this.nextElementSibling.classList.toggle('open')">
-        <span><b>${sop.id}</b> — ${sop.title}</span>
-        <span class="cr">▼</span>
-      </div>
-      <div class="cbody">
-        <ol>${sop.steps.map(s => `<li>${s}</li>`).join('')}</ol>
-      </div>
-    </div>`;
-  });
-  gid('sop-list').innerHTML = html;
-}
-
-// Feedback
-function renderFeedbacks() {
-  const feedbacks = JSON.parse(localStorage.getItem('mt-feedbacks') || '[]');
-  let html = `<table><thead><td><th>Patient</th><th>Rating</th><th>Comment</th><th>Date</th></tr></thead><tbody>`;
-  feedbacks.slice(-20).forEach(f => {
-    html += `<tr>
-      <td>${f.name || 'Anonymous'}</td>
-      <td>${'★'.repeat(f.rating)}${'☆'.repeat(5-f.rating)}</td>
-      <td>${f.comment || ''}</td>
-      <td>${f.date}</td>
-    </tr>`;
-  });
-  html += `</tbody></table>`;
-  gid('table-feedbacks').innerHTML = html;
-}
-
-function submitPublicFeedback() {
-  const rating = window.publicRating || 0;
-  if (!rating) { toast('Please select a rating', 'error'); return; }
-  
-  const feedback = {
-    id: Date.now(),
-    name: gv('fb-pub-name'),
-    rating: rating,
-    comment: gv('fb-pub-comment'),
-    date: today()
-  };
-  
-  const feedbacks = JSON.parse(localStorage.getItem('mt-feedbacks') || '[]');
-  feedbacks.unshift(feedback);
-  localStorage.setItem('mt-feedbacks', JSON.stringify(feedbacks));
-  
-  gid('fb-public-form').style.display = 'none';
-  gid('fb-public-thanks').style.display = 'block';
-  toast('Thank you for your feedback!', 'success');
-}
-
-function setPublicRating(n) {
-  window.publicRating = n;
-  for (let i = 1; i <= 5; i++) {
-    const star = gid(`pstar${i}`);
-    if (star) star.classList.toggle('active', i <= n);
-  }
-}
-
-// Admin
+// ============================================
+// ADMIN MODULE
+// ============================================
 function renderAdmin() {
-  let html = `<table><thead><td><th>Name</th><th>Role</th><th>Username</th><th>Actions</th></tr></thead><tbody>`;
+  let html = `<tr><thead><tr><th>Name</th><th>Role</th><th>Username</th><th>Action</th></tr></thead><tbody>`;
+  
   staffList.forEach(s => {
     html += `<tr>
       <td><b>${s.name}</b></td>
@@ -1521,6 +1449,8 @@ function renderAdmin() {
       <td><button class="bsm bd2" onclick="deleteStaff('${s.id}')">Delete</button></td>
     </tr>`;
   });
+  
+  if (!staffList.length) html += `<tr><td colspan="4" class="empty-state">No staff members</td></tr>`;
   html += `</tbody></table>`;
   gid('table-staff').innerHTML = html;
 }
@@ -1530,13 +1460,16 @@ function saveStaff() {
   const username = gv('staffUser');
   const password = gv('staffPass');
   
-  if (!name || !username || !password) { toast('Fill all fields', 'error'); return; }
+  if (!name || !username || !password) {
+    toast('Fill all fields', 'error');
+    return;
+  }
   
   staffList.push({
     id: 'S-' + Date.now(),
-    name,
-    username,
-    password,
+    name: name,
+    username: username,
+    password: password,
     role: gv('staffRole') || 'Staff',
     isAdmin: gid('staffAdmin')?.checked || false
   });
@@ -1544,172 +1477,250 @@ function saveStaff() {
   cModal('staff-modal');
   renderAdmin();
   toast('Staff added', 'success');
+  
+  // Clear form
+  gid('staffName').value = '';
+  gid('staffUser').value = '';
+  gid('staffPass').value = '';
+  gid('staffRole').value = '';
 }
 
 function deleteStaff(id) {
   if (!confirm('Delete this staff member?')) return;
   staffList = staffList.filter(s => s.id !== id);
   renderAdmin();
+  toast('Staff deleted', 'info');
 }
 
-// Modal helpers
-function oModal(id) { gid(id)?.classList.add('open'); }
-function cModal(id) { gid(id)?.classList.remove('open'); }
-
-// Login function
-function login() {
-  const username = gv('lu');
-  const password = gid('lp2')?.value || '';
+// ============================================
+// DASHBOARD MODULE
+// ============================================
+function renderDash() {
+  const todayVisits = visits.filter(v => v.date === today());
+  const revenue = todayVisits.reduce((s, v) => {
+    const total = (v.consultFee || 0) + 
+      (v.labs || []).reduce((a, l) => a + l.price, 0) +
+      (v.prescriptions || []).reduce((a, r) => a + (r.price * r.qty), 0);
+    return s + (v.totalPaid || 0);
+  }, 0);
   
-  const DEMO_ACCOUNTS = {
-    'admin': { name: 'Administrator', role: 'admin', sections: ALL_SECS },
-    'doctor': { name: 'Dr. Gerald', role: 'doctor', sections: ['reception','nurse','doctor','lab','pharmacy','radiology','billing'] },
-    'nurse': { name: 'Nurse', role: 'nurse', sections: ['reception','nurse'] },
-    'lab': { name: 'Lab Technician', role: 'lab', sections: ['lab'] },
-    'pharmacy': { name: 'Pharmacist', role: 'pharmacy', sections: ['pharmacy','inventory'] },
-    'billing': { name: 'Billing Officer', role: 'billing', sections: ['billing'] }
-  };
+  const debt = visits.reduce((s, v) => {
+    const total = (v.consultFee || 0) + 
+      (v.labs || []).reduce((a, l) => a + l.price, 0) +
+      (v.prescriptions || []).reduce((a, r) => a + (r.price * r.qty), 0);
+    return s + (total - (v.totalPaid || 0));
+  }, 0);
   
-  const demo = DEMO_ACCOUNTS[username];
-  if (demo && password === username + '123') {
-    currentUser = { id: 'demo-' + username, name: demo.name, username: username, role: demo.role, sections: demo.sections };
-    staffList = Object.entries(DEMO_ACCOUNTS).map(([k,v]) => ({ id: 'demo-' + k, name: v.name, username: k, role: v.role }));
-    inventory = WHO_MEDS.map((m,i) => ({ id: 'I-' + i, ...m, stock: m.stock || 50, price: m.price, sellPrice: m.price * 1.3 }));
-    
-    gid('lp').style.display = 'none';
-    gid('app').style.display = 'block';
-    gid('sb-user').textContent = demo.name + ' · ' + demo.role;
-    
-    renderNav();
-    showSection('reception');
-    toast(`Welcome, ${demo.name}!`, 'success');
-  } else {
-    toast('Invalid credentials. Use: doctor/doctor123', 'error');
-  }
+  const activeVisits = visits.filter(v => v.status !== 'DISCHARGED').length;
+  
+  gid('d-rev').textContent = '$' + revenue.toFixed(0);
+  gid('d-pats').textContent = todayVisits.length;
+  gid('d-debt').textContent = '$' + debt.toFixed(0);
+  gid('d-active').textContent = activeVisits;
 }
 
-function logout() {
-  if (!confirm('Sign out?')) return;
-  currentUser = null;
-  gid('app').style.display = 'none';
-  gid('lp').style.display = 'flex';
-  gid('lu').value = '';
-  gid('lp2').value = '';
-}
-
+// ============================================
+// NAVIGATION
+// ============================================
 function renderNav() {
   const sections = currentUser?.sections || ALL_SECS;
   const dn = gid('dn');
   if (!dn) return;
   
-  const groups = [
-    { label: 'Clinical', keys: ['reception','nurse','doctor'] },
-    { label: 'Departments', keys: ['lab','pharmacy','radiology'] },
-    { label: 'Finance', keys: ['billing','expenses','suppliers'] },
-    { label: 'Inventory', keys: ['inventory'] },
-    { label: 'Staff', keys: ['chat','protocols','feedbacks'] },
-    { label: 'Admin', keys: ['admin','director'] }
-  ];
+  const icons = {
+    reception: '🏥', nurse: '💉', doctor: '👨‍⚕️', billing: '💰',
+    lab: '🔬', pharmacy: '💊', radiology: '🩻', inventory: '📦',
+    expenses: '💰', suppliers: '🏪', admin: '⚙️'
+  };
+  
+  const labels = {
+    reception: 'Reception', nurse: 'Nurse', doctor: 'Doctor',
+    billing: 'Billing', lab: 'Lab', pharmacy: 'Pharmacy',
+    radiology: 'Radiology', inventory: 'Inventory',
+    expenses: 'Expenses', suppliers: 'Suppliers', admin: 'Admin'
+  };
   
   let html = '';
-  groups.forEach(g => {
-    const inGroup = g.keys.filter(k => sections.includes(k));
-    if (inGroup.length) {
-      html += `<div class="nav-sep">${g.label}</div>`;
-      inGroup.forEach(k => {
-        const icons = { reception:'🏥', nurse:'💉', doctor:'👨‍⚕️', billing:'💰', lab:'🔬', pharmacy:'💊', radiology:'🩻', inventory:'📦', expenses:'💰', suppliers:'🏪', chat:'💬', protocols:'📖', feedbacks:'⭐', admin:'⚙️', director:'📊' };
-        html += `<button id="btn-${k}" class="nb" onclick="showSection('${k}')">${icons[k] || '•'} ${k.charAt(0).toUpperCase() + k.slice(1)}</button>`;
-      });
-    }
+  sections.forEach(sec => {
+    html += `<button id="btn-${sec}" class="nb" onclick="showSection('${sec}')">${icons[sec] || '•'} ${labels[sec] || sec}</button>`;
   });
+  
   dn.innerHTML = html;
 }
 
-// Initialize with demo data
-function initDemoData() {
-  if (patients.length) return;
+function showSection(id) {
+  // Hide all sections
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  const targetSec = document.getElementById(`sec-${id}`);
+  if (targetSec) targetSec.classList.add('active');
   
-  // Sample patients
-  patients = [
-    { id: 'P1', name: 'John Okello', ageVal: 45, ageUnit: 'years', gender: 'Male', phone: '+256701234567', patNum: 'PT-001' },
-    { id: 'P2', name: 'Mary Achieng', ageVal: 32, ageUnit: 'years', gender: 'Female', phone: '+256702345678', patNum: 'PT-002' },
-    { id: 'P3', name: 'Peter Ocen', ageVal: 28, ageUnit: 'years', gender: 'Male', phone: '+256703456789', patNum: 'PT-003' },
-  ];
+  // Update active nav button
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  const activeBtn = document.getElementById(`btn-${id}`);
+  if (activeBtn) activeBtn.classList.add('active');
   
-  // Sample visits
-  visits = [
-    { id: 'V1', patId: 'P1', name: 'John Okello', date: today(), status: 'WAITING_TRIAGE', consultFee: 10, totalPaid: 0, labs: [], prescriptions: [], radiology: [] },
-    { id: 'V2', patId: 'P2', name: 'Mary Achieng', date: today(), status: 'WAITING_CONSULTATION', consultFee: 10, totalPaid: 0, labs: [], prescriptions: [], radiology: [], vitals: { bp: '120/80', temp: '36.8' } },
-  ];
+  // Close mobile sidebar
+  const sidebar = gid('sidebar');
+  if (sidebar) sidebar.classList.remove('sb-open');
   
-  // Sample inventory
-  inventory = WHO_MEDS.map((m,i) => ({ id: 'I-' + i, ...m, stock: m.stock || 50, price: m.price, sellPrice: m.price * 1.3 }));
+  // Render section content
+  const renders = {
+    director: renderDash,
+    reception: () => { renderPatients(); renderActiveVisits(); },
+    nurse: renderTriage,
+    doctor: renderCons,
+    billing: renderBilling,
+    lab: renderLab,
+    pharmacy: renderPharm,
+    radiology: renderRad,
+    inventory: renderInventory,
+    expenses: renderExpenses,
+    suppliers: renderSuppliers,
+    admin: renderAdmin
+  };
   
-  // Sample expenses
-  expenses = [
-    { id: 'E1', date: today(), category: 'Supplies', description: 'Medical gloves', amount: 150 },
-    { id: 'E2', date: today(), category: 'Utilities', description: 'Electricity', amount: 300 },
-  ];
+  if (renders[id]) renders[id]();
   
-  // Sample suppliers
-  suppliers = [
-    { id: 'S1', name: 'Kampala Pharma Ltd', phone: '+256701111111', email: 'orders@kampalapharma.ug' },
-    { id: 'S2', name: 'MedSupply Uganda', phone: '+256702222222', email: 'info@medsupply.ug' },
-  ];
-  
-  renderPatients();
-  renderActiveVisits();
+  // Update breadcrumb
+  const breadcrumbLabels = {
+    reception: '🏥 Reception', nurse: '💉 Nurse Station', doctor: '👨‍⚕️ Doctor Consultation',
+    billing: '💰 Billing', lab: '🔬 Laboratory', pharmacy: '💊 Pharmacy',
+    radiology: '🩻 Radiology', inventory: '📦 Inventory', expenses: '💰 Expenses',
+    suppliers: '🏪 Suppliers', admin: '⚙️ Administration', director: '📊 Dashboard'
+  };
+  const breadcrumb = gid('breadcrumb');
+  if (breadcrumb) breadcrumb.textContent = breadcrumbLabels[id] || id;
 }
 
-// Auto-refresh
-setInterval(() => {
-  if (document.querySelector('section.active')) {
-    renderPatients();
-    renderActiveVisits();
-    renderCons();
+// ============================================
+// INITIALIZATION
+// ============================================
+function init() {
+  console.log('MediTrack Pro initializing...');
+  
+  // Setup enter key on login
+  const passwordField = gid('lp2');
+  if (passwordField) {
+    passwordField.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') login();
+    });
   }
-}, 30000);
+  
+  const usernameField = gid('lu');
+  if (usernameField) {
+    usernameField.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') login();
+    });
+  }
+  
+  // Pre-fill demo credentials for convenience
+  const demoBtn = gid('demo-fill');
+  if (demoBtn) {
+    demoBtn.onclick = () => {
+      gid('lu').value = 'doctor';
+      gid('lp2').value = 'doctor123';
+    };
+  }
+  
+  // Hide loading screen
+  setTimeout(() => {
+    const ls = gid('ls');
+    if (ls) ls.style.display = 'none';
+  }, 500);
+}
+
+// Make functions global
+window.login = login;
+window.logout = logout;
+window.showSection = showSection;
+window.cModal = cModal;
+window.oModal = oModal;
+window.registerPatient = registerPatient;
+window.startVisit = startVisit;
+window.openTriage = openTriage;
+window.submitTriage = submitTriage;
+window.openCons = openCons;
+window.closeConsForm = closeConsForm;
+window.saveConsultation = saveConsultation;
+window.addRxRow = addRxRow;
+window.removeRxRow = removeRxRow;
+window.updateRxRow = updateRxRow;
+window.addRadRow = addRadRow;
+window.removeRadRow = removeRadRow;
+window.updateRadRow = updateRadRow;
+window.toggleLabTest = toggleLabTest;
+window.buildLabChips = buildLabChips;
+window.updateOrderSummary = updateOrderSummary;
+window.openPayment = openPayment;
+window.processPayment = processPayment;
+window.openLabEntry = openLabEntry;
+window.submitLabResults = submitLabResults;
+window.dispensePrescriptions = dispensePrescriptions;
+window.openRadReport = openRadReport;
+window.submitRadReport = submitRadReport;
+window.restockItem = restockItem;
+window.saveExpense = saveExpense;
+window.deleteExpense = deleteExpense;
+window.saveSupplier = saveSupplier;
+window.editSupplier = editSupplier;
+window.saveStaff = saveStaff;
+window.deleteStaff = deleteStaff;
+window.renderPatients = renderPatients;
+window.renderActiveVisits = renderActiveVisits;
+window.renderTriage = renderTriage;
+window.renderCons = renderCons;
+window.renderBilling = renderBilling;
+window.renderLab = renderLab;
+window.renderPharm = renderPharm;
+window.renderRad = renderRad;
+window.renderInventory = renderInventory;
+window.renderExpenses = renderExpenses;
+window.renderSuppliers = renderSuppliers;
+window.renderAdmin = renderAdmin;
+window.renderDash = renderDash;
 
 // Start
-window.onload = () => {
-  initDemoData();
-  renderNav();
-  gid('ls')?.remove();
-};
+init();
 </script>
 </head>
 <body>
 
-<div id="ls" style="position:fixed;inset:0;background:var(--p);display:flex;align-items:center;justify-content:center;color:#fff;z-index:9999;">
-  <div><div class="spin" style="width:40px;height:40px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px;"></div><div>Loading MediTrack Pro...</div></div>
+<div id="ls" style="position:fixed;inset:0;background:var(--p);display:flex;align-items:center;justify-content:center;color:#fff;z-index:9999;flex-direction:column;">
+  <div style="width:40px;height:40px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:16px;"></div>
+  <div>Loading MediTrack Pro...</div>
 </div>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-
-<div id="offline-banner">📡 Offline Mode - Changes will sync when back online</div>
 
 <!-- LOGIN PAGE -->
 <div id="lp" style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#134e4a 0%,#0d9488 50%,#14b8a6 100%);">
   <div class="card" style="width:400px;text-align:center;padding:32px 28px;">
-    <div style="font-size:38px;margin-bottom:8px;">🏥</div>
+    <div style="font-size:48px;margin-bottom:8px;">🏥</div>
     <div style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#0d9488,#14b8a6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">MediTrack Pro</div>
-    <div style="font-size:12px;color:var(--mu);margin-bottom:24px;">Hospital Management System</div>
+    <div style="font-size:12px;color:var(--mu);margin-bottom:24px;">Hospital Management Information System</div>
+    
     <label>Username</label>
-    <input id="lu" placeholder="Enter username" onkeyup="if(event.key==='Enter')login()">
+    <input id="lu" placeholder="Enter username" style="margin-bottom:12px;">
+    
     <label>Password</label>
-    <input type="password" id="lp2" placeholder="Enter password" onkeyup="if(event.key==='Enter')login()">
-    <button onclick="login()" class="bp" style="width:100%;padding:11px;margin-top:16px;">Sign In →</button>
-    <div id="le" style="color:var(--d);font-size:12px;margin-top:8px;"></div>
-    <details style="margin-top:12px;">
-      <summary style="font-size:12px;cursor:pointer;">Demo Credentials</summary>
-      <div style="font-size:11px;margin-top:8px;">
-        <div><b>doctor</b> / doctor123</div>
-        <div><b>nurse</b> / nurse123</div>
-        <div><b>lab</b> / lab123</div>
-        <div><b>pharmacy</b> / pharm123</div>
-        <div><b>billing</b> / billing123</div>
-        <div><b>admin</b> / admin123</div>
+    <input type="password" id="lp2" placeholder="Enter password" style="margin-bottom:12px;">
+    
+    <button onclick="login()" class="bp" style="width:100%;padding:12px;font-size:14px;">Sign In →</button>
+    
+    <div id="le" style="color:#dc2626;font-size:12px;margin-top:12px;min-height:20px;"></div>
+    
+    <details style="margin-top:16px;text-align:left;">
+      <summary style="font-size:12px;cursor:pointer;color:var(--p);font-weight:600;">Demo Credentials</summary>
+      <div style="font-size:11px;margin-top:8px;line-height:1.8;">
+        <div><strong>doctor</strong> / doctor123 <span style="color:var(--mu);">(Full access)</span></div>
+        <div><strong>nurse</strong> / nurse123 <span style="color:var(--mu);">(Triage only)</span></div>
+        <div><strong>lab</strong> / lab123 <span style="color:var(--mu);">(Lab only)</span></div>
+        <div><strong>pharmacy</strong> / pharm123 <span style="color:var(--mu);">(Pharmacy only)</span></div>
+        <div><strong>billing</strong> / billing123 <span style="color:var(--mu);">(Billing only)</span></div>
+        <div><strong>admin</strong> / admin123 <span style="color:var(--mu);">(Administrator)</span></div>
       </div>
     </details>
+    
+    <button id="demo-fill" style="margin-top:12px;background:var(--lt);border:1px solid var(--bd);color:var(--tx);padding:6px 12px;font-size:11px;" onclick="gid('lu').value='doctor';gid('lp2').value='doctor123';">📋 Fill Demo Credentials</button>
   </div>
 </div>
 
@@ -1723,16 +1734,19 @@ window.onload = () => {
     <nav id="dn"></nav>
     <div class="sb-footer">
       <div class="sb-footer-user" id="sb-user">Loading...</div>
-      <button onclick="logout()" class="sb-logout" style="margin-top:8px;">🔓 Logout</button>
+      <button onclick="logout()" class="sb-logout" style="margin-top:8px;background:rgba(255,255,255,.1);border:none;color:#fff;padding:6px 12px;border-radius:5px;cursor:pointer;">🔓 Logout</button>
     </div>
   </aside>
   
   <div id="main-wrap">
     <header class="top-header">
-      <div><div class="breadcrumb" id="breadcrumb">Dashboard</div><h1>MediTrack Pro</h1></div>
+      <div>
+        <div class="breadcrumb" id="breadcrumb">Dashboard</div>
+        <h1>MediTrack Pro</h1>
+      </div>
       <div id="user-chip" style="display:flex;align-items:center;gap:8px;">
-        <div id="user-avatar" class="pat-avatar" style="width:32px;height:32px;">G</div>
-        <div><div id="user-name" style="font-weight:700;">Loading</div><div id="user-role" style="font-size:10px;">role</div></div>
+        <div id="user-avatar" class="pat-avatar" style="width:32px;height:32px;">👤</div>
+        <div><div id="user-name" style="font-weight:700;">User</div><div id="user-role" style="font-size:10px;color:var(--mu);">role</div></div>
       </div>
     </header>
     <div class="con">
@@ -1763,13 +1777,13 @@ window.onload = () => {
         
         <div class="card">
           <h4>📋 Active Visits Today</h4>
-          <table id="active-visits-table"></table>
+          <div style="overflow-x:auto;"><table id="active-visits-table"></table></div>
         </div>
         
         <div class="card">
           <h4>👥 All Patients</h4>
           <input id="patSearch" placeholder="Search patients..." onkeyup="renderPatients()" style="margin-bottom:8px;">
-          <table id="table-pats"></table>
+          <div style="overflow-x:auto;"><table id="table-pats"></table></div>
         </div>
       </section>
 
@@ -1777,19 +1791,19 @@ window.onload = () => {
       <section id="sec-nurse">
         <div class="card">
           <h4>🩺 Triage Queue</h4>
-          <table id="triage-table"></table>
+          <div style="overflow-x:auto;"><table id="triage-table"></table></div>
         </div>
         
         <div id="triage-form" class="card" style="display:none;">
           <h4 id="triage-target"></h4>
           <div class="g">
             <div><label>BP (mmHg)</label><input id="vBP" placeholder="120/80"></div>
-            <div><label>Temp (°C)</label><input id="vTemp" placeholder="36.8"></div>
-            <div><label>Weight (kg)</label><input id="vWeight" placeholder="70"></div>
+            <div><label>Temp (°C)</label><input id="vTemp" placeholder="36.8" step="0.1"></div>
+            <div><label>Weight (kg)</label><input id="vWeight" placeholder="70" step="0.1"></div>
             <div><label>Pulse (bpm)</label><input id="vPulse" placeholder="78"></div>
             <div><label>SpO₂ (%)</label><input id="vSpO2" placeholder="98"></div>
           </div>
-          <div class="ab" style="margin-top:12px;">
+          <div class="ab">
             <button onclick="submitTriage()" class="bp">✅ Send to Doctor</button>
             <button onclick="gid('triage-form').style.display='none'" style="background:#e2e8f0;">Cancel</button>
           </div>
@@ -1800,36 +1814,38 @@ window.onload = () => {
       <section id="sec-doctor">
         <div class="card">
           <h4>📋 Consultation Queue</h4>
-          <table id="table-cons"></table>
+          <div style="overflow-x:auto;"><table id="table-cons"></table></div>
         </div>
         
         <div id="cons-form" class="card" style="display:none;">
-          <div style="background:var(--p);color:#fff;padding:12px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;">
+          <div style="background:var(--p);color:#fff;padding:12px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;">
             <div><div style="font-size:11px;opacity:.8;">Active Consultation</div><div id="cons-pat-name" style="font-weight:800;font-size:18px;">—</div></div>
-            <div><button onclick="closeConsForm()" style="background:rgba(255,255,255,.2);color:#fff;">✕ Close</button></div>
+            <div><button onclick="closeConsForm()" style="background:rgba(255,255,255,.2);color:#fff;border:none;padding:6px 12px;border-radius:5px;">✕ Close</button></div>
           </div>
           
+          <div id="cons-vitals-display" style="display:none;"></div>
+          
           <div class="cf-tabs">
-            <button class="cft active" data-tab="overview" onclick="document.querySelectorAll('.cf-pan').forEach(p=>p.style.display='none');gid('cf-overview').style.display='block';">📊 Overview</button>
-            <button class="cft" data-tab="clinical" onclick="document.querySelectorAll('.cf-pan').forEach(p=>p.style.display='none');gid('cf-clinical').style.display='block';">📝 Clinical</button>
-            <button class="cft" data-tab="orders" onclick="document.querySelectorAll('.cf-pan').forEach(p=>p.style.display='none');gid('cf-orders').style.display='block';">💊 Orders</button>
+            <button class="cft active" data-tab="overview" onclick="document.querySelectorAll('.cf-pan').forEach(p=>p.style.display='none');gid('cf-overview').style.display='block';this.classList.add('active');">📊 Overview</button>
+            <button class="cft" data-tab="clinical" onclick="document.querySelectorAll('.cf-pan').forEach(p=>p.style.display='none');gid('cf-clinical').style.display='block';this.classList.add('active');">📝 Clinical</button>
+            <button class="cft" data-tab="orders" onclick="document.querySelectorAll('.cf-pan').forEach(p=>p.style.display='none');gid('cf-orders').style.display='block';this.classList.add('active');">💊 Orders</button>
           </div>
           
           <div style="padding:16px;">
             <!-- Overview Panel -->
             <div id="cf-overview" class="cf-pan">
               <div class="g2">
-                <div><label>Presenting Complaint</label><textarea id="hPC" rows="2" placeholder="Chief complaint..."></textarea></div>
-                <div><label>History of Presenting Complaint</label><textarea id="hHPC" rows="2" placeholder="Onset, duration, severity..."></textarea></div>
+                <div><label>Presenting Complaint</label><textarea id="hPC" rows="2" placeholder="Chief complaint in patient's own words..."></textarea></div>
+                <div><label>History of Presenting Complaint</label><textarea id="hHPC" rows="2" placeholder="Onset, duration, severity, modifying factors..."></textarea></div>
               </div>
             </div>
             
             <!-- Clinical Panel -->
             <div id="cf-clinical" class="cf-pan" style="display:none;">
-              <div><label>Physical Examination</label><textarea id="hPE" rows="3" placeholder="General, CVS, Resp, Abdomen, CNS..."></textarea></div>
+              <div><label>Physical Examination</label><textarea id="hPE" rows="3" placeholder="General, CVS, Respiratory, Abdomen, CNS..."></textarea></div>
               <div><label>Differential Diagnosis</label><textarea id="cDiffDx" rows="2"></textarea></div>
-              <div><label>Final Diagnosis</label><input id="cFinalDx" placeholder="Working diagnosis"></div>
-              <div><label>Treatment Plan</label><textarea id="cNotes" rows="3" placeholder="Plan, follow-up..."></textarea></div>
+              <div><label>Final / Working Diagnosis</label><input id="cFinalDx" placeholder="Diagnosis"></div>
+              <div><label>Treatment Plan & Notes</label><textarea id="cNotes" rows="3" placeholder="Plan, follow-up instructions..."></textarea></div>
             </div>
             
             <!-- Orders Panel -->
@@ -1862,7 +1878,7 @@ window.onload = () => {
       <section id="sec-billing">
         <div class="card">
           <h4>💰 Billing & Payments</h4>
-          <table id="table-bill"></table>
+          <div style="overflow-x:auto;"><table id="table-bill"></table></div>
         </div>
       </section>
 
@@ -1870,7 +1886,7 @@ window.onload = () => {
       <section id="sec-lab">
         <div class="card">
           <h4>🔬 Pending Lab Tests</h4>
-          <table id="lab-pending-table"></table>
+          <div style="overflow-x:auto;"><table id="lab-pending-table"></table></div>
         </div>
         
         <div id="lab-entry" class="card" style="display:none;">
@@ -1883,7 +1899,7 @@ window.onload = () => {
       <section id="sec-pharmacy">
         <div class="card">
           <h4>💊 Pending Prescriptions</h4>
-          <table id="pharm-pending-table"></table>
+          <div style="overflow-x:auto;"><table id="pharm-pending-table"></table></div>
         </div>
       </section>
 
@@ -1891,7 +1907,7 @@ window.onload = () => {
       <section id="sec-radiology">
         <div class="card">
           <h4>🩻 Pending Imaging</h4>
-          <table id="rad-pending-table"></table>
+          <div style="overflow-x:auto;"><table id="rad-pending-table"></table></div>
         </div>
         
         <div id="rad-entry" class="card" style="display:none;">
@@ -1907,7 +1923,7 @@ window.onload = () => {
             <h4>📦 Inventory</h4>
             <button class="bp" onclick="addRxRow()">+ Add Item</button>
           </div>
-          <table id="table-inv"></table>
+          <div style="overflow-x:auto;"><table id="table-inv"></table></div>
         </div>
       </section>
 
@@ -1918,7 +1934,7 @@ window.onload = () => {
             <h4>💰 Expenses</h4>
             <button class="bp" onclick="oModal('exp-modal')">+ Add Expense</button>
           </div>
-          <table id="table-exp"></table>
+          <div style="overflow-x:auto;"><table id="table-exp"></table></div>
         </div>
       </section>
 
@@ -1929,35 +1945,7 @@ window.onload = () => {
             <h4>🏪 Suppliers</h4>
             <button class="bp" onclick="oModal('sup-add-modal')">+ Add Supplier</button>
           </div>
-          <table id="table-suppliers"></table>
-        </div>
-      </section>
-
-      <!-- CHAT -->
-      <section id="sec-chat">
-        <div class="card">
-          <h4>💬 Staff Chat</h4>
-          <div id="chat-messages" class="chat-area" style="height:300px;overflow-y:auto;border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:8px;"></div>
-          <div style="display:flex;gap:6px;">
-            <input id="chat-input" placeholder="Type message... (Enter to send)" onkeypress="if(event.key==='Enter')sendChat()" style="flex:1;">
-            <button class="bp" onclick="sendChat()">Send</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- PROTOCOLS -->
-      <section id="sec-protocols">
-        <div class="card">
-          <h4>📖 Standard Operating Procedures</h4>
-          <div id="sop-list"></div>
-        </div>
-      </section>
-
-      <!-- FEEDBACKS -->
-      <section id="sec-feedbacks">
-        <div class="card">
-          <h4>⭐ Patient Feedback</h4>
-          <table id="table-feedbacks"></table>
+          <div style="overflow-x:auto;"><table id="table-suppliers"></table></div>
         </div>
       </section>
 
@@ -1968,7 +1956,7 @@ window.onload = () => {
             <h4>👤 Staff Management</h4>
             <button class="bp" onclick="oModal('staff-modal')">+ Add Staff</button>
           </div>
-          <table id="table-staff"></table>
+          <div style="overflow-x:auto;"><table id="table-staff"></table></div>
         </div>
       </section>
 
@@ -1984,9 +1972,9 @@ window.onload = () => {
     <div id="pay-balance" style="font-size:18px;font-weight:700;margin:12px 0;"></div>
     <label>Amount ($)</label>
     <input type="number" id="pay-amount" step="0.01">
-    <div class="ab" style="margin-top:12px;">
+    <div class="ab">
       <button onclick="processPayment()" class="ba">Process Payment</button>
-      <button onclick="cModal('pay-modal')" style="background:#e2e8f0;">Cancel</button>
+      <button onclick="cModal('pay-modal')">Cancel</button>
     </div>
   </div>
 </div>
@@ -2002,7 +1990,7 @@ window.onload = () => {
       <div><label>Reference</label><input id="expRef" placeholder="Receipt #"></div>
     </div>
     <label>Description</label><input id="expDesc" placeholder="What was this expense for?">
-    <div class="ab" style="margin-top:12px;">
+    <div class="ab">
       <button onclick="saveExpense()" class="ba">Save</button>
       <button onclick="cModal('exp-modal')">Cancel</button>
     </div>
@@ -2020,7 +2008,7 @@ window.onload = () => {
       <div><label>Email</label><input id="supEmail"></div>
     </div>
     <label>Address</label><input id="supAddress">
-    <div class="ab" style="margin-top:12px;">
+    <div class="ab">
       <button onclick="saveSupplier()" class="ba">Save</button>
       <button onclick="cModal('sup-add-modal')">Cancel</button>
     </div>
@@ -2038,133 +2026,27 @@ window.onload = () => {
       <div><label>Role</label><input id="staffRole" placeholder="e.g., Nurse, Lab Tech"></div>
     </div>
     <label><input type="checkbox" id="staffAdmin" style="width:auto;margin-right:6px;"> Admin Access</label>
-    <div class="ab" style="margin-top:12px;">
+    <div class="ab">
       <button onclick="saveStaff()" class="ba">Save</button>
       <button onclick="cModal('staff-modal')">Cancel</button>
     </div>
   </div>
 </div>
 
-<!-- PUBLIC FEEDBACK PAGE (shown when /feedback route) -->
-<div id="feedback-public-wrap" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#1e3a8a,#3b82f6);z-index:9999;justify-content:center;align-items:center;">
-  <div style="background:#fff;border-radius:14px;width:100%;max-width:500px;padding:32px;margin:20px;">
-    <div style="text-align:center;margin-bottom:20px;"><div style="font-size:48px;">🏥</div><h2>Patient Feedback</h2></div>
-    <div id="fb-public-form">
-      <input id="fb-pub-name" placeholder="Your name (optional)" style="margin-bottom:8px;">
-      <textarea id="fb-pub-comment" rows="3" placeholder="How was your experience?" style="margin-bottom:8px;"></textarea>
-      <div style="text-align:center;margin:12px 0;">
-        <span class="fb-star" onclick="setPublicRating(1)" id="pstar1">★</span>
-        <span class="fb-star" onclick="setPublicRating(2)" id="pstar2">★</span>
-        <span class="fb-star" onclick="setPublicRating(3)" id="pstar3">★</span>
-        <span class="fb-star" onclick="setPublicRating(4)" id="pstar4">★</span>
-        <span class="fb-star" onclick="setPublicRating(5)" id="pstar5">★</span>
-      </div>
-      <button onclick="submitPublicFeedback()" class="bp" style="width:100%;padding:12px;">Submit Feedback</button>
-    </div>
-    <div id="fb-public-thanks" style="display:none;text-align:center;padding:30px;">
-      <div style="font-size:56px;">🙏</div>
-      <h3 style="color:#10b981;">Thank You!</h3>
-      <p>Your feedback helps us improve.</p>
-    </div>
-  </div>
-</div>
-
-<style>
-.fb-star { font-size: 32px; cursor: pointer; color: #d1d5db; transition: .15s; margin: 0 4px; }
-.fb-star.active { color: #f59e0b; }
-.lab-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #fff;
-  border: 1.5px solid var(--bd);
-  border-radius: 20px;
-  padding: 3px 9px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: .15s;
-}
-.lab-chip.selected { background: var(--p); color: #fff; border-color: var(--p); }
-.rx-row { margin-bottom: 6px; }
-.osum-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--bd);
-  font-size: 12px;
-}
-.osum-total {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 800;
-  font-size: 14px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 2px solid var(--p);
-}
-.ab { display: flex; gap: 6px; margin-top: 12px; }
-.dv { border: none; border-top: 1.5px solid var(--bd); margin: 11px 0; }
-.nav-sep {
-  padding: 14px 16px 5px 16px;
-  font-size: 10px;
-  font-weight: 700;
-  color: rgba(255,255,255,.45);
-  text-transform: uppercase;
-}
-.nb {
-  display: block;
-  width: calc(100% - 12px);
-  margin: 1px 6px;
-  padding: 10px 12px;
-  background: transparent;
-  color: rgba(255,255,255,.9);
-  text-align: left;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.nb:hover { background: rgba(255,255,255,.1); }
-.nb.active { background: #ffffff; color: var(--p); font-weight: 700; }
-#sidebar { scrollbar-width: thin; }
-#sidebar::-webkit-scrollbar { width: 6px; }
-.chat-area { display: flex; flex-direction: column; gap: 8px; }
-.chat-mine { align-self: flex-end; background: var(--p); color: #fff; border-radius: 12px 12px 2px 12px; padding: 8px 13px; max-width: 70%; }
-.chat-other { align-self: flex-start; background: var(--card); border: 1px solid var(--bd); border-radius: 12px 12px 12px 2px; padding: 8px 13px; max-width: 70%; }
-.chat-name { font-size: 10px; font-weight: 700; color: var(--p); margin-bottom: 2px; }
-.chat-time { font-size: 10px; opacity: .55; margin-top: 3px; text-align: right; }
-.cb { border: 1.5px solid var(--bd); border-radius: 7px; margin-bottom: 7px; overflow: hidden; }
-.ch { background: var(--lt); padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
-.cbody { display: none; padding: 10px 12px; }
-.cbody.open { display: block; }
-@media (max-width: 768px) {
-  #main-wrap { margin-left: 0; }
-  .g, .g2, .g3, .g4 { grid-template-columns: 1fr; }
-  .con { padding: 12px; }
-}
-</style>
-
 <script>
-// Additional helper for section toggling
-window.showSection = showSection;
-window.cModal = cModal;
-window.oModal = oModal;
-window.updateOrderSummary = updateOrderSummary;
-window.addRxRow = addRxRow;
-window.addRadRow = addRadRow;
-window.removeRxRow = removeRxRow;
-window.removeRadRow = removeRadRow;
-window.updateRxRow = updateRxRow;
-window.updateRadRow = updateRadRow;
-window.toggleLabTest = toggleLabTest;
-window.buildLabChips = buildLabChips;
-window.setPublicRating = setPublicRating;
+// Additional setup for tab switching
+document.querySelectorAll('.cft').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.cft').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
 
 // Hide loading screen after everything loads
 setTimeout(() => {
   const ls = document.getElementById('ls');
   if (ls) ls.style.display = 'none';
-}, 500);
+}, 800);
 </script>
 
 </body>

@@ -1465,10 +1465,18 @@ function newVisit(vId, patId, name, consultType, payer) {
 }
 
 // ── AUTH ──
+// ─────────────────────────────────────────────────────────────────────
+// LOGIN FLOW (v2 — Supabase-native, with approval gate)
+// Strategy:
+//  1. Demo accounts: hardcoded, offline, always work
+//  2. Real accounts: signInWithPassword using email (username@meditrack.pro OR raw email)
+//     → After auth, fetch staff row → check approval_status → gate access
+// ─────────────────────────────────────────────────────────────────────
 function login() {
-  const u = gv('lu'), pw = document.getElementById('lp2')?.value || '';
+  const u = (gv('lu')||'').trim();
+  const pw = document.getElementById('lp2')?.value || '';
   const le = gid('le');
-  if (!u || !pw) { if(le) le.textContent = 'Enter username and password.'; return; }
+  if (!u || !pw) { if(le) le.textContent = 'Enter your email/username and password.'; return; }
 
   // ── DEMO ACCOUNTS — 100% synchronous, zero network calls ──
   const DEMO = {
@@ -1484,9 +1492,7 @@ function login() {
   const PWDS = {gerald:'gerald123',admin:'admin123',director:'director123',doctor:'doctor123',nurse:'nurse123',lab:'lab123',pharmacy:'pharm123',billing:'billing123'};
 
   const demoKey = Object.keys(DEMO).find(k => k===u && PWDS[k]===pw);
-
   if (demoKey) {
-    // INSTANT login — no network whatsoever
     const d = DEMO[demoKey];
     currentUser = {id:'demo-'+demoKey, name:d.name, username:demoKey,
       role:d.role, isAdmin:d.isAdmin, sections:d.sections, auth_uid:'demo-'+demoKey};
@@ -1497,19 +1503,14 @@ function login() {
     gid('lp').style.display = 'none';
     gid('app').style.display = 'block';
     gid('sb-user').textContent = d.name + ' · ' + d.role;
-    initDemoData(); // Seed demo patients/visits if empty
+    initDemoData();
     gid('voice-badge').textContent = voiceEnabled ? '🔊' : '🔇';
     renderNav();
     toast('Welcome, ' + d.name + '! Loading your data...', 'success');
     updateUserChip();
     _startAlertPolling();
-    // CRITICAL: ensure real hospital ID is set BEFORE any patient registration
-    // This makes demo accounts persistent in Supabase
     ensureRealHospital().then(realId => {
-      if (realId) {
-        currentHospital = realId;
-        return loadSupabaseData();
-      }
+      if (realId) { currentHospital = realId; return loadSupabaseData(); }
     }).then(() => {
       toast('☁️ ' + (patients.length) + ' patient(s) loaded from cloud.', 'info');
       if (typeof renderPatients === 'function') renderPatients();
@@ -1519,47 +1520,272 @@ function login() {
     }).catch(err => {
       console.warn('Cloud sync failed:', err.message);
       toast('⚠️ Working offline — data backed up locally.', 'warning');
-      // Fall back to localStorage cache
       loadFromLocalStorage();
     });
     setInterval(autoRefresh, 30000);
     return;
   }
 
-  // Real account — async login
-  if(le) le.textContent = 'Signing in…';
-  _doRealLogin(u, pw, le);
+  // Real Supabase account
+  if(le) le.textContent = '';
+  const loginBtn = document.getElementById('login-btn');
+  if(loginBtn){ loginBtn.disabled = true; loginBtn.textContent = 'Signing in…'; }
+  _doRealLogin(u, pw, le).finally(()=>{
+    if(loginBtn){ loginBtn.disabled = false; loginBtn.textContent = 'Sign In →'; }
+  });
 }
 
 async function _doRealLogin(u, pw, le) {
   try {
-    const { data: authData, error: authError } = await sb.auth.signInWithPassword({
-      email: u.includes('@') ? u : u + '@meditrack.pro', password: pw
-    }).catch(() => ({data:null, error:{message:'Network error'}}));
+    // Accept bare username (e.g. "drjohn") OR full email
+    const email = u.includes('@') ? u : u + '@meditrack.pro';
+
+    const { data: authData, error: authError } = await sb.auth.signInWithPassword({ email, password: pw })
+      .catch(() => ({data:null, error:{message:'Network error — check your connection.'}}));
 
     if (authError) {
-      if(le) le.textContent = 'Incorrect username or password.';
+      // Supabase returns "Invalid login credentials" for wrong pw OR unconfirmed email
+      if(le) le.textContent = authError.message.includes('Invalid') || authError.message.includes('credentials')
+        ? 'Incorrect email/username or password.'
+        : authError.message;
       return;
     }
-    const { data: staffRow } = await sb.from('staff').select('*')
-      .eq('auth_user_id', authData.user.id).maybeSingle().catch(()=>({data:null}));
-    currentUser = staffRow
-      ? {...staffRow, auth_uid: authData.user.id}
-      : {id:authData.user.id, name:u, username:u, role:'admin', isAdmin:true, sections:[...ALL_SECS], auth_uid:authData.user.id};
-    const { data: hospData } = await sb.from('hospitals').select('*').limit(10).catch(()=>({data:[]}));
+
+    // ── Fetch staff profile ──
+    const { data: staffRow } = await sb.from('staff')
+      .select('*')
+      .eq('auth_user_id', authData.user.id)
+      .maybeSingle()
+      .catch(()=>({data:null}));
+
+    // ── APPROVAL GATE ──
+    if (staffRow) {
+      const approvalStatus = staffRow.approval_status || 'approved'; // legacy rows = approved
+      if (approvalStatus === 'pending') {
+        await sb.auth.signOut().catch(()=>{});
+        if(le) le.innerHTML = '⏳ <b>Account pending approval.</b><br><span style="font-size:11px;font-weight:400;">An administrator must approve your account before you can log in. Please contact your facility admin.</span>';
+        return;
+      }
+      if (approvalStatus === 'rejected') {
+        await sb.auth.signOut().catch(()=>{});
+        if(le) le.innerHTML = '🚫 <b>Account access denied.</b><br><span style="font-size:11px;font-weight:400;">Your access request was declined. Contact administration for assistance.</span>';
+        return;
+      }
+      if (staffRow.is_active === false) {
+        await sb.auth.signOut().catch(()=>{});
+        if(le) le.textContent = '🔒 This account has been deactivated. Contact your administrator.';
+        return;
+      }
+    }
+
+    // ── Build currentUser ──
+    if (staffRow) {
+      currentUser = {
+        ...staffRow,
+        name: staffRow.full_name || u,
+        username: staffRow.username || u,
+        isAdmin: staffRow.is_admin || ['admin','superadmin','director'].includes((staffRow.role||'').toLowerCase()),
+        sections: staffRow.sections || [...ALL_SECS],
+        auth_uid: authData.user.id
+      };
+    } else {
+      // Auth user exists but no staff row yet — treat as superadmin (first-time setup)
+      currentUser = {
+        id: authData.user.id,
+        name: authData.user.email?.split('@')[0] || u,
+        username: u,
+        role: 'superadmin',
+        isAdmin: true,
+        sections: [...ALL_SECS],
+        auth_uid: authData.user.id,
+        approval_status: 'approved'
+      };
+    }
+
+    // ── Load hospitals ──
+    const { data: hospData } = await sb.from('hospitals').select('*')
+      .eq('is_active', true).limit(20).catch(()=>({data:[]}));
     allHospitals = hospData || [];
-    currentHospital = allHospitals[0]?.id || null;
+    // Prefer hospital matching staff's hospital_id, else first
+    currentHospital = (staffRow?.hospital_id && allHospitals.find(h=>h.id===staffRow.hospital_id))
+      ? staffRow.hospital_id
+      : (allHospitals[0]?.id || null);
+
     await loadSupabaseData();
+
     gid('lp').style.display = 'none';
     gid('app').style.display = 'block';
     gid('sb-user').textContent = currentUser.name + ' · ' + (currentUser.role||'Staff');
     gid('voice-badge').textContent = voiceEnabled ? '🔊' : '🔇';
     renderNav();
+    updateUserChip();
+    _startAlertPolling();
     toast('Welcome, ' + currentUser.name + '!', 'success');
     setInterval(autoRefresh, 30000);
   } catch(e) {
+    console.error('Login error:', e);
     if(le) le.textContent = 'Login error. Please try again.';
   }
+}
+
+// ── SELF-SERVICE REGISTRATION (Request Access) ──
+// Staff sign themselves up; an admin must approve before they can log in.
+async function requestAccess() {
+  const fullName = (document.getElementById('ra-name')?.value||'').trim();
+  const email    = (document.getElementById('ra-email')?.value||'').trim();
+  const pw       = document.getElementById('ra-pw')?.value||'';
+  const pw2      = document.getElementById('ra-pw2')?.value||'';
+  const role     = document.getElementById('ra-role')?.value||'';
+  const dept     = document.getElementById('ra-dept')?.value||'';
+  const msg      = gid('ra-msg');
+
+  if (!fullName||!email||!pw||!role) { if(msg) msg.innerHTML='<span style="color:#dc2626">Fill all required fields.</span>'; return; }
+  if (!email.includes('@'))          { if(msg) msg.innerHTML='<span style="color:#dc2626">Enter a valid email address.</span>'; return; }
+  if (pw.length < 8)                 { if(msg) msg.innerHTML='<span style="color:#dc2626">Password must be at least 8 characters.</span>'; return; }
+  if (pw !== pw2)                    { if(msg) msg.innerHTML='<span style="color:#dc2626">Passwords do not match.</span>'; return; }
+
+  const raBtn = document.getElementById('ra-btn');
+  if(raBtn){ raBtn.disabled=true; raBtn.textContent='Submitting…'; }
+  if(msg) msg.innerHTML='';
+
+  try {
+    // 1. Create Supabase auth account (email confirmation disabled on anon signup)
+    const { data: signupData, error: signupError } = await sb.auth.signUp({ email, password: pw });
+    if (signupError) {
+      if(msg) msg.innerHTML = '<span style="color:#dc2626">'+signupError.message+'</span>';
+      return;
+    }
+
+    // 2. Insert pending staff record — approval_status = 'pending'
+    const { error: insertError } = await sb.from('staff').insert({
+      auth_user_id: signupData.user?.id,
+      full_name: fullName,
+      username: email.split('@')[0],
+      email: email,
+      role: role,
+      department: dept||null,
+      approval_status: 'pending',
+      is_active: false,
+      is_admin: false,
+      sections: [],
+      requested_at: new Date().toISOString()
+    }).catch(e=>({error:e}));
+
+    if (insertError) {
+      console.warn('Staff insert error:', insertError);
+      // Non-fatal: auth account created, admin can still see user in Auth dashboard
+    }
+
+    if(msg) msg.innerHTML = `
+      <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:14px;text-align:center;">
+        <div style="font-size:22px;margin-bottom:6px;">✅</div>
+        <div style="font-weight:700;color:#065f46;margin-bottom:4px;">Request submitted!</div>
+        <div style="font-size:12px;color:#374151;">Your account request has been sent to the iCURE administrator. You will be notified when it's approved. You cannot log in until your account is approved.</div>
+      </div>`;
+    setTimeout(()=>showLoginTab('login'), 4000);
+  } catch(e) {
+    console.error('Request access error:', e);
+    if(msg) msg.innerHTML='<span style="color:#dc2626">An error occurred. Please try again.</span>';
+  } finally {
+    if(raBtn){ raBtn.disabled=false; raBtn.textContent='Submit Request'; }
+  }
+}
+
+function showLoginTab(tab) {
+  const loginPane = gid('login-pane');
+  const registerPane = gid('register-pane');
+  const tabLogin = gid('tab-login');
+  const tabRegister = gid('tab-register');
+  if(tab==='login'){
+    if(loginPane) loginPane.style.display='block';
+    if(registerPane) registerPane.style.display='none';
+    if(tabLogin){ tabLogin.style.background='#fff'; tabLogin.style.color='#0f172a'; tabLogin.style.fontWeight='700'; }
+    if(tabRegister){ tabRegister.style.background='transparent'; tabRegister.style.color='rgba(255,255,255,.7)'; tabRegister.style.fontWeight='500'; }
+  } else {
+    if(loginPane) loginPane.style.display='none';
+    if(registerPane) registerPane.style.display='block';
+    if(tabRegister){ tabRegister.style.background='#fff'; tabRegister.style.color='#0f172a'; tabRegister.style.fontWeight='700'; }
+    if(tabLogin){ tabLogin.style.background='transparent'; tabLogin.style.color='rgba(255,255,255,.7)'; tabLogin.style.fontWeight='500'; }
+  }
+}
+
+// ── ADMIN: Approve/Reject pending staff ──
+async function loadPendingStaff() {
+  const el = gid('pending-staff-list');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;">Loading…</div>';
+  const { data } = await sb.from('staff')
+    .select('*')
+    .eq('approval_status','pending')
+    .order('requested_at',{ascending:true})
+    .catch(()=>({data:[]}));
+  const rows = data||[];
+  if (!rows.length) { el.innerHTML='<div style="text-align:center;padding:20px;color:#94a3b8;font-style:italic;">No pending requests 🎉</div>'; return; }
+  el.innerHTML = rows.map(s=>`
+    <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:180px;">
+        <div style="font-weight:700;color:#0f172a;">${s.full_name}</div>
+        <div style="font-size:11px;color:#64748b;">${s.email||'—'} · ${s.role||'—'} · ${s.department||'No dept'}</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Requested: ${s.requested_at ? new Date(s.requested_at).toLocaleString() : '—'}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <select id="role-sel-${s.id}" style="font-size:12px;padding:4px 8px;border:1px solid #e2e8f0;border-radius:6px;margin:0;height:auto;">
+          ${['doctor','nurse','lab','pharmacy','billing','radiology','admin','director'].map(r=>`<option value="${r}" ${s.role===r?'selected':''}>${r.charAt(0).toUpperCase()+r.slice(1)}</option>`).join('')}
+        </select>
+        <button class="btn btn-success btn-sm" onclick="approveStaff('${s.id}')">✅ Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="rejectStaff('${s.id}')">❌ Reject</button>
+      </div>
+    </div>`).join('');
+}
+
+async function approveStaff(staffId) {
+  const roleEl = document.getElementById('role-sel-'+staffId);
+  const role = roleEl?.value || 'staff';
+  // Determine sections from role
+  const roleSections = {
+    doctor:['doctor','lab','pharmacy','radiology','billing','inventory'],
+    nurse:['nurse','reception'],lab:['lab'],pharmacy:['pharmacy','inventory'],
+    billing:['billing','reception'],radiology:['radiology'],
+    admin:[...ALL_SECS],director:[...ALL_SECS],superadmin:[...ALL_SECS]
+  };
+  const sections = roleSections[role] || ['doctor'];
+  const { error } = await sb.from('staff').update({
+    approval_status: 'approved',
+    is_active: true,
+    role: role,
+    sections: sections,
+    hospital_id: currentHospital,
+    approved_by: currentUser?.name || 'Admin',
+    approved_at: new Date().toISOString()
+  }).eq('id', staffId).catch(e=>({error:e}));
+  if (error) { toast('Approval failed: ' + error.message, 'error'); return; }
+  toast('✅ Staff member approved!', 'success');
+  loadPendingStaff();
+  renderAdmin();
+}
+
+async function rejectStaff(staffId) {
+  if (!confirm('Reject this access request? The user will not be able to log in.')) return;
+  const { error } = await sb.from('staff').update({
+    approval_status: 'rejected',
+    is_active: false,
+    rejected_by: currentUser?.name || 'Admin',
+    rejected_at: new Date().toISOString()
+  }).eq('id', staffId).catch(e=>({error:e}));
+  if (error) { toast('Rejection failed: ' + error.message, 'error'); return; }
+  toast('Staff request rejected.', 'info');
+  loadPendingStaff();
+}
+
+// Count pending for badge
+async function refreshPendingBadge() {
+  if (!currentUser?.isAdmin || !currentHospital) return;
+  const { data, count } = await sb.from('staff')
+    .select('id', {count:'exact',head:true})
+    .eq('approval_status','pending')
+    .catch(()=>({data:null,count:0}));
+  const badge = gid('pending-badge');
+  if (badge) { badge.textContent = count||''; badge.style.display = count ? 'inline-flex' : 'none'; }
 }
 
 async function loadSupabaseData() {
@@ -4348,7 +4574,15 @@ function swAdmin(tab, btn) {
   if(btn) btn.classList.add('active');
   const tabs = ['staff','patients','labtests','radprocs','nurseprocs','saas','permissions','performance'];
   tabs.forEach(t => { const el=gid('admin-'+t); if(el) el.style.display = t===tab?'block':'none'; });
-  if(tab==='staff') renderAdmin();
+  if(tab==='staff') {
+    renderAdmin();
+    // Show pending approvals panel for admins
+    const panel = gid('pending-approvals-panel');
+    if (panel && currentUser?.isAdmin) {
+      panel.style.display = 'block';
+      loadPendingStaff();
+    }
+  }
   if(tab==='patients') renderAdminPatients();
   if(tab==='labtests') renderLabTestsEditor();
   if(tab==='radprocs') renderRadProcsEditor();
@@ -4421,18 +4655,47 @@ async function saveStaff(){
   const sections=ALL_SECS.filter(sec=>document.querySelector(`input[name="sc_${sec}"]`)?.checked);
   const eid=gv('staffEid');
   const demo={role:gv('staffRole'),empId:gv('staffEmpId'),phone:gv('staffPhone')};
-  // Try to create Supabase auth user
-  const email=username+'@meditrack.pro';
+  // Use email = username@meditrack.pro convention for Supabase auth
+  const email = username.includes('@') ? username : username+'@meditrack.pro';
   if(!eid){
-    const {data:authUser}=await sb.auth.admin?.createUser({email,password}).catch(()=>({data:null})) || {data:null};
-    const {data:dbStaff}=await sb.from('staff').insert({hospital_id:currentHospital,full_name:name,role:gv('staffRole')||'Staff',phone:gv('staffPhone')||null,employee_id:gv('staffEmpId')||null}).select().single().catch(()=>({data:{id:'S-'+Date.now()}}));
     if(staffList.some(s=>s.username===username)){toast('Username already exists.','error');return;}
-    staffList.push({id:dbStaff.id,name,username,password,isAdmin,sections,...demo});
+    // NOTE: auth.admin.createUser requires service_role key. We use signUp instead.
+    // The account is created pre-approved (admin is creating it directly).
+    const {data:authData, error:authErr} = await sb.auth.signUp({email, password})
+      .catch(()=>({data:null,error:{message:'Auth signup failed'}}));
+    if(authErr && !authErr.message?.includes('already registered')){
+      toast('Auth error: '+authErr.message,'error'); return;
+    }
+    const authUid = authData?.user?.id || null;
+    const roleSections = {
+      doctor:['doctor','lab','pharmacy','radiology','billing','inventory'],
+      nurse:['nurse','reception'],lab:['lab'],pharmacy:['pharmacy','inventory'],
+      billing:['billing','reception'],radiology:['radiology'],
+      admin:[...ALL_SECS],director:[...ALL_SECS],superadmin:[...ALL_SECS]
+    };
+    const autoSections = sections.length ? sections : (roleSections[gv('staffRole')] || ['doctor']);
+    const {data:dbStaff}=await sb.from('staff').insert({
+      hospital_id:currentHospital,
+      full_name:name, username, email,
+      role:gv('staffRole')||'Staff',
+      is_admin:isAdmin,
+      sections:autoSections,
+      phone:gv('staffPhone')||null,
+      employee_id:gv('staffEmpId')||null,
+      auth_user_id: authUid,
+      approval_status:'approved',  // Admin-created accounts are pre-approved
+      is_active:true,
+      created_by: currentUser?.name||'Admin'
+    }).select().single().catch(()=>({data:{id:'S-'+Date.now()}}));
+    staffList.push({id:dbStaff.id,name,username,password,isAdmin,sections:autoSections,...demo,auth_uid:authUid});
   }else{
     const s=staffList.find(x=>x.id===eid);if(!s)return;
+    const updFields = {full_name:name,username,role:gv('staffRole')||s.role,is_admin:isAdmin,sections,phone:gv('staffPhone')||null,employee_id:gv('staffEmpId')||null};
+    await sb.from('staff').update(updFields).eq('id',eid).catch(()=>{});
     Object.assign(s,{name,username,password,isAdmin,sections,...demo});
   }
   cModal('staff-modal');renderAdmin();toast('Staff saved.','success');
+  refreshPendingBadge();
 }
 function delStaff(id){if(!confirm('Delete this staff member?'))return;staffList=staffList.filter(s=>s.id!==id);renderAdmin();}
 
@@ -8416,43 +8679,100 @@ function setDemo(user) {
 <div id="ls" style="display:none;"><div class="spin"></div><div style="font-size:22px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px;">MediTrack Pro</div><div style="opacity:.7;font-size:12px;margin-top:4px;" id="ls-msg">Starting up…</div><div style="margin-top:16px;background:rgba(255,255,255,.15);border-radius:20px;width:180px;height:4px;overflow:hidden;"><div id="ls-bar" style="background:#fff;height:4px;width:0%;border-radius:20px;transition:width .4s;"></div></div><div style="font-size:10px;opacity:.5;margin-top:24px;">Press any key or tap to continue if stuck</div></div>
 
 <!-- LOGIN PAGE -->
-<div id="lp" style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#134e4a 0%,#0d9488 50%,#14b8a6 100%);">
-  <div style="width:100%;max-width:440px;padding:20px;">
-    <!-- Logo Card -->
-    <div style="text-align:center;margin-bottom:24px;">
-      <div style="width:72px;height:72px;background:#fff;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 8px 32px rgba(0,0,0,.15);margin-bottom:12px;">🏥</div>
-      <div style="color:#fff;font-size:26px;font-weight:800;letter-spacing:-.02em;">MediTrack <span style="opacity:.85;font-weight:400;">Pro</span></div>
-      <div style="color:rgba(255,255,255,.7);font-size:13px;margin-top:4px;">iCURE Medical Centre · Juba, South Sudan</div>
+<div id="lp" style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#134e4a 0%,#0d9488 50%,#14b8a6 100%);padding:16px;">
+  <div style="width:100%;max-width:460px;">
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:22px;">
+      <div style="width:72px;height:72px;background:#fff;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 8px 32px rgba(0,0,0,.2);margin-bottom:10px;">🏥</div>
+      <div style="color:#fff;font-size:26px;font-weight:800;letter-spacing:-.02em;">MediTrack <span style="opacity:.8;font-weight:400;">Pro</span></div>
+      <div style="color:rgba(255,255,255,.7);font-size:12px;margin-top:3px;">iCURE Medical Centre · Juba, South Sudan</div>
     </div>
-    <!-- Login Card -->
-    <div style="background:#fff;border-radius:16px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2);">
-      <h2 style="margin:0 0 20px;font-size:18px;font-weight:800;color:#0f172a;">Sign in to your account</h2>
+
+    <!-- Tab bar -->
+    <div style="display:flex;margin-bottom:-1px;position:relative;z-index:1;">
+      <button id="tab-login" onclick="showLoginTab('login')"
+        style="flex:1;padding:10px;border:none;border-radius:12px 0 0 0;background:#fff;color:#0f172a;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">
+        🔑 Sign In
+      </button>
+      <button id="tab-register" onclick="showLoginTab('register')"
+        style="flex:1;padding:10px;border:none;border-radius:0 12px 0 0;background:rgba(255,255,255,.12);color:rgba(255,255,255,.8);font-weight:500;font-size:13px;cursor:pointer;font-family:inherit;">
+        📝 Request Access
+      </button>
+    </div>
+
+    <!-- SIGN IN PANE -->
+    <div id="login-pane" style="background:#fff;border-radius:0 0 16px 16px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.2);">
       <div style="margin-bottom:14px;">
-        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">Username</label>
-        <input id="lu" placeholder="e.g. gerald, doctor, nurse…" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;" onkeydown="if(event.key==='Enter')login()">
+        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">Email or Username</label>
+        <input id="lu" type="email" autocomplete="email" placeholder="you@example.com or username" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;" onkeydown="if(event.key==='Enter')document.getElementById('lp2')?.focus()">
       </div>
-      <div style="margin-bottom:18px;">
+      <div style="margin-bottom:6px;">
         <label style="display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">Password</label>
-        <input id="lp2" type="password" placeholder="••••••••" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;" onkeydown="if(event.key==='Enter')login()">
+        <input id="lp2" type="password" autocomplete="current-password" placeholder="••••••••" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;" onkeydown="if(event.key==='Enter')login()">
       </div>
-      <div id="le" style="color:#dc2626;font-size:12px;font-weight:600;margin-bottom:10px;min-height:18px;"></div>
-      <button onclick="login()" class="bp" style="width:100%;padding:12px;font-size:14px;border-radius:8px;">Sign In →</button>
-      <button onclick="fillDemo()" style="width:100%;padding:10px;background:#f0fdf9;color:#0f766e;border:1.5px solid #0f766e;border-radius:8px;margin-top:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:13px;">
+      <div id="le" style="min-height:36px;font-size:12px;font-weight:600;margin:8px 0 6px;line-height:1.4;"></div>
+      <button id="login-btn" onclick="login()" class="bp" style="width:100%;padding:12px;font-size:14px;border-radius:8px;">Sign In →</button>
+      <button onclick="fillDemo()" style="width:100%;padding:9px;background:#f0fdf9;color:#0f766e;border:1.5px solid #0f766e;border-radius:8px;margin-top:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:12px;">
         🎯 Quick Demo — Dr. Gerald Apule
       </button>
-      <!-- Demo credentials hint -->
-      <div style="margin-top:16px;padding:10px 12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
-        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Demo Accounts</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-          <div style="font-size:11px;color:#475569;cursor:pointer;" onclick="setDemo('gerald')">👨‍⚕️ gerald / gerald123</div>
-          <div style="font-size:11px;color:#475569;cursor:pointer;" onclick="setDemo('nurse')">💉 nurse / nurse123</div>
-          <div style="font-size:11px;color:#475569;cursor:pointer;" onclick="setDemo('lab')">🔬 lab / lab123</div>
-          <div style="font-size:11px;color:#475569;cursor:pointer;" onclick="setDemo('pharmacy')">💊 pharmacy / pharm123</div>
+      <details style="margin-top:14px;">
+        <summary style="font-size:11px;color:#94a3b8;cursor:pointer;font-weight:600;">Demo credentials (development only)</summary>
+        <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;">
+          <div style="padding:4px 7px;background:#f8fafc;border-radius:5px;cursor:pointer;border:1px solid #e2e8f0;" onclick="setDemo('gerald')">👑 gerald / gerald123</div>
+          <div style="padding:4px 7px;background:#f8fafc;border-radius:5px;cursor:pointer;border:1px solid #e2e8f0;" onclick="setDemo('doctor')">🩺 doctor / doctor123</div>
+          <div style="padding:4px 7px;background:#f8fafc;border-radius:5px;cursor:pointer;border:1px solid #e2e8f0;" onclick="setDemo('nurse')">💉 nurse / nurse123</div>
+          <div style="padding:4px 7px;background:#f8fafc;border-radius:5px;cursor:pointer;border:1px solid #e2e8f0;" onclick="setDemo('lab')">🔬 lab / lab123</div>
+        </div>
+      </details>
+    </div>
+
+    <!-- REQUEST ACCESS PANE -->
+    <div id="register-pane" style="display:none;background:#fff;border-radius:0 0 16px 16px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+      <p style="margin:0 0 16px;font-size:13px;color:#475569;">Fill in your details. An administrator will review and activate your account.</p>
+      <div style="display:grid;gap:12px;">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Full Name *</label>
+          <input id="ra-name" placeholder="Dr. Jane Doe" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Work Email *</label>
+          <input id="ra-email" type="email" placeholder="you@icure.org" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Role *</label>
+            <select id="ra-role" style="width:100%;padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+              <option value="">Select…</option>
+              <option value="doctor">Doctor</option>
+              <option value="nurse">Nurse</option>
+              <option value="lab">Lab Technician</option>
+              <option value="pharmacy">Pharmacist</option>
+              <option value="billing">Billing Officer</option>
+              <option value="radiology">Radiologist</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Department</label>
+            <input id="ra-dept" placeholder="e.g. OPD" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+          </div>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Password * <span style="font-weight:400;color:#94a3b8;">(min 8 characters)</span></label>
+          <input id="ra-pw" type="password" placeholder="Choose a strong password" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Confirm Password *</label>
+          <input id="ra-pw2" type="password" placeholder="Repeat your password" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;" onkeydown="if(event.key==='Enter')requestAccess()">
         </div>
       </div>
+      <div id="ra-msg" style="min-height:20px;font-size:12px;margin:10px 0 6px;"></div>
+      <button id="ra-btn" onclick="requestAccess()" class="bp" style="width:100%;padding:11px;font-size:14px;border-radius:8px;">Submit Request</button>
+      <div style="margin-top:10px;font-size:11px;color:#94a3b8;text-align:center;">Already have an account? <a href="#" onclick="showLoginTab('login');return false;" style="color:#0d9488;font-weight:700;">Sign in →</a></div>
     </div>
-    <div style="text-align:center;margin-top:16px;color:rgba(255,255,255,.55);font-size:11px;">
-      MediTrack Pro v2.0 · Powered by Anthropic Claude
+
+    <div style="text-align:center;margin-top:14px;color:rgba(255,255,255,.45);font-size:10px;">
+      MediTrack Pro v2.1 · Secure · Supabase-Backed · iCURE 2025
     </div>
   </div>
 </div>
@@ -9640,6 +9960,19 @@ function setDemo(user) {
       <button class="st" onclick="swAdmin('saas',this)" id="saas-tab" style="display:none;">💼 Platform SaaS</button>
     </div>
     <div id="admin-staff" style="display:block;">
+      <!-- Pending Approvals Banner (admin only) -->
+      <div id="pending-approvals-panel" style="display:none;margin-bottom:14px;">
+        <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:14px 16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div>
+              <span style="font-weight:700;color:#92400e;">⏳ Pending Account Requests</span>
+              <span style="font-size:11px;color:#78350f;margin-left:6px;">Review and approve new staff accounts below</span>
+            </div>
+            <button onclick="loadPendingStaff()" class="btn btn-warning btn-sm">↻ Refresh</button>
+          </div>
+          <div id="pending-staff-list"><div style="text-align:center;padding:10px;color:#94a3b8;">Loading…</div></div>
+        </div>
+      </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <h4>Staff Management</h4>
         <button onclick="oStaffModal(null)" class="bp bsm">+ Add Staff</button>

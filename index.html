@@ -1246,6 +1246,8 @@ let medRows = [], radRows = [], procRows = [];
 let selectedLabTests = new Set();
 let _charts = {};
 let voiceEnabled = localStorage.getItem('mt-voice') !== '0';
+// Alias for speak() function which references speakEnabled
+Object.defineProperty(window, 'speakEnabled', { get: () => voiceEnabled, set: v => { voiceEnabled = v; } });
 let _chatTimer = null;
 let pubFbRating = 0;
 
@@ -3093,6 +3095,12 @@ function openCons(id) {
   v.status = 'WITH_DOCTOR';
 
   // Default Rx date and billing
+  // ── SHOW form, HIDE queue (like the video: clicking a patient collapses the list) ──
+  const queueCard = gid('queue-list-card');
+  const consForm  = gid('cons-form');
+  if (queueCard) queueCard.style.display = 'none';
+  if (consForm)  { consForm.style.display = 'block'; consForm.scrollIntoView({behavior:'smooth', block:'start'}); }
+
   const rxDate = gid('rx-date'); if (rxDate && !rxDate.value) rxDate.value = new Date().toISOString().split('T')[0];
   const rxBill = gid('rx-billing'); if (rxBill) rxBill.value = v.payer || 'cash';
 
@@ -3103,32 +3111,94 @@ function openCons(id) {
     if (typeof checkAllergyAlert === 'function') checkAllergyAlert(v);
   }, 50);
 
-  // Refresh queue
+  // Refresh queue counts (but keep it hidden)
   if (typeof renderCons === 'function') renderCons();
 }
 
 function closeConsForm(){
-  gid('cons-form').style.display='none';
+  const queueCard = gid('queue-list-card');
+  const consForm  = gid('cons-form');
+  if (consForm)  consForm.style.display = 'none';
+  if (queueCard) { queueCard.style.display = 'block'; queueCard.scrollIntoView({behavior:'smooth', block:'start'}); }
   const dr = gid('drug-results'); if(dr) dr.style.display='none';
-  // Clear allergy banner
   const ab = gid('allergy-alert-banner'); if (ab) { ab.innerHTML=''; ab.style.display='none'; }
+  activeVid = null;
   renderCons();
 }
 
 function buildLabChips(){
-  const tests=window._labTests||LAB_TESTS;
-  const term=(gid('lab-search')?.value||'').toLowerCase();
-  const filtered=tests.filter(t=>t.name.toLowerCase().includes(term));
-  gid('lab-check-list').innerHTML=filtered.map(t=>`<span class="lab-chip ${selectedLabTests.has(t.name)?'selected':''}" onclick="toggleLabTest('${enc(t.name)}',${t.price})">${t.name} — $${t.price.toFixed(2)}</span>`).join('');
-  gid('selected-labs-display').textContent=selectedLabTests.size?`Selected: ${[...selectedLabTests].join(', ')}`:'';
+  const tests = window._labTests || LAB_TESTS;
+  const term  = (gid('lab-search')?.value || '').trim().toLowerCase();
+  const list  = gid('lab-check-list');
+  if (!list) return;
+  if (!term) { list.style.display = 'none'; list.innerHTML = ''; _renderSelectedLabs(); return; }
+  const filtered = tests.filter(t => t.name.toLowerCase().includes(term)).slice(0, 20);
+  if (!filtered.length) { list.innerHTML = '<div style="padding:8px;font-size:12px;color:#94a3b8;">No tests found</div>'; list.style.display = 'flex'; list.style.flexWrap='wrap'; _renderSelectedLabs(); return; }
+  list.style.display = 'flex';
+  list.innerHTML = filtered.map(t => {
+    const sel = selectedLabTests.has(t.name);
+    return `<span class="lab-chip ${sel?'selected':''}" onclick="toggleLabTest('${enc(t.name)}',${t.price})">${t.name} — $${t.price.toFixed(2)}</span>`;
+  }).join('');
+  _renderSelectedLabs();
 }
-function filterLabTests(){buildLabChips();}
-function toggleLabTest(nameEnc,price){
-  const name=dec(nameEnc);
-  if(selectedLabTests.has(name))selectedLabTests.delete(name);
+function _renderSelectedLabs() {
+  const el = gid('selected-labs-display'); if (!el) return;
+  if (!selectedLabTests.size) { el.innerHTML = ''; return; }
+  el.innerHTML = [...selectedLabTests].map(name => `
+    <span style="display:inline-flex;align-items:center;gap:4px;background:#dbeafe;color:#1e40af;border-radius:20px;padding:3px 10px 3px 8px;font-size:12px;font-weight:600;">
+      \u{1F52C} ${name}
+      <button onclick="toggleLabTest('${enc(name)}',0)" style="background:none;border:none;color:#1e40af;cursor:pointer;font-size:13px;padding:0;line-height:1;" title="Remove">&times;</button>
+    </span>`).join('');
+}
+function filterLabTests(){ buildLabChips(); }
+function toggleLabTest(nameEnc, price){
+  const name = dec(nameEnc);
+  if (selectedLabTests.has(name)) selectedLabTests.delete(name);
   else selectedLabTests.add(name);
-  buildLabChips();renderOrderSummary();
+  buildLabChips(); renderOrderSummary();
 }
+// RAD SEARCH
+function filterRadSearch() {
+  const procs = window._radProcs || RADIOLOGY_PROCS;
+  const term  = (gid('rad-search')?.value || '').trim().toLowerCase();
+  const res   = gid('rad-search-results'); if (!res) return;
+  if (!term) { res.style.display = 'none'; return; }
+  const filtered = procs.filter(p => p.name.toLowerCase().includes(term)).slice(0, 15);
+  if (!filtered.length) { res.innerHTML = '<div style="padding:8px;font-size:12px;color:#94a3b8;">No imaging found</div>'; res.style.display = 'block'; return; }
+  res.style.display = 'block';
+  res.innerHTML = filtered.map(p =>
+    `<div onclick="selectRadItem('${enc(p.name)}',${p.price||0})" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f5f9;" onmouseover="this.style.background='#f0f9ff'" onmouseout="this.style.background=''">
+      \u{1F9FB} ${p.name} <span style="float:right;color:#64748b;">$${(p.price||0).toFixed(2)}</span>
+    </div>`).join('');
+}
+function selectRadItem(nameEnc, price) {
+  const name = dec(nameEnc);
+  addRadRow({name, price});
+  const inp = gid('rad-search'); if (inp) inp.value = '';
+  const res = gid('rad-search-results'); if (res) res.style.display = 'none';
+}
+// PROC SEARCH
+function filterProcSearch() {
+  const procs = window._nursingProcs || NURSING_PROCEDURES;
+  const term  = (gid('proc-search')?.value || '').trim().toLowerCase();
+  const res   = gid('proc-search-results'); if (!res) return;
+  if (!term) { res.style.display = 'none'; return; }
+  const filtered = procs.filter(p => p.name.toLowerCase().includes(term)).slice(0, 15);
+  if (!filtered.length) { res.innerHTML = '<div style="padding:8px;font-size:12px;color:#94a3b8;">No procedures found</div>'; res.style.display = 'block'; return; }
+  res.style.display = 'block';
+  res.innerHTML = filtered.map(p =>
+    `<div onclick="selectProcItem('${enc(p.name)}',${p.price||0})" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f5f9;" onmouseover="this.style.background='#f0f9ff'" onmouseout="this.style.background=''">
+      \u{1FA79} ${p.name} <span style="float:right;color:#64748b;">$${(p.price||0).toFixed(2)}</span>
+    </div>`).join('');
+}
+function selectProcItem(nameEnc, price) {
+  const name = dec(nameEnc);
+  if (typeof addProcFromData === 'function') addProcFromData({name, price});
+  else if (typeof addProcRow === 'function') addProcRow({name, price});
+  const inp = gid('proc-search'); if (inp) inp.value = '';
+  const res = gid('proc-search-results'); if (res) res.style.display = 'none';
+}
+
 
 function addRxRow(prefill){
   const id = medRowId++;
@@ -3155,7 +3225,10 @@ function addRxRow(prefill){
     <input type="number" id="rp-${id}" value="${data.price||0}" min="0" step="0.01" placeholder="Unit $" onchange="updateRxRow(${id});updateRxTotal();" style="margin:0;text-align:right;">
     <textarea id="ri-${id}" rows="2" placeholder="Instructions for nurse/patient (e.g. 1 tab BD x 5/7, take after food)" onchange="updateRxRow(${id})" style="margin:0;font-size:12px;resize:vertical;min-height:38px;">${data.instructions||data.dosage||''}</textarea>
     <button onclick="removeRxRow(${id});updateRxTotal();" class="bd2" style="align-self:start;padding:6px 10px;">✕</button>`;
-  gid('med-orders-list').appendChild(row);
+  // New drug appears at the TOP (newest first, like the video)
+  const list = gid('med-orders-list');
+  if (list.firstChild) list.insertBefore(row, list.firstChild);
+  else list.appendChild(row);
   if(typeof updateOrderSummary === 'function') {
     const v = visits.find(x => x.id === activeVid);
     if(v) updateOrderSummary(v);
@@ -6664,6 +6737,7 @@ function renderPharmPending() {
           <th style="padding:6px 8px;">Qty</th>
           <th style="padding:6px 8px;">Unit Price</th>
           <th style="padding:6px 8px;">Total</th>
+          <th style="padding:6px 8px;color:#0d9488;">Instructions</th>
           <th style="padding:6px 8px;">Action</th>
         </tr>
         ${pending.map((r,i) => `<tr>
@@ -6673,6 +6747,7 @@ function renderPharmPending() {
           <td style="padding:6px 8px;font-weight:700;">${r.qty||1}</td>
           <td style="padding:6px 8px;">$${(r.price||0).toFixed(2)}</td>
           <td style="padding:6px 8px;font-weight:700;">$${((r.price||0)*(r.qty||1)).toFixed(2)}</td>
+          <td style="padding:6px 8px;font-size:12px;color:#0f766e;font-weight:500;">${r.instructions||'—'}</td>
           <td style="padding:6px 8px;">
             <button class="bsm" style="background:#0d9488;color:#fff;" onclick="dispenseOne('${v.id}','${r.id||r.name}')">Dispense</button>
           </td>
@@ -7277,10 +7352,18 @@ function addProcedureFromSelect() {
 // CONSULTATION FORM TABS (Overview/Clinical/Timeline/etc)
 // ══════════════════════════════════════════════
 function cfTab(tabName) {
+  // AUTO-SAVE clinical notes before switching away from the clinical tab
+  const v = visits.find(x => x.id === activeVid);
+  if (v) {
+    const currentActive = document.querySelector('.cft.active');
+    if (currentActive && currentActive.dataset.tab === 'clinical') {
+      _autoSaveClinical(v);
+    }
+  }
   document.querySelectorAll('.cft').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
   document.querySelectorAll('.cf-pan').forEach(p => p.style.display = p.dataset.pan === tabName ? 'block' : 'none');
   // Render content for the tab
-  const v = visits.find(x => x.id === activeVid); if (!v) return;
+  if (!v) return;
   if (tabName === 'overview')  renderConsOverview(v);
   if (tabName === 'timeline')  renderConsTimeline(v);
   if (tabName === 'triage')    renderConsTriage(v);
@@ -7288,6 +7371,25 @@ function cfTab(tabName) {
   if (tabName === 'services')  renderConsImagingStatus(v);
   if (tabName === 'docs')      renderConsDocs(v);
   if (tabName === 'rx')        updateRxTotal();
+}
+
+function _autoSaveClinical(v) {
+  if (!v) return;
+  const cl = v.clinical || {};
+  ['hPC','hHPC','hPMH','hOG','hFSH','hDrug','hAllergy',
+   'hPEGeneral','hPEHead','hPEChest','hPECVS','hPEAbdomen','hPECNS','hPEExtremities','hPESkin','hPEOther',
+   'cDiffDx','cFinalDx','cNotes','cRecommendations'].forEach(fid => {
+    const el = gid(fid); if (el) cl[fid] = el.value;
+  });
+  ['hLMP','hGP'].forEach(fid => { const el = gid(fid); if (el) cl[fid] = el.value; });
+  if (gid('c-return-date')) cl.returnDate = gid('c-return-date').value;
+  if (gid('c-return-note')) cl.returnNote = gid('c-return-note').value;
+  v.clinical = cl;
+  // Quietly persist to Supabase (no toast)
+  if (!isDemoMode() && v.sbId) {
+    sb.from('visits').update({ clinical_notes: cl, updated_at: new Date().toISOString() })
+      .eq('id', v.sbId).catch(() => {});
+  }
 }
 
 // Imaging vs Procedures sub-tab
@@ -9404,9 +9506,10 @@ function setDemo(user) {
           <!-- Order new tests -->
           <div class="card" style="margin:0 0 12px;background:var(--lt);">
             <p style="font-size:11px;font-weight:700;color:var(--mu);margin-bottom:6px;">ORDER NEW TESTS</p>
-            <input id="lab-search" placeholder="Search lab tests…" onkeyup="filterLabTests()" style="margin-bottom:5px;">
-            <div class="lab-check-list" id="lab-check-list"></div>
-            <div id="selected-labs-display" style="margin-top:6px;font-size:12px;color:var(--mu);"></div>
+            <input id="lab-search" placeholder="🔍 Type to search lab tests (e.g. CBC, RBS, Malaria)…" onkeyup="filterLabTests()" autocomplete="off" style="margin-bottom:5px;">
+            <div class="lab-check-list" id="lab-check-list" style="display:none;"></div>
+            <!-- Selected items shown as tags with delete -->
+            <div id="selected-labs-display" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;"></div>
           </div>
           <!-- Existing test status -->
           <div class="card" style="margin:0;">
@@ -9431,7 +9534,12 @@ function setDemo(user) {
           <div id="cf-srv-imaging">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
               <h4 style="margin:0;color:var(--p);">🩻 Imaging Orders</h4>
-              <button class="bp" onclick="addRadRow()">+ Add Imaging</button>
+            </div>
+            <!-- Search-first imaging -->
+            <div class="card" style="margin:0 0 12px;background:var(--lt);">
+              <input id="rad-search" placeholder="🔍 Search imaging (e.g. X-ray, Ultrasound, CT…)" onkeyup="filterRadSearch()" autocomplete="off" style="margin-bottom:5px;">
+              <div id="rad-search-results" style="display:none;max-height:160px;overflow-y:auto;border:1.5px solid var(--bd);border-radius:6px;background:#fff;"></div>
+              <div id="selected-rads-display" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;"></div>
             </div>
             <div id="rad-orders-list"></div>
             <hr class="dv">
@@ -9442,11 +9550,11 @@ function setDemo(user) {
           <div id="cf-srv-proc" style="display:none;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
               <h4 style="margin:0;color:var(--p);">🩹 Procedures</h4>
-              <button class="bp" onclick="addProcRow()">+ Add Procedure</button>
             </div>
-            <div style="display:flex;gap:6px;margin-bottom:10px;">
-              <select id="proc-order-select" style="flex:1;margin:0;"></select>
-              <button class="bp bsm" onclick="addProcFromSelect()">+ Add</button>
+            <div class="card" style="margin:0 0 12px;background:var(--lt);">
+              <input id="proc-search" placeholder="🔍 Search procedures (e.g. Dressing, Suture, IV line…)" onkeyup="filterProcSearch()" autocomplete="off" style="margin-bottom:5px;">
+              <div id="proc-search-results" style="display:none;max-height:160px;overflow-y:auto;border:1.5px solid var(--bd);border-radius:6px;background:#fff;"></div>
+              <div id="selected-procs-display" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;"></div>
             </div>
             <div id="proc-orders-list"></div>
           </div>

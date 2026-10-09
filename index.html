@@ -8494,25 +8494,6 @@ function initDemoData() {
 
   console.log('Demo data seeded:', patients.length, 'patients,', visits.length, 'active visits');
 }
-
-
-function fillDemo() {
-  const lu = gid('lu'); const lp = gid('lp2');
-  if (lu) lu.value = 'gerald';
-  if (lp) lp.value = 'gerald123';
-  toast('Demo credentials filled — click Sign In', 'info');
-}
-
-
-function setDemo(user) {
-  const lu = gid('lu'); const lp = gid('lp2');
-  const pwds = {gerald:'gerald123',admin:'admin123',director:'director123',
-    doctor:'doctor123',nurse:'nurse123',lab:'lab123',pharmacy:'pharm123',billing:'billing123'};
-  if (lu) lu.value = user;
-  if (lp) lp.value = pwds[user] || user+'123';
-}
-
-
 // ════════════════════════════════════════════════════════════════
 // STRUCTURED LAB RESULTS — Hercules pattern
 // Supports multi-parameter results with flags (normal/high/low/critical)
@@ -10052,72 +10033,39 @@ function showBillPanel(panel, btn) {
 
 <!-- LOGIN PAGE -->
 <div id="lp" style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#134e4a 0%,#0d9488 50%,#14b8a6 100%);">
-  <div style="width:100%;max-width:440px;padding:20px;">
-    <!-- Logo Card -->
-    <div style="text-align:center;margin-bottom:24px;">
-      <div style="width:72px;height:72px;background:#fff;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 8px 32px rgba(0,0,0,.15);margin-bottom:12px;">🏥</div>
-      <div style="color:#fff;font-size:26px;font-weight:800;letter-spacing:-.02em;">MediTrack <span style="opacity:.85;font-weight:400;">Pro</span></div>
-      <div style="color:rgba(255,255,255,.7);font-size:13px;margin-top:4px;">iCURE Medical Centre · Juba, South Sudan</div>
+  <div style="width:100%;max-width:420px;padding:20px;">
+    <!-- Branding -->
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="width:72px;height:72px;background:#fff;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 8px 32px rgba(0,0,0,.18);margin-bottom:14px;">🏥</div>
+      <div style="color:#fff;font-size:26px;font-weight:800;letter-spacing:-.02em;">MediTrack <span style="opacity:.8;font-weight:400;">Pro</span></div>
+      <div style="color:rgba(255,255,255,.65);font-size:12px;margin-top:5px;letter-spacing:.02em;">iCURE MEDICAL CENTRE · JUBA, SOUTH SUDAN</div>
     </div>
     <!-- Login Card -->
-    <div style="background:#fff;border-radius:16px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2);">
-      <h2 style="margin:0 0 20px;font-size:18px;font-weight:800;color:#0f172a;">Sign in to your account</h2>
+    <div style="background:#fff;border-radius:16px;padding:30px 28px;box-shadow:0 24px 64px rgba(0,0,0,.22);">
+      <h2 style="margin:0 0 22px;font-size:17px;font-weight:800;color:#0f172a;letter-spacing:-.01em;">Sign in to your account</h2>
       <div style="margin-bottom:14px;">
-        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">Username</label>
-        <input id="lu" placeholder="e.g. gerald, doctor, nurse…" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;" onkeydown="if(event.key==='Enter')login()">
+        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">Username</label>
+        <input id="lu" placeholder="Enter your username" autocomplete="username"
+          style="width:100%;padding:11px 13px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;transition:border-color .15s;"
+          onkeydown="if(event.key==='Enter')gid('lp2').focus()">
       </div>
-      <div style="margin-bottom:18px;">
-        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">Password</label>
-        <input id="lp2" type="password" placeholder="••••••••" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;" onkeydown="if(event.key==='Enter')login()">
+      <div style="margin-bottom:6px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">Password</label>
+        <input id="lp2" type="password" placeholder="••••••••" autocomplete="current-password"
+          style="width:100%;padding:11px 13px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;transition:border-color .15s;"
+          onkeydown="if(event.key==='Enter')login()">
       </div>
-      <div id="le" style="color:#dc2626;font-size:12px;font-weight:600;margin-bottom:10px;min-height:18px;"></div>
-      <button onclick="login()" class="bp" style="width:100%;padding:12px;font-size:14px;border-radius:8px;">Sign In →</button>
-      <button onclick="fillDemo()" style="width:100%;padding:10px;background:#f0fdf9;color:#0f766e;border:1.5px solid #0f766e;border-radius:8px;margin-top:8px;font-weight:700;font-family:inherit;cursor:pointer;font-size:13px;">
-        🎯 Quick Demo — Dr. Gerald Apule
+      <div id="le" style="color:#dc2626;font-size:12px;font-weight:600;min-height:20px;margin-bottom:10px;padding-top:4px;"></div>
+      <button onclick="login()" class="bp"
+        style="width:100%;padding:13px;font-size:14px;border-radius:8px;font-weight:700;letter-spacing:-.01em;">
+        Sign In →
       </button>
-      <!-- Demo credentials hint -->
-      <div style="margin-top:16px;padding:10px 12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
-        <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Demo Accounts</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-          <div style="font-size:11px;color:#475569;cursor:pointer;" onclick="setDemo('gerald')">👨‍⚕️ gerald / gerald123</div>
-          <div style="font-size:11px;color:#475569;cursor:pointer;" onclick="setDemo('nurse')">💉 nurse / nurse123</div>
-          <div style="font-size:11px;color:#475569;cursor:pointer;" onclick="setDemo('lab')">🔬 lab / lab123</div>
-          <div style="font-size:11px;color:#475569;cursor:pointer;" onclick="setDemo('pharmacy')">💊 pharmacy / pharm123</div>
-        </div>
-      </div>
     </div>
-    <div style="text-align:center;margin-top:16px;color:rgba(255,255,255,.55);font-size:11px;">
-      MediTrack Pro v2.0 · Powered by Anthropic Claude
+    <div style="text-align:center;margin-top:18px;color:rgba(255,255,255,.4);font-size:11px;">
+      MediTrack Pro · iCURE Medical Centre
     </div>
   </div>
 </div>
-    <div style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#0d9488,#14b8a6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:3px;">MediTrack Pro</div>
-    <div style="font-size:12px;color:var(--mu);margin-bottom:24px;font-style:italic;">Hospital Management Information System</div>
-    <label style="text-align:left;">Username</label>
-    <input id="lu" placeholder="Enter username" onkeyup="if(event.key==='Enter')login()" style="margin-bottom:6px;">
-    <label style="text-align:left;">Password</label>
-    <input type="password" id="lp2" placeholder="Enter password" onkeyup="if(event.key==='Enter')login()" style="margin-bottom:12px;">
-    <button onclick="login()" class="bp" style="width:100%;padding:11px;font-size:14px;">Sign In →</button>
-          <button onclick="fillDemo()" style="width:100%;padding:9px;background:var(--lt);color:var(--p);border:1.5px solid var(--p);border-radius:6px;margin-top:8px;font-weight:600;font-family:inherit;cursor:pointer;">
-            🎯 Quick Demo (Dr. Gerald)
-          </button>
-    <div id="le" style="color:var(--d);font-size:12px;margin-top:8px;min-height:18px;"></div>
-    <details style="margin-top:12px;background:#f8fafc;border:1px solid var(--bd);border-radius:6px;padding:8px;text-align:left;">
-      <summary style="font-size:12px;cursor:pointer;font-weight:700;">Demo Credentials</summary>
-      <div style="font-size:11px;margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-        <div style="background:#eff6ff;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #bfdbfe;" onclick="document.getElementById('lu').value='admin';document.getElementById('lp2').value='admin123'"><b>admin</b><br><span style="color:#1e40af;">admin / admin123</span></div>
-        <div style="background:#f0fdf4;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #bbf7d0;" onclick="document.getElementById('lu').value='doctor';document.getElementById('lp2').value='doctor123'"><b>doctor</b><br><span style="color:#065f46;">doctor / doctor123</span></div>
-        <div style="background:#fef3c7;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fde68a;" onclick="document.getElementById('lu').value='nurse';document.getElementById('lp2').value='nurse123'"><b>nurse</b><br><span style="color:#92400e;">nurse / nurse123</span></div>
-        <div style="background:#fce7f3;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fbcfe8;" onclick="document.getElementById('lu').value='lab';document.getElementById('lp2').value='lab123'"><b>lab</b><br><span style="color:#9d174d;">lab / lab123</span></div>
-        <div style="background:#ede9fe;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #ddd6fe;" onclick="document.getElementById('lu').value='pharmacy';document.getElementById('lp2').value='pharm123'"><b>pharmacy</b><br><span style="color:#5b21b6;">pharmacy / pharm123</span></div>
-        <div style="background:#fff7ed;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #fed7aa;" onclick="document.getElementById('lu').value='billing';document.getElementById('lp2').value='billing123'"><b>billing</b><br><span style="color:#92400e;">billing / billing123</span></div>
-        <div style="background:#134e4a;padding:5px 8px;border-radius:4px;cursor:pointer;border:1px solid #0d9488;grid-column:1/-1;" onclick="document.getElementById('lu').value='gerald';document.getElementById('lp2').value='gerald123'"><b style="color:#ccfbf1;">🌐 Platform Admin (gerald)</b><br><span style="color:#5eead4;font-size:10px;">gerald / gerald123 — MediTrack Super Admin</span></div>
-      </div>
-      <p style="font-size:10px;color:#94a3b8;margin-top:5px;text-align:center;">👆 Click any box to auto-fill credentials</p>
-      </details>
-  </div>
-</div>
-
 
 <!-- MAIN APP -->
 <div id="app" style="display:none;">

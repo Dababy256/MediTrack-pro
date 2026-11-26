@@ -16,3 +16,4 @@ jobs:
           node-version: '22'
       - run: node --check assets/app.js
       - run: node tests/regression.mjs
+      - run: node tests/cloud-regression.mjs

@@ -44,3 +44,4 @@ jobs:
       - name: Deploy tested demo
         id: deployment
         uses: actions/deploy-pages@v4
+# Trigger deployment after Pages source activation.
